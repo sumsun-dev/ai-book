@@ -1,11 +1,13 @@
 import { create } from 'zustand'
-import { BookProject, BookStatus, BookOutline, AgentMessage, BookType } from '@/types/book'
+import { BookProject, BookStatus, BookOutline, AgentMessage, BookType, TableOfContents, OutlineFeedback } from '@/types/book'
+import { generateTableOfContents, refineOutline, addChapter, removeChapter, reorderChapters, addSection, removeSection } from '@/agents/outliner'
 
 interface BookStore {
   currentProject: BookProject | null
   chapters: Map<number, string>
   agentMessages: AgentMessage[]
   isProcessing: boolean
+  tableOfContents: TableOfContents | null
 
   // Actions
   createProject: (title: string, type: BookType, description: string) => void
@@ -16,6 +18,15 @@ interface BookStore {
   clearAgentMessages: () => void
   setProcessing: (processing: boolean) => void
   reset: () => void
+
+  // Outline modification actions
+  generateTOC: () => void
+  refineOutlineWithFeedback: (feedback: OutlineFeedback) => Promise<void>
+  addChapterToOutline: (title: string, summary: string, position?: number) => void
+  removeChapterFromOutline: (chapterNumber: number) => void
+  reorderOutlineChapters: (fromIndex: number, toIndex: number) => void
+  addSectionToChapter: (chapterNumber: number, title: string, summary: string) => void
+  removeSectionFromChapter: (chapterNumber: number, sectionId: string) => void
 }
 
 export const useBookStore = create<BookStore>((set, get) => ({
@@ -23,6 +34,7 @@ export const useBookStore = create<BookStore>((set, get) => ({
   chapters: new Map(),
   agentMessages: [],
   isProcessing: false,
+  tableOfContents: null,
 
   createProject: (title, type, description) => {
     const project: BookProject = {
@@ -92,6 +104,122 @@ export const useBookStore = create<BookStore>((set, get) => ({
       chapters: new Map(),
       agentMessages: [],
       isProcessing: false,
+      tableOfContents: null,
     })
+  },
+
+  generateTOC: () => {
+    const { currentProject } = get()
+    if (currentProject?.outline) {
+      const toc = generateTableOfContents(currentProject.title, currentProject.outline)
+      set({ tableOfContents: toc })
+    }
+  },
+
+  refineOutlineWithFeedback: async (feedback) => {
+    const { currentProject } = get()
+    if (!currentProject?.outline) return
+
+    set({ isProcessing: true })
+    try {
+      const refinedOutline = await refineOutline(currentProject.outline, feedback)
+      set({
+        currentProject: {
+          ...currentProject,
+          outline: refinedOutline,
+          updatedAt: new Date(),
+        },
+      })
+      // Regenerate TOC after outline change
+      const toc = generateTableOfContents(currentProject.title, refinedOutline)
+      set({ tableOfContents: toc })
+    } finally {
+      set({ isProcessing: false })
+    }
+  },
+
+  addChapterToOutline: (title, summary, position) => {
+    const { currentProject } = get()
+    if (!currentProject?.outline) return
+
+    const newOutline = addChapter(currentProject.outline, title, summary, position)
+    set({
+      currentProject: {
+        ...currentProject,
+        outline: newOutline,
+        updatedAt: new Date(),
+      },
+    })
+    // Regenerate TOC
+    const toc = generateTableOfContents(currentProject.title, newOutline)
+    set({ tableOfContents: toc })
+  },
+
+  removeChapterFromOutline: (chapterNumber) => {
+    const { currentProject } = get()
+    if (!currentProject?.outline) return
+
+    const newOutline = removeChapter(currentProject.outline, chapterNumber)
+    set({
+      currentProject: {
+        ...currentProject,
+        outline: newOutline,
+        updatedAt: new Date(),
+      },
+    })
+    // Regenerate TOC
+    const toc = generateTableOfContents(currentProject.title, newOutline)
+    set({ tableOfContents: toc })
+  },
+
+  reorderOutlineChapters: (fromIndex, toIndex) => {
+    const { currentProject } = get()
+    if (!currentProject?.outline) return
+
+    const newOutline = reorderChapters(currentProject.outline, fromIndex, toIndex)
+    set({
+      currentProject: {
+        ...currentProject,
+        outline: newOutline,
+        updatedAt: new Date(),
+      },
+    })
+    // Regenerate TOC
+    const toc = generateTableOfContents(currentProject.title, newOutline)
+    set({ tableOfContents: toc })
+  },
+
+  addSectionToChapter: (chapterNumber, title, summary) => {
+    const { currentProject } = get()
+    if (!currentProject?.outline) return
+
+    const newOutline = addSection(currentProject.outline, chapterNumber, title, summary)
+    set({
+      currentProject: {
+        ...currentProject,
+        outline: newOutline,
+        updatedAt: new Date(),
+      },
+    })
+    // Regenerate TOC
+    const toc = generateTableOfContents(currentProject.title, newOutline)
+    set({ tableOfContents: toc })
+  },
+
+  removeSectionFromChapter: (chapterNumber, sectionId) => {
+    const { currentProject } = get()
+    if (!currentProject?.outline) return
+
+    const newOutline = removeSection(currentProject.outline, chapterNumber, sectionId)
+    set({
+      currentProject: {
+        ...currentProject,
+        outline: newOutline,
+        updatedAt: new Date(),
+      },
+    })
+    // Regenerate TOC
+    const toc = generateTableOfContents(currentProject.title, newOutline)
+    set({ tableOfContents: toc })
   },
 }))

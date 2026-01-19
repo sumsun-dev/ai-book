@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { runResearchAgent } from '@/agents/research'
-import { runOutlinerAgent } from '@/agents/outliner'
+import { runOutlinerAgent, refineOutline, generateTableOfContents } from '@/agents/outliner'
 import { runWriterAgent } from '@/agents/writer'
 import { runEditorAgent } from '@/agents/editor'
 import { runCriticAgent } from '@/agents/critic'
-import { BookType } from '@/types/book'
+import { BookType, OutlineFeedback, BookOutline } from '@/types/book'
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +25,21 @@ export async function POST(request: NextRequest) {
       case 'outline': {
         const { bookType, title, description, research } = body
         const outline = await runOutlinerAgent(bookType, title, description, research)
-        return NextResponse.json({ outline })
+        const toc = generateTableOfContents(title, outline)
+        return NextResponse.json({ outline, toc })
+      }
+
+      case 'refine': {
+        const { outline, feedback, title } = body as { outline: BookOutline; feedback: OutlineFeedback; title: string }
+        const refinedOutline = await refineOutline(outline, feedback)
+        const toc = generateTableOfContents(title || 'Untitled', refinedOutline)
+        return NextResponse.json({ outline: refinedOutline, toc })
+      }
+
+      case 'toc': {
+        const { title, outline } = body
+        const toc = generateTableOfContents(title, outline)
+        return NextResponse.json({ toc })
       }
 
       case 'write': {

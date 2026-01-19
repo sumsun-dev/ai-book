@@ -36,11 +36,38 @@ export interface BookOutline {
   tone: string
 }
 
+export interface Section {
+  id: string
+  title: string
+  summary: string
+  estimatedWords: number
+}
+
 export interface ChapterOutline {
   number: number
   title: string
   summary: string
   keyPoints: string[]
+  sections: Section[]
+}
+
+export interface TOCEntry {
+  type: 'chapter' | 'section'
+  number: string
+  title: string
+  page?: number
+}
+
+export interface TableOfContents {
+  title: string
+  entries: TOCEntry[]
+  generatedAt: Date
+}
+
+export interface OutlineFeedback {
+  type: 'add_chapter' | 'remove_chapter' | 'modify_chapter' | 'reorder' | 'general'
+  targetChapter?: number
+  instruction: string
 }
 
 export interface Chapter {
