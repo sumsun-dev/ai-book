@@ -11,6 +11,7 @@ const agentInfo: Record<AgentType, { name: string; emoji: string; color: string 
   writer: { name: 'Writer Agent', emoji: '✍️', color: 'bg-green-100 text-green-800' },
   editor: { name: 'Editor Agent', emoji: '📝', color: 'bg-yellow-100 text-yellow-800' },
   critic: { name: 'Critic Agent', emoji: '⭐', color: 'bg-red-100 text-red-800' },
+  'editor-critic': { name: 'Editor-Critic Agent', emoji: '🔄', color: 'bg-orange-100 text-orange-800' },
 }
 
 function WritePageContent() {

@@ -72,6 +72,7 @@ export type AgentType =
   | 'writer'
   | 'editor'
   | 'critic'
+  | 'editor-critic'
 
 export interface AgentMessage {
   agent: AgentType
