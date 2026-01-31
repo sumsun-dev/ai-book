@@ -1,5 +1,5 @@
 import { prisma } from './client'
-import type { BookProject, BookOutline, Chapter, BookType, BookStatus } from '@/types/book'
+import type { BookProject, BookOutline, Chapter, BookType, BookStatus, ProjectStage } from '@/types/book'
 
 export interface CreateProjectDto {
   title: string
@@ -12,7 +12,12 @@ export interface UpdateProjectDto {
   type?: BookType
   description?: string
   status?: BookStatus
+  stage?: ProjectStage
   outline?: BookOutline | null
+  targetAudience?: string
+  targetLength?: number
+  tone?: string
+  confirmedAt?: Date
 }
 
 export interface CreateChapterDto {
@@ -29,7 +34,13 @@ function toBookProject(dbProject: {
   type: string
   description: string
   status: string
+  stage: string
   outline: string | null
+  targetAudience: string | null
+  targetLength: number | null
+  tone: string | null
+  confirmedAt: Date | null
+  userId: string | null
   createdAt: Date
   updatedAt: Date
   chapters: {
@@ -46,7 +57,13 @@ function toBookProject(dbProject: {
     type: dbProject.type as BookType,
     description: dbProject.description,
     status: dbProject.status as BookStatus,
+    stage: (dbProject.stage || 'research') as ProjectStage,
     outline: dbProject.outline ? JSON.parse(dbProject.outline) : null,
+    targetAudience: dbProject.targetAudience,
+    targetLength: dbProject.targetLength,
+    tone: dbProject.tone,
+    confirmedAt: dbProject.confirmedAt,
+    userId: dbProject.userId,
     chapters: dbProject.chapters.map((ch) => ({
       number: ch.number,
       title: ch.title,
@@ -83,6 +100,7 @@ export const projectRepository = {
         type: data.type,
         description: data.description,
         status: 'draft',
+        stage: 'research',
       },
       include: { chapters: true },
     })
@@ -97,9 +115,14 @@ export const projectRepository = {
         ...(data.type && { type: data.type }),
         ...(data.description && { description: data.description }),
         ...(data.status && { status: data.status }),
+        ...(data.stage && { stage: data.stage }),
         ...(data.outline !== undefined && {
           outline: data.outline ? JSON.stringify(data.outline) : null,
         }),
+        ...(data.targetAudience !== undefined && { targetAudience: data.targetAudience }),
+        ...(data.targetLength !== undefined && { targetLength: data.targetLength }),
+        ...(data.tone !== undefined && { tone: data.tone }),
+        ...(data.confirmedAt !== undefined && { confirmedAt: data.confirmedAt }),
       },
       include: { chapters: { orderBy: { number: 'asc' } } },
     })

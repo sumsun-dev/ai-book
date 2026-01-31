@@ -224,7 +224,7 @@ function Navigation() {
             내 프로젝트
           </Link>
           <ThemeToggle />
-          <Link href="/write" className="cta-button text-sm py-2 px-5">
+          <Link href="/new" className="cta-button text-sm py-2 px-5">
             시작하기
           </Link>
         </div>
@@ -606,7 +606,7 @@ function HeroSection() {
                 className="flex flex-col sm:flex-row gap-8 items-center justify-start"
                 variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.6 } } }}
               >
-                <Link href="/write" className="group relative px-10 py-5 bg-gold text-ink font-bold tracking-widest uppercase overflow-hidden transition-all duration-300 rounded-sm shadow-[0_10px_30px_-10px_rgba(212,175,55,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.6)] hover:-translate-y-1 active:translate-y-0 active:shadow-inner">
+                <Link href="/new" className="group relative px-10 py-5 bg-gold text-ink font-bold tracking-widest uppercase overflow-hidden transition-all duration-300 rounded-sm shadow-[0_10px_30px_-10px_rgba(212,175,55,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.6)] hover:-translate-y-1 active:translate-y-0 active:shadow-inner">
                   <span className="relative z-10">지금 바로 나만의 책 쓰기</span>
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 </Link>
@@ -885,7 +885,7 @@ function CTASection() {
           </h2>
 
           <div className="flex flex-col items-center">
-            <Link href="/write" className="group relative inline-flex items-center gap-6 px-16 py-8 bg-gold text-ink text-2xl font-bold tracking-[0.2em] uppercase overflow-hidden transition-all duration-500 hover:bg-cream">
+            <Link href="/new" className="group relative inline-flex items-center gap-6 px-16 py-8 bg-gold text-ink text-2xl font-bold tracking-[0.2em] uppercase overflow-hidden transition-all duration-500 hover:bg-cream">
               <span className="relative z-10">Start Your Journey</span>
               <div className="relative z-10 w-12 h-12 rounded-full border border-ink/20 flex items-center justify-center group-hover:translate-x-4 transition-transform duration-500">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -932,7 +932,7 @@ function Footer() {
           <div className="md:col-span-3">
             <h4 className="font-serif text-lg mb-6 text-gold">Platform</h4>
             <ul className="space-y-4 text-stone-400">
-              <li><Link href="/write" className="hover:text-white transition-colors">Start Writing</Link></li>
+              <li><Link href="/new" className="hover:text-white transition-colors">Start Writing</Link></li>
               <li><Link href="/features" className="hover:text-white transition-colors">Features</Link></li>
               <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
             </ul>

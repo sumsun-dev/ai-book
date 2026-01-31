@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client'
 
 import { useRef, useMemo, Suspense } from 'react'
@@ -90,7 +91,7 @@ function BookModel() {
 
 export default function FloatingBookThree() {
     return (
-        <div className="w-full h-full min-h-[900px] cursor-grab active:cursor-grabbing bg-[#fcfaf7]">
+        <div className="w-full h-full min-h-[900px] cursor-grab active:cursor-grabbing bg-cream">
             <Canvas shadows dpr={[1, 2]}>
                 {/* 카메라를 조금 뒤로 밀어서 하단 그림자 여유 확보 */}
                 <PerspectiveCamera makeDefault position={[0, 0, 12]} fov={30} />

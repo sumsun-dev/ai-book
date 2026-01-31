@@ -7,6 +7,16 @@ export type BookType =
   | 'children'
   | 'poetry'
 
+export type ProjectStage = 'research' | 'outline' | 'write' | 'edit' | 'review'
+
+export interface User {
+  id: string
+  email: string
+  name: string | null
+  image: string | null
+  provider: string | null
+}
+
 export interface BookProject {
   id: string
   title: string
@@ -15,6 +25,12 @@ export interface BookProject {
   outline: BookOutline | null
   chapters: Chapter[]
   status: BookStatus
+  stage: ProjectStage
+  targetAudience: string | null
+  targetLength: number | null
+  tone: string | null
+  confirmedAt: Date | null
+  userId: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -123,4 +139,98 @@ export interface CoverImage {
   template?: string
   createdAt: Date
   updatedAt: Date
+}
+
+// Research 단계 관련 타입
+export interface AIQuestion {
+  id: string
+  question: string
+  category: 'audience' | 'theme' | 'structure' | 'style' | 'content'
+  priority: number
+}
+
+export interface UserAnswer {
+  questionId: string
+  answer: string
+  timestamp: Date
+}
+
+export interface ResearchDataType {
+  id: string
+  projectId: string
+  initialIdea: string
+  aiQuestions: AIQuestion[]
+  userAnswers: UserAnswer[]
+  findings: ResearchFinding[]
+  references: Reference[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface ResearchFinding {
+  topic: string
+  insight: string
+  source: string | null
+  relevance: 'high' | 'medium' | 'low'
+}
+
+export interface Reference {
+  title: string
+  author: string | null
+  url: string | null
+  type: 'book' | 'article' | 'website' | 'other'
+  notes: string | null
+}
+
+// Edit 단계 관련 타입
+export interface EditHistoryEntry {
+  id: string
+  projectId: string
+  chapterId: string | null
+  type: 'suggestion' | 'revision' | 'approval' | 'rejection'
+  agent: AgentType
+  beforeContent: string | null
+  afterContent: string
+  feedback: string | null
+  createdAt: Date
+}
+
+export interface EditSuggestion {
+  id: string
+  chapterNumber: number
+  originalText: string
+  suggestedText: string
+  reason: string
+  type: 'grammar' | 'style' | 'clarity' | 'structure' | 'content'
+  severity: 'minor' | 'moderate' | 'major'
+  status: 'pending' | 'accepted' | 'rejected'
+}
+
+// 단계별 진행 상태
+export interface StageProgress {
+  research: {
+    ideaSubmitted: boolean
+    questionsAnswered: number
+    totalQuestions: number
+    researchComplete: boolean
+  }
+  outline: {
+    settingsComplete: boolean
+    outlineGenerated: boolean
+    outlineConfirmed: boolean
+  }
+  write: {
+    totalChapters: number
+    completedChapters: number
+    currentChapter: number | null
+  }
+  edit: {
+    totalSuggestions: number
+    reviewedSuggestions: number
+    acceptedSuggestions: number
+  }
+  review: {
+    allChaptersReviewed: boolean
+    approved: boolean
+  }
 }

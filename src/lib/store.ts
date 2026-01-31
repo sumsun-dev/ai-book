@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import { BookProject, BookStatus, BookOutline, AgentMessage, BookType, TableOfContents, OutlineFeedback } from '@/types/book'
-import { generateTableOfContents, refineOutline, addChapter, removeChapter, reorderChapters, addSection, removeSection } from '@/agents/outliner'
+import { BookProject, BookStatus, BookOutline, AgentMessage, BookType, TableOfContents, OutlineFeedback, ProjectStage } from '@/types/book'
+import { generateTableOfContents, addChapter, removeChapter, reorderChapters, addSection, removeSection } from '@/lib/outline-utils'
 
 interface BookStore {
   currentProject: BookProject | null
@@ -50,6 +50,12 @@ export const useBookStore = create<BookStore>((set, get) => ({
       outline: null,
       chapters: [],
       status: 'draft',
+      stage: 'research',
+      targetAudience: null,
+      targetLength: null,
+      tone: null,
+      confirmedAt: null,
+      userId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -186,7 +192,17 @@ export const useBookStore = create<BookStore>((set, get) => ({
 
     set({ isProcessing: true })
     try {
-      const refinedOutline = await refineOutline(currentProject.outline, feedback)
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phase: 'refine',
+          outline: currentProject.outline,
+          feedback,
+          title: currentProject.title,
+        }),
+      })
+      const { outline: refinedOutline } = await response.json()
       set({
         currentProject: {
           ...currentProject,

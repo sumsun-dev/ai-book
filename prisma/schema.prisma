@@ -7,17 +7,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String?
+  password  String?
+  image     String?
+  provider  String?   // google, kakao, credentials
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+}
+
 model Project {
-  id          String       @id @default(uuid())
-  title       String
-  type        String
-  description String
-  status      String       @default("draft")
-  outline     String?      // JSON stored as string
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  chapters    Chapter[]
-  coverImage  CoverImage?
+  id             String        @id @default(uuid())
+  title          String
+  type           String
+  description    String
+  status         String        @default("draft")
+  stage          String        @default("research") // research, outline, write, edit, review
+  outline        String?       // JSON stored as string
+  targetAudience String?
+  targetLength   Int?          // 목표 페이지 수
+  tone           String?       // 문체/어투
+  confirmedAt    DateTime?     // 목차 확정 시간
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  chapters       Chapter[]
+  coverImage     CoverImage?
+  researchData   ResearchData?
+  editHistory    EditHistory[]
+}
+
+model ResearchData {
+  id          String   @id @default(uuid())
+  projectId   String   @unique
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  initialIdea String   // 초기 아이디어
+  aiQuestions String   // JSON: AI가 생성한 질문들
+  userAnswers String   // JSON: 사용자 답변들
+  findings    String   // JSON: 리서치 결과
+  references  String   // JSON: 참고 자료
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EditHistory {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  chapterId     String?
+  type          String   // suggestion, revision, approval, rejection
+  agent         String   // editor, critic, editor-critic
+  beforeContent String?
+  afterContent  String
+  feedback      String?
+  createdAt     DateTime @default(now())
+
+  @@index([projectId])
+  @@index([chapterId])
 }
 
 model Chapter {
