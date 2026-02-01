@@ -4,15 +4,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import StageHeader from '@/components/project/StageHeader'
 import { BookOutline, Chapter } from '@/types/book'
-import {
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-  DocumentTextIcon,
-  BookOpenIcon,
-  ArrowPathIcon,
-  CheckBadgeIcon
-} from '@heroicons/react/24/outline'
-import { CheckCircleIcon as CheckCircleSolid } from '@heroicons/react/24/solid'
 
 interface ReviewState {
   outline: BookOutline | null
@@ -72,7 +63,7 @@ export default function ReviewPage() {
         }))
       }
     } catch {
-      setError('프로젝트를 불러오는데 실패했습니다.')
+      setError('Failed to load project.')
     }
   }
 
@@ -103,7 +94,7 @@ export default function ReviewPage() {
         }))
       }
     } catch {
-      setError('평가에 실패했습니다. 다시 시도해주세요.')
+      setError('Evaluation failed. Please try again.')
       setState(prev => ({ ...prev, isEvaluating: false }))
     }
   }
@@ -135,7 +126,6 @@ export default function ReviewPage() {
 
     setState(prev => ({ ...prev, reviewStatus: newStatus }))
 
-    // 모든 챕터 승인
     await Promise.all(
       Array.from(state.chapters.entries()).map(([number, chapter]) =>
         fetch(`/api/projects/${projectId}/chapters`, {
@@ -171,120 +161,142 @@ export default function ReviewPage() {
   ) || false
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-green-600'
-    if (score >= 6) return 'text-yellow-600'
-    return 'text-red-600'
+    if (score >= 8) return 'text-emerald-600 dark:text-emerald-400'
+    if (score >= 6) return 'text-amber-600 dark:text-amber-400'
+    return 'text-red-600 dark:text-red-400'
   }
 
+  const evaluationMetrics = [
+    { key: 'coherence', label: '일관성' },
+    { key: 'engagement', label: '몰입도' },
+    { key: 'clarity', label: '명확성' },
+    { key: 'originality', label: '독창성' },
+    { key: 'targetFit', label: '적합도' }
+  ]
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-700">
       <StageHeader
-        title="최종 검토"
-        description="책의 완성도를 평가하고 최종 승인합니다"
+        title="검토"
+        description="품질을 평가하고 최종 콘텐츠를 승인하세요"
         stage="review"
         onPrevious={handlePreviousStage}
-        previousLabel="편집으로"
+        previousLabel="편집"
       />
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-8 py-12">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+          <div className="mb-8 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
             {error}
           </div>
         )}
 
-        {/* 전체 평가 섹션 */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6 mb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <BookOpenIcon className="w-6 h-6 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                전체 평가
+        {/* Evaluation Section */}
+        <section className="mb-12 p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-light text-neutral-900 dark:text-white mb-1">
+                품질 평가
               </h2>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                AI로 원고를 평가합니다
+              </p>
             </div>
             <button
               onClick={handleEvaluate}
               disabled={state.isEvaluating}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+                flex items-center gap-2 px-6 py-3 text-sm font-medium tracking-wide transition-all duration-500
                 ${state.isEvaluating
-                  ? 'bg-gray-100 text-gray-400'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                  ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600'
+                  : 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
                 }
               `}
             >
               {state.isEvaluating ? (
                 <>
-                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
                   평가 중...
                 </>
               ) : (
-                <>
-                  <CheckBadgeIcon className="w-4 h-4" />
-                  AI 평가 받기
-                </>
+                '평가 실행'
               )}
             </button>
           </div>
 
           {state.evaluation && (
-            <div className="grid grid-cols-5 gap-4 mb-6">
-              {[
-                { key: 'coherence', label: '일관성' },
-                { key: 'engagement', label: '흥미도' },
-                { key: 'clarity', label: '명확성' },
-                { key: 'originality', label: '독창성' },
-                { key: 'targetFit', label: '타겟 적합도' }
-              ].map(({ key, label }) => (
-                <div key={key} className="text-center">
-                  <div className={`text-2xl font-bold ${getScoreColor(state.evaluation![key as keyof typeof state.evaluation] as number)}`}>
-                    {state.evaluation![key as keyof typeof state.evaluation]}
+            <>
+              {/* Score Grid */}
+              <div className="grid grid-cols-5 gap-6 mb-8">
+                {evaluationMetrics.map(({ key, label }) => (
+                  <div key={key} className="text-center">
+                    <div className={`text-3xl font-light mb-1 ${getScoreColor(state.evaluation![key as keyof typeof state.evaluation] as number)}`}>
+                      {state.evaluation![key as keyof typeof state.evaluation]}
+                    </div>
+                    <div className="text-xs tracking-wider uppercase text-neutral-500 dark:text-neutral-400">
+                      {label}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-500">{label}</div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {state.overallScore !== null && (
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <div>
-                <span className="text-sm text-gray-500">종합 점수</span>
-                <div className={`text-3xl font-bold ${getScoreColor(state.overallScore)}`}>
-                  {state.overallScore} / 10
-                </div>
+                ))}
               </div>
-              {state.overallScore >= 7 && (
-                <div className="flex items-center gap-2 text-green-600">
-                  <CheckCircleSolid className="w-6 h-6" />
-                  <span className="font-medium">출판 준비 완료!</span>
+
+              {/* Overall Score */}
+              {state.overallScore !== null && (
+                <div className="flex items-center justify-between p-6 bg-neutral-50 dark:bg-neutral-800">
+                  <div>
+                    <span className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+                      종합 점수
+                    </span>
+                    <div className={`text-4xl font-light ${getScoreColor(state.overallScore)}`}>
+                      {state.overallScore} <span className="text-lg text-neutral-400">/ 10</span>
+                    </div>
+                  </div>
+                  {state.overallScore >= 7 && (
+                    <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                        <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">출판 준비 완료</span>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {state.evaluation?.feedback && (
-            <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">AI 피드백</h4>
-              <p className="text-sm text-blue-700 dark:text-blue-400">
-                {state.evaluation.feedback}
+              {/* Feedback */}
+              {state.evaluation.feedback && (
+                <div className="mt-6 p-6 border-l-2 border-neutral-300 dark:border-neutral-700">
+                  <h4 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-3">
+                    AI 피드백
+                  </h4>
+                  <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                    {state.evaluation.feedback}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+
+        {/* Chapter Review Section */}
+        <section className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-xl font-light text-neutral-900 dark:text-white mb-1">
+                챕터 검토
+              </h2>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                최종 출판을 위해 각 챕터를 승인하세요
               </p>
             </div>
-          )}
-        </div>
-
-        {/* 챕터별 검토 */}
-        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              챕터별 검토
-            </h2>
             {!allApproved && (
               <button
                 onClick={handleApproveAll}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
               >
-                모두 승인
+                전체 승인
               </button>
             )}
           </div>
@@ -298,10 +310,10 @@ export default function ReviewPage() {
                 <div
                   key={chapter.number}
                   className={`
-                    p-4 rounded-lg border cursor-pointer transition-all
+                    p-5 border cursor-pointer transition-all duration-300
                     ${selectedChapter === chapter.number
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                      ? 'border-neutral-900 dark:border-white'
+                      : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
                     }
                   `}
                   onClick={() => setSelectedChapter(
@@ -309,17 +321,29 @@ export default function ReviewPage() {
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {status === 'approved' ? (
-                        <CheckCircleSolid className="w-6 h-6 text-green-600" />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full border-2 border-gray-300" />
-                      )}
+                    <div className="flex items-center gap-4">
+                      <div className={`
+                        w-8 h-8 flex items-center justify-center
+                        ${status === 'approved'
+                          ? 'bg-emerald-600 text-white'
+                          : 'border-2 border-neutral-300 dark:border-neutral-700'
+                        }
+                      `}>
+                        {status === 'approved' ? (
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <span className="text-sm text-neutral-400 dark:text-neutral-600">
+                            {chapter.number}
+                          </span>
+                        )}
+                      </div>
                       <div>
-                        <div className="font-medium text-gray-900 dark:text-white">
+                        <div className="text-neutral-900 dark:text-white">
                           {chapter.number}. {chapter.title}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
                           {chapterContent?.content?.length?.toLocaleString() || 0}자
                         </div>
                       </div>
@@ -330,7 +354,7 @@ export default function ReviewPage() {
                           e.stopPropagation()
                           handleApproveChapter(chapter.number)
                         }}
-                        className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                        className="px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium transition-all duration-300 hover:bg-neutral-700 dark:hover:bg-neutral-200"
                       >
                         승인
                       </button>
@@ -338,8 +362,8 @@ export default function ReviewPage() {
                   </div>
 
                   {selectedChapter === chapter.number && chapterContent && (
-                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded max-h-60 overflow-auto">
-                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                    <div className="mt-5 p-5 bg-neutral-50 dark:bg-neutral-800 max-h-64 overflow-auto">
+                      <p className="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-wrap leading-relaxed">
                         {chapterContent.content?.substring(0, 1000)}
                         {(chapterContent.content?.length || 0) > 1000 && '...'}
                       </p>
@@ -349,24 +373,23 @@ export default function ReviewPage() {
               )
             })}
           </div>
-        </div>
+        </section>
 
-        {/* 완료 버튼 */}
+        {/* Complete Button */}
         {allApproved && (
-          <div className="mt-6 text-center">
+          <div className="mt-12 text-center">
             <button
               onClick={handleComplete}
-              className="px-8 py-4 bg-green-600 text-white rounded-xl font-medium text-lg hover:bg-green-700 transition-colors inline-flex items-center gap-2"
+              className="px-12 py-5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium tracking-widest uppercase transition-all duration-500 hover:bg-neutral-700 dark:hover:bg-neutral-200"
             >
-              <CheckCircleIcon className="w-6 h-6" />
-              책 완성하기
+              완료 및 미리보기
             </button>
-            <p className="mt-2 text-sm text-gray-500">
-              모든 챕터가 승인되었습니다. 책을 완성하고 미리보기로 이동합니다.
+            <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+              모든 챕터가 승인되었습니다. 책을 마무리하고 미리보기를 확인하세요.
             </p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }

@@ -1,7 +1,6 @@
 'use client'
 
 import { ChapterOutline, Chapter } from '@/types/book'
-import { CheckIcon } from '@heroicons/react/24/outline'
 
 interface ChapterListProps {
   chapters: ChapterOutline[]
@@ -24,43 +23,68 @@ export default function ChapterList({
   }
 
   return (
-    <aside className="w-64 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-auto">
-      <div className="p-4">
-        <h3 className="font-medium text-gray-900 dark:text-white mb-3">
+    <aside className="w-64 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 overflow-auto transition-colors duration-500">
+      <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
+        <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
           챕터 목록
         </h3>
-        <ul className="space-y-1">
-          {chapters.map((ch) => {
-            const status = getChapterStatus(ch.number)
-            return (
-              <li key={ch.number}>
-                <button
-                  onClick={() => onChapterSelect(ch.number)}
-                  className={`
-                    w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2
-                    ${currentChapter === ch.number
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-                    }
-                  `}
-                >
+      </div>
+      <div className="py-2">
+        {chapters.map((ch) => {
+          const status = getChapterStatus(ch.number)
+          const isActive = currentChapter === ch.number
+
+          return (
+            <button
+              key={ch.number}
+              onClick={() => onChapterSelect(ch.number)}
+              className={`
+                w-full text-left px-6 py-4 transition-all duration-300 border-l-2
+                ${isActive
+                  ? 'border-neutral-900 dark:border-white bg-neutral-50 dark:bg-neutral-800'
+                  : 'border-transparent hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                }
+              `}
+            >
+              <div className="flex items-center gap-3">
+                <span className={`
+                  w-7 h-7 flex items-center justify-center text-xs font-medium transition-all duration-300
+                  ${status === 'done'
+                    ? 'bg-emerald-600 text-white'
+                    : status === 'writing'
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400'
+                  }
+                `}>
+                  {status === 'done' ? (
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    ch.number
+                  )}
+                </span>
+                <div className="flex-1 min-w-0">
                   <span className={`
-                    w-5 h-5 rounded-full flex items-center justify-center text-xs
-                    ${status === 'done'
-                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                      : status === 'writing'
-                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800'
+                    text-sm truncate block
+                    ${isActive
+                      ? 'text-neutral-900 dark:text-white'
+                      : 'text-neutral-600 dark:text-neutral-400'
                     }
                   `}>
-                    {status === 'done' ? <CheckIcon className="w-3 h-3" /> : ch.number}
+                    {ch.title}
                   </span>
-                  <span className="truncate">{ch.title}</span>
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+                  {status === 'writing' && (
+                    <span className="text-xs text-amber-600 dark:text-amber-400">작성 중</span>
+                  )}
+                  {status === 'done' && (
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400">완료</span>
+                  )}
+                </div>
+              </div>
+            </button>
+          )
+        })}
       </div>
     </aside>
   )

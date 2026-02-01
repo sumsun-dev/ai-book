@@ -7,7 +7,6 @@ import { ChapterList, ChapterEditor } from '@/components/write'
 import { PageEditor } from '@/components/page-editor'
 import { FileUploader, ChapterSplitter } from '@/components/upload'
 import { BookOutline, ChapterOutline, Chapter, ParsedFile, SplitChapter, PageGenerateMode } from '@/types/book'
-import { CheckIcon, ArrowPathIcon, DocumentArrowUpIcon, XMarkIcon, Squares2X2Icon, Bars3Icon } from '@heroicons/react/24/outline'
 
 interface WriteState {
   outline: BookOutline | null
@@ -71,7 +70,6 @@ export default function WritePage() {
         let firstChapterId: string | null = null
         project.chapters?.forEach((ch: Chapter) => {
           chaptersMap.set(ch.number, ch)
-          // 첫 번째 챕터 또는 현재 선택된 챕터의 ID 저장
           if (ch.number === 1 && ch.id) {
             firstChapterId = ch.id
           }
@@ -79,7 +77,6 @@ export default function WritePage() {
             setChapterId(ch.id)
           }
         })
-        // 현재 챕터 ID가 없으면 첫 번째 챕터 ID 사용
         if (!chapterId && firstChapterId) {
           setChapterId(firstChapterId)
         }
@@ -90,7 +87,7 @@ export default function WritePage() {
         }))
       }
     } catch {
-      setError('프로젝트를 불러오는데 실패했습니다.')
+      setError('Failed to load project.')
     }
   }
 
@@ -118,7 +115,7 @@ export default function WritePage() {
       })
       setLastSaved(new Date())
     } catch {
-      setError('챕터 저장에 실패했습니다.')
+      setError('Failed to save chapter.')
     } finally {
       setIsSaving(false)
     }
@@ -210,15 +207,13 @@ export default function WritePage() {
 
       await saveChapter(state.currentChapter, updatedChapter)
     } catch {
-      setError('AI 집필에 실패했습니다. 다시 시도해주세요.')
+      setError('AI writing failed. Please try again.')
       setState(prev => ({ ...prev, isWriting: false }))
     }
   }
 
   const handleChapterSelect = (number: number) => {
     setState(prev => ({ ...prev, currentChapter: number }))
-
-    // Map에서 직접 챕터 ID 가져오기
     const chapter = state.chapters.get(number)
     if (chapter?.id) {
       setChapterId(chapter.id)
@@ -267,7 +262,7 @@ export default function WritePage() {
 
   const handlePageAIGenerate = useCallback(async (mode: PageGenerateMode, pageNumber: number, context: string) => {
     if (!chapterId) {
-      setError('챕터 ID를 찾을 수 없습니다.')
+      setError('Chapter ID not found.')
       return
     }
 
@@ -315,7 +310,7 @@ export default function WritePage() {
       })
       router.push(`/project/${projectId}/edit`)
     } catch {
-      setError('다음 단계로 이동하는데 실패했습니다.')
+      setError('Failed to proceed to next stage.')
     }
   }
 
@@ -368,7 +363,7 @@ export default function WritePage() {
       closeImportModal()
       await loadProjectData()
     } catch {
-      setError('챕터 가져오기에 실패했습니다.')
+      setError('Failed to import chapters.')
     } finally {
       setIsImporting(false)
     }
@@ -393,74 +388,82 @@ export default function WritePage() {
   const displayContent = state.isWriting ? state.streamingContent : (currentChapter?.content || '')
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col transition-colors duration-700">
       <StageHeader
         title="집필"
-        description="각 챕터를 작성합니다"
+        description="책의 각 챕터를 작성하세요"
         stage="write"
         onPrevious={handlePreviousStage}
         onNext={allChaptersDone() ? handleNextStage : undefined}
-        nextLabel="편집으로"
-        previousLabel="목차로"
+        nextLabel="편집 및 검토"
+        previousLabel="목차"
       >
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        {/* Save Status */}
+        <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
           {isSaving ? (
             <>
-              <ArrowPathIcon className="w-4 h-4 animate-spin" />
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
               저장 중...
             </>
           ) : lastSaved ? (
             <>
-              <CheckIcon className="w-4 h-4 text-green-500" />
-              {lastSaved.toLocaleTimeString()} 저장됨
+              <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {lastSaved.toLocaleTimeString()}
             </>
           ) : null}
         </div>
 
-        <div className="flex items-center border rounded-lg overflow-hidden">
+        {/* Editor Mode Toggle */}
+        <div className="flex border border-neutral-200 dark:border-neutral-800">
           <button
             onClick={() => setEditorMode('chapter')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-sm ${
+            className={`px-4 py-2 text-xs tracking-wider uppercase transition-colors ${
               editorMode === 'chapter'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
             }`}
-            title="챕터 모드"
           >
-            <Bars3Icon className="w-4 h-4" />
             챕터
           </button>
           <button
             onClick={() => setEditorMode('page')}
-            className={`flex items-center gap-1 px-3 py-1.5 text-sm ${
+            className={`px-4 py-2 text-xs tracking-wider uppercase transition-colors ${
               editorMode === 'page'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
             }`}
-            title="페이지 모드"
           >
-            <Squares2X2Icon className="w-4 h-4" />
             페이지
           </button>
         </div>
 
+        {/* Import Button */}
         <button
           onClick={() => setShowImportModal(true)}
-          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded hover:bg-purple-200 dark:hover:bg-purple-900/50"
+          className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
         >
-          <DocumentArrowUpIcon className="w-4 h-4" />
-          파일 가져오기
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          가져오기
         </button>
+
+        {/* Save Button */}
         <button
           onClick={handleManualSave}
-          className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
         >
           저장
         </button>
       </StageHeader>
 
       {error && (
-        <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+        <div className="mx-8 mt-4 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
           {error}
         </div>
       )}
@@ -491,42 +494,65 @@ export default function WritePage() {
           </>
         ) : (
           <>
+            {/* Page Mode Chapter Sidebar */}
             {state.outline && (
-              <div className="w-48 bg-gray-50 border-r overflow-y-auto">
-                <div className="p-3 border-b bg-white">
-                  <h3 className="font-medium text-sm text-gray-700">챕터 목록</h3>
+              <aside className="w-56 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 overflow-auto">
+                <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
+                  <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+                    챕터
+                  </h3>
                 </div>
-                {state.outline.chapters.map((ch) => {
-                  const chapter = state.chapters.get(ch.number)
-                  const hasContent = chapter && chapter.content && chapter.content.length > 0
-                  const isComplete = chapter && chapter.content && chapter.content.length > 2000
+                <div className="py-2">
+                  {state.outline.chapters.map((ch) => {
+                    const chapter = state.chapters.get(ch.number)
+                    const hasContent = chapter && chapter.content && chapter.content.length > 0
+                    const isComplete = chapter && chapter.content && chapter.content.length > 2000
 
-                  return (
-                    <button
-                      key={ch.number}
-                      onClick={() => handleChapterSelect(ch.number)}
-                      className={`w-full text-left px-3 py-2 text-sm border-b transition-colors ${
-                        state.currentChapter === ch.number
-                          ? 'bg-blue-50 border-l-2 border-l-blue-500'
-                          : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                          isComplete
-                            ? 'bg-green-100 text-green-700'
-                            : hasContent
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-gray-200 text-gray-500'
-                        }`}>
-                          {ch.number}
-                        </span>
-                        <span className="truncate">{ch.title}</span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
+                    return (
+                      <button
+                        key={ch.number}
+                        onClick={() => handleChapterSelect(ch.number)}
+                        className={`
+                          w-full text-left px-4 py-3 transition-all duration-300 border-l-2
+                          ${state.currentChapter === ch.number
+                            ? 'border-neutral-900 dark:border-white bg-neutral-50 dark:bg-neutral-800'
+                            : 'border-transparent hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`
+                            w-6 h-6 flex items-center justify-center text-xs font-medium
+                            ${isComplete
+                              ? 'bg-emerald-600 text-white'
+                              : hasContent
+                                ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                                : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400'
+                            }
+                          `}>
+                            {isComplete ? (
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : (
+                              ch.number
+                            )}
+                          </span>
+                          <span className={`
+                            text-sm truncate
+                            ${state.currentChapter === ch.number
+                              ? 'text-neutral-900 dark:text-white'
+                              : 'text-neutral-600 dark:text-neutral-400'
+                            }
+                          `}>
+                            {ch.title}
+                          </span>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </aside>
             )}
 
             {chapterId && currentChapterOutline && (
@@ -543,34 +569,37 @@ export default function WritePage() {
             )}
 
             {!chapterId && (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                챕터를 선택해주세요
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-neutral-500 dark:text-neutral-400">챕터를 선택하여 시작하세요</p>
               </div>
             )}
           </>
         )}
       </div>
 
+      {/* Import Modal */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                파일에서 챕터 가져오기
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-neutral-900 w-full max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
+            <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+              <h2 className="text-xl font-light text-neutral-900 dark:text-white">
+                챕터 가져오기
               </h2>
               <button
                 onClick={closeImportModal}
-                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                className="w-10 h-10 flex items-center justify-center text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors"
               >
-                <XMarkIcon className="w-5 h-5" />
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            <div className="p-4">
+            <div className="p-6">
               {importStep === 'upload' && (
                 <>
-                  <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                    원고 파일을 업로드하면 기존 챕터를 대체하거나 추가할 수 있습니다.
+                  <p className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
+                    원고 파일을 업로드하여 챕터를 추가하거나 대체하세요.
                   </p>
                   <FileUploader
                     onFileLoaded={handleFileLoaded}

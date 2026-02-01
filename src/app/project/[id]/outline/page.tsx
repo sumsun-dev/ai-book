@@ -66,7 +66,7 @@ export default function OutlinePage() {
         }
       }
     } catch {
-      // 초기 로드 실패는 무시
+      // Initial load failure ignored
     }
   }
 
@@ -100,11 +100,11 @@ export default function OutlinePage() {
           isLoading: false
         }))
       } else {
-        setError('목차 생성에 실패했습니다.')
+        setError('Failed to generate outline.')
         setState(prev => ({ ...prev, step: 'settings', isLoading: false }))
       }
     } catch {
-      setError('목차 생성에 실패했습니다. 다시 시도해주세요.')
+      setError('Failed to generate outline. Please try again.')
       setState(prev => ({ ...prev, step: 'settings', isLoading: false }))
     }
   }
@@ -130,11 +130,11 @@ export default function OutlinePage() {
       if (res.ok) {
         setState(prev => ({ ...prev, step: 'confirm', isLoading: false }))
       } else {
-        setError('목차 저장에 실패했습니다.')
+        setError('Failed to save outline.')
         setState(prev => ({ ...prev, isLoading: false }))
       }
     } catch {
-      setError('목차 저장에 실패했습니다. 다시 시도해주세요.')
+      setError('Failed to save outline. Please try again.')
       setState(prev => ({ ...prev, isLoading: false }))
     }
   }
@@ -155,21 +155,76 @@ export default function OutlinePage() {
     router.push(`/project/${projectId}/research`)
   }
 
+  const steps = [
+    { id: 'settings', label: '설정', num: 1 },
+    { id: 'generate', label: '생성', num: 2 },
+    { id: 'edit', label: '수정', num: 3 },
+    { id: 'confirm', label: '확인', num: 4 }
+  ]
+  const currentStepIndex = steps.findIndex(s => s.id === state.step)
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-700">
       <StageHeader
-        title="목차 설계"
-        description="책의 구조를 설계하고 목차를 확정합니다"
+        title="목차"
+        description="책 구조와 목차를 디자인하세요"
         stage="outline"
         onPrevious={handlePreviousStage}
         onNext={state.step === 'confirm' ? handleNextStage : undefined}
         nextLabel="집필 시작"
-        previousLabel="리서치로"
+        previousLabel="리서치"
       />
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <main className="max-w-4xl mx-auto px-8 py-12">
+        {/* Progress Steps */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-1">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`
+                      w-10 h-10 flex items-center justify-center text-sm font-medium transition-all duration-500
+                      ${index <= currentStepIndex
+                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                        : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600'
+                      }
+                    `}
+                  >
+                    {index < currentStepIndex ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      step.num
+                    )}
+                  </div>
+                  <span className={`mt-2 text-xs tracking-wider transition-colors duration-500 ${
+                    index <= currentStepIndex
+                      ? 'text-neutral-900 dark:text-white'
+                      : 'text-neutral-400 dark:text-neutral-600'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className="flex-1 mx-4">
+                    <div
+                      className={`h-px transition-colors duration-500 ${
+                        index < currentStepIndex
+                          ? 'bg-neutral-900 dark:bg-white'
+                          : 'bg-neutral-200 dark:bg-neutral-800'
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+          <div className="mb-8 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
             {error}
           </div>
         )}
@@ -197,7 +252,7 @@ export default function OutlinePage() {
         {state.step === 'confirm' && state.outline && (
           <ConfirmStep outline={state.outline} />
         )}
-      </div>
+      </main>
     </div>
   )
 }

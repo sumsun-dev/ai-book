@@ -1,7 +1,7 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { ProjectStage } from '@/types/book'
-import { ArrowRightIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
 
 interface StageHeaderProps {
   title: string
@@ -15,54 +15,124 @@ interface StageHeaderProps {
   children?: React.ReactNode
 }
 
+const stageOrder: ProjectStage[] = ['research', 'outline', 'write', 'edit', 'review']
+const stageLabels: Record<ProjectStage, string> = {
+  research: '리서치',
+  outline: '목차',
+  write: '집필',
+  edit: '편집',
+  review: '검토'
+}
+
 export default function StageHeader({
   title,
   description,
   stage,
   onPrevious,
   onNext,
-  nextLabel = '다음 단계',
-  previousLabel = '이전 단계',
+  nextLabel = '다음',
+  previousLabel = '이전',
   nextDisabled = false,
   children
 }: StageHeaderProps) {
+  const router = useRouter()
+  const currentIndex = stageOrder.indexOf(stage)
+
   return (
-    <header className="sticky top-0 z-10 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{title}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{description}</p>
+    <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-neutral-950/80 border-b border-neutral-200/50 dark:border-neutral-800/50">
+      <div className="max-w-7xl mx-auto">
+        {/* Progress Bar */}
+        <div className="px-8 pt-4 pb-2">
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => router.push('/projects')}
+              className="group flex items-center gap-2 text-sm text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors duration-300"
+            >
+              <svg className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+              프로젝트
+            </button>
+
+            {/* Stage Progress */}
+            <div className="flex items-center gap-1">
+              {stageOrder.map((s, i) => (
+                <div key={s} className="flex items-center">
+                  <div
+                    className={`
+                      px-3 py-1 text-xs font-medium tracking-wider transition-all duration-500
+                      ${i === currentIndex
+                        ? 'text-neutral-900 dark:text-white'
+                        : i < currentIndex
+                          ? 'text-neutral-400 dark:text-neutral-500'
+                          : 'text-neutral-300 dark:text-neutral-700'
+                      }
+                    `}
+                  >
+                    {stageLabels[s]}
+                  </div>
+                  {i < stageOrder.length - 1 && (
+                    <div
+                      className={`
+                        w-8 h-px transition-colors duration-500
+                        ${i < currentIndex
+                          ? 'bg-neutral-400 dark:bg-neutral-500'
+                          : 'bg-neutral-200 dark:bg-neutral-800'
+                        }
+                      `}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {children}
+        {/* Main Header */}
+        <div className="px-8 py-6 flex items-end justify-between">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-extralight tracking-tight text-neutral-900 dark:text-white mb-1">
+              {title}
+            </h1>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400 font-light">
+              {description}
+            </p>
+          </div>
 
-          {onPrevious && (
-            <button
-              onClick={onPrevious}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-            >
-              <ArrowLeftIcon className="w-4 h-4" />
-              {previousLabel}
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {children}
 
-          {onNext && (
-            <button
-              onClick={onNext}
-              disabled={nextDisabled}
-              className={`
-                flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                ${nextDisabled
-                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-                }
-              `}
-            >
-              {nextLabel}
-              <ArrowRightIcon className="w-4 h-4" />
-            </button>
-          )}
+            {onPrevious && (
+              <button
+                onClick={onPrevious}
+                className="group flex items-center gap-2 px-5 py-2.5 text-sm font-medium tracking-wide text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors duration-300"
+              >
+                <svg className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                {previousLabel}
+              </button>
+            )}
+
+            {onNext && (
+              <button
+                onClick={onNext}
+                disabled={nextDisabled}
+                className={`
+                  group flex items-center gap-2 px-5 py-2.5 text-sm font-medium tracking-wide transition-all duration-500
+                  ${nextDisabled
+                    ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
+                    : 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
+                  }
+                `}
+              >
+                {nextLabel}
+                <svg className={`w-4 h-4 transition-transform duration-300 ${!nextDisabled ? 'group-hover:translate-x-1' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </header>

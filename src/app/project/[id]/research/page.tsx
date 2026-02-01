@@ -3,13 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import StageHeader from '@/components/project/StageHeader'
-import { AIQuestion, UserAnswer, BookType } from '@/types/book'
-import {
-  SparklesIcon,
-  ChatBubbleLeftRightIcon,
-  CheckIcon,
-  ArrowPathIcon
-} from '@heroicons/react/24/outline'
+import { AIQuestion, UserAnswer } from '@/types/book'
 
 interface ResearchState {
   step: 'idea' | 'questions' | 'planning' | 'complete'
@@ -36,7 +30,6 @@ export default function ResearchPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
-  // 프로젝트 정보 및 기존 리서치 데이터 로드
   useEffect(() => {
     loadExistingData()
   }, [projectId])
@@ -58,7 +51,7 @@ export default function ResearchPage() {
         }
       }
     } catch {
-      // 초기 로드 실패는 무시 (새 프로젝트일 수 있음)
+      // Initial load failure ignored
     }
   }
 
@@ -82,10 +75,10 @@ export default function ResearchPage() {
           aiQuestions: data.questions
         }))
       } else {
-        setError('질문 생성에 실패했습니다. 다시 시도해주세요.')
+        setError('Failed to generate questions. Please try again.')
       }
     } catch {
-      setError('질문 생성에 실패했습니다. 다시 시도해주세요.')
+      setError('Failed to generate questions. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -104,7 +97,6 @@ export default function ResearchPage() {
     setState(prev => ({ ...prev, userAnswers: newAnswers }))
     setCurrentAnswer('')
 
-    // 모든 질문에 답변 완료
     if (currentQuestionIndex === state.aiQuestions.length - 1) {
       await generatePlan(newAnswers)
     } else {
@@ -136,11 +128,11 @@ export default function ResearchPage() {
           researchSummary: data.summary
         }))
       } else {
-        setError('계획 수립에 실패했습니다.')
+        setError('Failed to create plan.')
         setState(prev => ({ ...prev, step: 'questions' }))
       }
     } catch {
-      setError('계획 수립에 실패했습니다. 다시 시도해주세요.')
+      setError('Failed to create plan. Please try again.')
       setState(prev => ({ ...prev, step: 'questions' }))
     } finally {
       setIsLoading(false)
@@ -156,227 +148,247 @@ export default function ResearchPage() {
       })
       router.push(`/project/${projectId}/outline`)
     } catch {
-      setError('다음 단계로 이동하는데 실패했습니다.')
+      setError('Failed to proceed to next stage.')
     }
   }
 
-  const renderStepIndicator = () => {
-    const steps = [
-      { id: 'idea', label: '아이디어' },
-      { id: 'questions', label: 'AI 질문' },
-      { id: 'planning', label: '계획 수립' },
-      { id: 'complete', label: '완료' }
-    ]
-
-    const currentStepIndex = steps.findIndex(s => s.id === state.step)
-
-    return (
-      <div className="flex items-center justify-center mb-8">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
-            <div className={`
-              w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-              ${index <= currentStepIndex
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
-              }
-            `}>
-              {index < currentStepIndex ? (
-                <CheckIcon className="w-5 h-5" />
-              ) : (
-                index + 1
-              )}
-            </div>
-            {index < steps.length - 1 && (
-              <div className={`
-                w-12 h-0.5 mx-2
-                ${index < currentStepIndex
-                  ? 'bg-blue-600'
-                  : 'bg-gray-200 dark:bg-gray-700'
-                }
-              `} />
-            )}
-          </div>
-        ))}
-      </div>
-    )
-  }
+  const steps = [
+    { id: 'idea', label: '아이디어', num: 1 },
+    { id: 'questions', label: '탐색', num: 2 },
+    { id: 'planning', label: '기획', num: 3 },
+    { id: 'complete', label: '완료', num: 4 }
+  ]
+  const currentStepIndex = steps.findIndex(s => s.id === state.step)
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-700">
       <StageHeader
         title="리서치"
-        description="책의 아이디어를 구체화하고 방향을 설정합니다"
+        description="책의 컨셉과 방향을 정의하세요"
         stage="research"
         onNext={state.step === 'complete' ? handleNextStage : undefined}
-        nextLabel="목차 설계로"
+        nextLabel="목차로 이동"
         nextDisabled={state.step !== 'complete'}
       />
 
-      <div className="max-w-3xl mx-auto px-6 py-8">
-        {renderStepIndicator()}
+      <main className="max-w-3xl mx-auto px-8 py-12">
+        {/* Progress Steps */}
+        <div className="mb-16">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center flex-1">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`
+                      w-10 h-10 flex items-center justify-center text-sm font-medium transition-all duration-500
+                      ${index <= currentStepIndex
+                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                        : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600'
+                      }
+                    `}
+                  >
+                    {index < currentStepIndex ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      step.num
+                    )}
+                  </div>
+                  <span className={`mt-2 text-xs tracking-wider transition-colors duration-500 ${
+                    index <= currentStepIndex
+                      ? 'text-neutral-900 dark:text-white'
+                      : 'text-neutral-400 dark:text-neutral-600'
+                  }`}>
+                    {step.label}
+                  </span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className="flex-1 mx-4">
+                    <div
+                      className={`h-px transition-colors duration-500 ${
+                        index < currentStepIndex
+                          ? 'bg-neutral-900 dark:bg-white'
+                          : 'bg-neutral-200 dark:bg-neutral-800'
+                      }`}
+                    />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+          <div className="mb-8 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
             {error}
           </div>
         )}
 
-        {/* Step 1: 아이디어 입력 */}
+        {/* Step 1: Idea Input */}
         {state.step === 'idea' && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <SparklesIcon className="w-6 h-6 text-blue-600" />
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                어떤 책을 쓰고 싶으신가요?
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-2xl font-light text-neutral-900 dark:text-white mb-2 tracking-tight">
+                어떤 이야기를 전하고 싶으신가요?
               </h2>
+              <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+                초기 아이디어를 공유해주세요. AI가 질문을 통해 아이디어를 다듬어 드립니다.
+              </p>
             </div>
 
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              간단한 아이디어나 주제부터 시작해보세요. AI가 더 구체적인 질문을 통해 아이디어를 발전시켜 드립니다.
-            </p>
-
-            <textarea
-              value={state.initialIdea}
-              onChange={(e) => setState(prev => ({ ...prev, initialIdea: e.target.value }))}
-              placeholder="예: 30대 직장인을 위한 재테크 입문서를 쓰고 싶어요. 주식, 부동산, 가상화폐 등 다양한 투자 방법을 쉽게 설명하고 싶습니다."
-              className="w-full h-40 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
+            <div>
+              <textarea
+                value={state.initialIdea}
+                onChange={(e) => setState(prev => ({ ...prev, initialIdea: e.target.value }))}
+                placeholder="책 아이디어, 주제 또는 컨셉을 설명해주세요..."
+                className="w-full h-48 p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors duration-300 resize-none text-lg font-light"
+              />
+            </div>
 
             <button
               onClick={handleIdeaSubmit}
               disabled={!state.initialIdea.trim() || isLoading}
               className={`
-                mt-4 w-full py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2
+                w-full py-5 text-sm font-medium tracking-widest uppercase transition-all duration-500 flex items-center justify-center gap-3
                 ${state.initialIdea.trim() && !isLoading
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                  ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
+                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
                 }
               `}
             >
               {isLoading ? (
                 <>
-                  <ArrowPathIcon className="w-5 h-5 animate-spin" />
-                  AI가 질문을 준비하고 있어요...
+                  <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  질문 준비 중...
                 </>
               ) : (
-                <>
-                  <SparklesIcon className="w-5 h-5" />
-                  아이디어 발전시키기
-                </>
+                '아이디어 발전시키기'
               )}
             </button>
           </div>
         )}
 
-        {/* Step 2: AI 질문 답변 */}
+        {/* Step 2: AI Questions */}
         {state.step === 'questions' && state.aiQuestions.length > 0 && (
-          <div className="space-y-6">
-            {/* 이전 답변들 */}
-            {state.userAnswers.map((answer, index) => (
-              <div key={answer.questionId} className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 border border-gray-200 dark:border-gray-800">
-                <div className="flex items-start gap-3 mb-2">
-                  <ChatBubbleLeftRightIcon className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+          <div className="space-y-8">
+            {/* Previous Answers */}
+            {state.userAnswers.length > 0 && (
+              <div className="space-y-4 mb-12">
+                {state.userAnswers.map((answer, index) => (
+                  <div key={answer.questionId} className="p-6 bg-neutral-100 dark:bg-neutral-900 border-l-2 border-neutral-300 dark:border-neutral-700">
+                    <p className="text-xs tracking-wider uppercase text-neutral-400 dark:text-neutral-500 mb-2">
+                      질문 {index + 1}
+                    </p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">
                       {state.aiQuestions[index].question}
                     </p>
-                    <p className="mt-2 text-gray-900 dark:text-white">
+                    <p className="text-neutral-900 dark:text-white">
                       {answer.answer}
                     </p>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
+            )}
 
-            {/* 현재 질문 */}
+            {/* Current Question */}
             {currentQuestionIndex < state.aiQuestions.length && (
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
                     질문 {currentQuestionIndex + 1} / {state.aiQuestions.length}
                   </span>
-                  <span className="text-xs text-gray-400 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
+                  <span className="px-3 py-1 bg-neutral-100 dark:bg-neutral-800 text-xs text-neutral-500 dark:text-neutral-400">
                     {state.aiQuestions[currentQuestionIndex].category}
                   </span>
                 </div>
 
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                <h3 className="text-2xl font-light text-neutral-900 dark:text-white leading-relaxed">
                   {state.aiQuestions[currentQuestionIndex].question}
                 </h3>
 
                 <textarea
                   value={currentAnswer}
                   onChange={(e) => setCurrentAnswer(e.target.value)}
-                  placeholder="답변을 입력해주세요..."
-                  className="w-full h-32 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  placeholder="답변을 입력하세요..."
+                  className="w-full h-36 p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors duration-300 resize-none"
                 />
 
                 <button
                   onClick={handleAnswerSubmit}
                   disabled={!currentAnswer.trim()}
                   className={`
-                    mt-4 w-full py-3 rounded-lg font-medium transition-colors
+                    w-full py-5 text-sm font-medium tracking-widest uppercase transition-all duration-500
                     ${currentAnswer.trim()
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                      ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
                     }
                   `}
                 >
-                  {currentQuestionIndex === state.aiQuestions.length - 1 ? '계획 수립하기' : '다음 질문'}
+                  {currentQuestionIndex === state.aiQuestions.length - 1 ? '완료 및 계획 생성' : '다음 질문'}
                 </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Step 3: 계획 수립 중 */}
+        {/* Step 3: Planning */}
         {state.step === 'planning' && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-8 text-center">
-            <ArrowPathIcon className="w-12 h-12 text-blue-600 mx-auto mb-4 animate-spin" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              책 계획을 수립하고 있어요
+          <div className="py-24 text-center">
+            <div className="w-16 h-16 mx-auto mb-8 relative">
+              <div className="absolute inset-0 border-2 border-neutral-200 dark:border-neutral-800 animate-ping" />
+              <div className="absolute inset-0 border-2 border-neutral-900 dark:border-white" />
+            </div>
+            <h3 className="text-2xl font-light text-neutral-900 dark:text-white mb-3">
+              책 계획을 작성 중입니다
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              답변을 분석하여 최적의 책 구조와 방향을 설계하고 있습니다...
+            <p className="text-neutral-500 dark:text-neutral-400">
+              최적의 구조를 위해 응답을 분석 중입니다...
             </p>
           </div>
         )}
 
-        {/* Step 4: 완료 */}
+        {/* Step 4: Complete */}
         {state.step === 'complete' && state.researchSummary && (
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <CheckIcon className="w-6 h-6 text-green-600" />
+          <div className="space-y-8">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 bg-neutral-900 dark:bg-white flex items-center justify-center">
+                <svg className="w-6 h-6 text-white dark:text-neutral-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  리서치 완료!
+                <h2 className="text-2xl font-light text-neutral-900 dark:text-white">
+                  리서치 완료
                 </h2>
-                <p className="text-sm text-gray-500">
-                  아이디어가 구체화되었습니다
+                <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+                  책 컨셉이 개발되었습니다
                 </p>
               </div>
             </div>
 
-            <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <h3 className="font-medium text-gray-900 dark:text-white mb-3">
+            <div className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+              <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-6">
                 책 계획 요약
               </h3>
-              <div className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="prose prose-neutral dark:prose-invert max-w-none">
                 {state.researchSummary.split('\n').map((line, i) => (
-                  <p key={i} className="text-gray-600 dark:text-gray-300">{line}</p>
+                  <p key={i} className="text-neutral-700 dark:text-neutral-300 leading-relaxed mb-4 last:mb-0">
+                    {line}
+                  </p>
                 ))}
               </div>
             </div>
 
-            <p className="mt-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-              이제 목차를 설계할 준비가 되었습니다. 다음 단계로 진행해주세요.
+            <p className="text-center text-neutral-500 dark:text-neutral-400 text-sm pt-8">
+              목차를 디자인할 준비가 되었습니다. 다음 단계로 진행하세요.
             </p>
           </div>
         )}
-      </div>
+      </main>
     </div>
   )
 }

@@ -4,16 +4,6 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import StageHeader from '@/components/project/StageHeader'
 import { BookOutline, Chapter, EditSuggestion } from '@/types/book'
-import {
-  PencilSquareIcon,
-  CheckIcon,
-  XMarkIcon,
-  ArrowPathIcon,
-  SparklesIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ExclamationTriangleIcon
-} from '@heroicons/react/24/outline'
 
 interface EditState {
   outline: BookOutline | null
@@ -68,7 +58,7 @@ export default function EditPage() {
         }))
       }
     } catch {
-      setError('프로젝트를 불러오는데 실패했습니다.')
+      setError('Failed to load project.')
     }
   }
 
@@ -101,13 +91,12 @@ export default function EditPage() {
         }))
       }
     } catch {
-      setError('분석에 실패했습니다. 다시 시도해주세요.')
+      setError('Analysis failed. Please try again.')
       setState(prev => ({ ...prev, isAnalyzing: false }))
     }
   }
 
   const handleAcceptSuggestion = async (suggestion: EditSuggestion) => {
-    // 제안 적용
     const newContent = state.editedContent.replace(
       suggestion.originalText,
       suggestion.suggestedText
@@ -121,7 +110,6 @@ export default function EditPage() {
       )
     }))
 
-    // 히스토리 저장
     await fetch(`/api/projects/${projectId}/edit/history`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -157,7 +145,6 @@ export default function EditPage() {
       })
     })
 
-    // 상태 업데이트
     setState(prev => {
       const newChapters = new Map(prev.chapters)
       const currentChapter = newChapters.get(state.currentChapter)
@@ -197,68 +184,100 @@ export default function EditPage() {
   }
 
   const pendingSuggestions = state.suggestions.filter(s => s.status === 'pending')
-  const getSeverityColor = (severity: EditSuggestion['severity']) => {
+
+  const getSeverityStyles = (severity: EditSuggestion['severity']) => {
     switch (severity) {
-      case 'major': return 'text-red-600 bg-red-50 dark:bg-red-900/20'
-      case 'moderate': return 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
-      case 'minor': return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20'
+      case 'major': return 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-900/50'
+      case 'moderate': return 'bg-amber-50 dark:bg-amber-950/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-900/50'
+      case 'minor': return 'bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-900/50'
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col transition-colors duration-700">
       <StageHeader
         title="편집"
-        description="AI가 문법, 스타일, 내용을 검토하고 개선 제안을 합니다"
+        description="AI가 문법, 스타일, 내용을 검토합니다"
         stage="edit"
         onPrevious={handlePreviousStage}
         onNext={handleNextStage}
-        nextLabel="최종 검토로"
-        previousLabel="집필로"
+        nextLabel="최종 검토"
+        previousLabel="집필"
       />
 
       {error && (
-        <div className="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-600 dark:text-red-400">
+        <div className="mx-8 mt-4 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
           {error}
         </div>
       )}
 
-      <div className="flex-1 flex">
-        {/* 챕터 목록 */}
-        <aside className="w-56 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 overflow-auto">
-          <div className="p-4">
-            <h3 className="font-medium text-gray-900 dark:text-white mb-3">챕터</h3>
-            <ul className="space-y-1">
-              {state.outline?.chapters.map((ch) => (
-                <li key={ch.number}>
-                  <button
-                    onClick={() => handleChapterChange(ch.number)}
-                    className={`
-                      w-full text-left px-3 py-2 rounded-lg text-sm
-                      ${state.currentChapter === ch.number
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700'
-                        : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chapter Sidebar */}
+        <aside className="w-64 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 overflow-auto">
+          <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
+            <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+              챕터
+            </h3>
+          </div>
+          <div className="py-2">
+            {state.outline?.chapters.map((ch) => {
+              const chapter = state.chapters.get(ch.number)
+              const hasContent = chapter?.content && chapter.content.length > 0
+
+              return (
+                <button
+                  key={ch.number}
+                  onClick={() => handleChapterChange(ch.number)}
+                  className={`
+                    w-full text-left px-6 py-4 transition-all duration-300 border-l-2
+                    ${state.currentChapter === ch.number
+                      ? 'border-neutral-900 dark:border-white bg-neutral-50 dark:bg-neutral-800'
+                      : 'border-transparent hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <span className={`
+                      w-6 h-6 flex items-center justify-center text-xs font-medium
+                      ${hasContent
+                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
+                        : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400'
                       }
-                    `}
-                  >
-                    {ch.number}. {ch.title}
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    `}>
+                      {ch.number}
+                    </span>
+                    <span className={`
+                      text-sm truncate
+                      ${state.currentChapter === ch.number
+                        ? 'text-neutral-900 dark:text-white'
+                        : 'text-neutral-600 dark:text-neutral-400'
+                      }
+                    `}>
+                      {ch.title}
+                    </span>
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </aside>
 
-        {/* 에디터 영역 */}
-        <main className="flex-1 flex flex-col">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {state.currentChapter}. {state.outline?.chapters.find(c => c.number === state.currentChapter)?.title}
-            </h2>
-            <div className="flex items-center gap-2">
+        {/* Editor Area */}
+        <main className="flex-1 flex flex-col bg-neutral-50 dark:bg-neutral-950">
+          {/* Toolbar */}
+          <div className="px-8 py-4 bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-light text-neutral-900 dark:text-white">
+                {state.currentChapter}. {state.outline?.chapters.find(c => c.number === state.currentChapter)?.title}
+              </h2>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                {state.editedContent.length.toLocaleString()}자
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleSaveChapter}
-                className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-800 rounded hover:bg-gray-200"
+                className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
               >
                 저장
               </button>
@@ -266,21 +285,26 @@ export default function EditPage() {
                 onClick={handleAnalyze}
                 disabled={state.isAnalyzing}
                 className={`
-                  flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors
+                  flex items-center gap-2 px-5 py-2.5 text-sm font-medium tracking-wide transition-all duration-500
                   ${state.isAnalyzing
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400'
-                    : 'bg-purple-600 text-white hover:bg-purple-700'
+                    ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600'
+                    : 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
                   }
                 `}
               >
                 {state.isAnalyzing ? (
                   <>
-                    <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
                     분석 중...
                   </>
                 ) : (
                   <>
-                    <SparklesIcon className="w-4 h-4" />
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
                     AI 분석
                   </>
                 )}
@@ -288,72 +312,74 @@ export default function EditPage() {
             </div>
           </div>
 
-          <div className="flex-1 flex">
-            {/* 텍스트 에디터 */}
-            <div className="flex-1 p-6">
+          <div className="flex-1 flex overflow-hidden">
+            {/* Text Editor */}
+            <div className="flex-1 p-8">
               <textarea
                 value={state.editedContent}
                 onChange={(e) => setState(prev => ({ ...prev, editedContent: e.target.value }))}
-                className="w-full h-full p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white resize-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-                style={{ minHeight: '400px' }}
+                className="w-full h-full p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-400 dark:focus:border-neutral-600 transition-colors resize-none font-light leading-relaxed"
+                style={{ minHeight: '500px' }}
               />
             </div>
 
-            {/* 제안 패널 */}
+            {/* Suggestions Panel */}
             {state.suggestions.length > 0 && (
-              <aside className="w-80 border-l border-gray-200 dark:border-gray-800 overflow-auto">
-                <div className="p-4">
-                  <h3 className="font-medium text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                    <PencilSquareIcon className="w-5 h-5" />
-                    편집 제안 ({pendingSuggestions.length})
+              <aside className="w-96 bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 overflow-auto">
+                <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
+                  <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+                    제안 ({pendingSuggestions.length})
                   </h3>
-                  <div className="space-y-3">
-                    {state.suggestions.map((suggestion) => (
-                      <div
-                        key={suggestion.id}
-                        className={`
-                          p-3 rounded-lg border
-                          ${suggestion.status === 'accepted'
-                            ? 'border-green-200 bg-green-50 dark:bg-green-900/20 opacity-60'
-                            : suggestion.status === 'rejected'
-                              ? 'border-gray-200 bg-gray-50 dark:bg-gray-800 opacity-60'
-                              : 'border-gray-200 dark:border-gray-700'
-                          }
-                        `}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={`text-xs px-2 py-0.5 rounded ${getSeverityColor(suggestion.severity)}`}>
-                            {suggestion.type}
-                          </span>
-                          {suggestion.status === 'pending' && (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleAcceptSuggestion(suggestion)}
-                                className="p-1 text-green-600 hover:bg-green-100 rounded"
-                              >
-                                <CheckIcon className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => handleRejectSuggestion(suggestion.id)}
-                                className="p-1 text-red-600 hover:bg-red-100 rounded"
-                              >
-                                <XMarkIcon className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 line-through mb-1">
-                          {suggestion.originalText.substring(0, 50)}...
-                        </p>
-                        <p className="text-sm text-gray-900 dark:text-white mb-2">
-                          {suggestion.suggestedText.substring(0, 50)}...
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {suggestion.reason}
-                        </p>
+                </div>
+                <div className="p-4 space-y-4">
+                  {state.suggestions.map((suggestion) => (
+                    <div
+                      key={suggestion.id}
+                      className={`
+                        p-5 border transition-all duration-300
+                        ${suggestion.status !== 'pending'
+                          ? 'opacity-50'
+                          : ''
+                        }
+                        ${getSeverityStyles(suggestion.severity)}
+                      `}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-medium uppercase tracking-wider">
+                          {suggestion.type}
+                        </span>
+                        {suggestion.status === 'pending' && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleAcceptSuggestion(suggestion)}
+                              className="w-8 h-8 flex items-center justify-center text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => handleRejectSuggestion(suggestion.id)}
+                              className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                            >
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 line-through mb-2">
+                        {suggestion.originalText.substring(0, 60)}...
+                      </p>
+                      <p className="text-sm text-neutral-900 dark:text-white mb-3">
+                        {suggestion.suggestedText.substring(0, 60)}...
+                      </p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {suggestion.reason}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               </aside>
             )}
