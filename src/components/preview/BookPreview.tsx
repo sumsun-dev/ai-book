@@ -68,31 +68,6 @@ export function BookPreview({
     }
   }
 
-  const handleExportMOBI = async () => {
-    setIsExporting(true)
-    setShowExportMenu(false)
-    try {
-      const response = await fetch(`/api/projects/${project.id}/export/mobi`, {
-        method: 'POST',
-      })
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || 'MOBI 생성 실패')
-      }
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${project.title}.mobi`
-      link.click()
-      URL.revokeObjectURL(url)
-    } catch (error) {
-      alert(error instanceof Error ? error.message : 'MOBI 다운로드에 실패했습니다.')
-    } finally {
-      setIsExporting(false)
-    }
-  }
-
   const handleExportPrintCover = async () => {
     setIsExporting(true)
     setShowExportMenu(false)
@@ -264,14 +239,7 @@ export function BookPreview({
                     className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 flex items-center gap-3"
                   >
                     <span className="text-green-400 font-medium">EPUB</span>
-                    <span className="text-gray-400 text-sm">전자책</span>
-                  </button>
-                  <button
-                    onClick={handleExportMOBI}
-                    className="w-full px-4 py-3 text-left text-white hover:bg-gray-700 flex items-center gap-3"
-                  >
-                    <span className="text-orange-400 font-medium">MOBI</span>
-                    <span className="text-gray-400 text-sm">Kindle</span>
+                    <span className="text-gray-400 text-sm">전자책 / Kindle</span>
                   </button>
                   <div className="border-t border-gray-700" />
                   <button
