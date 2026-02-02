@@ -7,7 +7,7 @@ const ALLOWED_MIME_TYPES: Record<string, string> = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
   'application/pdf': 'pdf',
 }
-const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
 
 function sanitizeFileName(fileName: string): string {
   const baseName = fileName.split(/[/\\]/).pop() || 'file'
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { success: false, error: '파일 크기가 10MB를 초과합니다.' },
+        { success: false, error: '파일 크기가 50MB를 초과합니다.' },
         { status: 400 }
       )
     }

@@ -2,6 +2,9 @@
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@anthropic-ai/sdk'],
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
   },
 }
 
