@@ -260,10 +260,10 @@ export default function WritePage() {
     await saveChapter(state.currentChapter, updatedChapter)
   }, [state.currentChapter, projectId])
 
-  const handlePageAIGenerate = useCallback(async (mode: PageGenerateMode, pageNumber: number, context: string) => {
+  const handlePageAIGenerate = useCallback(async (mode: PageGenerateMode, pageNumber: number, context: string): Promise<string> => {
     if (!chapterId) {
       setError('Chapter ID not found.')
-      return
+      throw new Error('Chapter ID not found')
     }
 
     const currentChapter = getCurrentChapter()
@@ -298,7 +298,11 @@ export default function WritePage() {
       fullContent += chunk
     }
 
+    // 챕터 내용 저장
     await handlePageSave(fullContent)
+
+    // 생성된 내용 반환 (PageEditor에서 내부 상태 업데이트용)
+    return fullContent
   }, [chapterId, projectId, handlePageSave])
 
   const handleNextStage = async () => {
@@ -388,7 +392,7 @@ export default function WritePage() {
   const displayContent = state.isWriting ? state.streamingContent : (currentChapter?.content || '')
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col transition-colors duration-700">
+    <div className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden transition-colors duration-700">
       <StageHeader
         title="집필"
         description="책의 각 챕터를 작성하세요"
@@ -463,12 +467,12 @@ export default function WritePage() {
       </StageHeader>
 
       {error && (
-        <div className="mx-8 mt-4 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm">
+        <div className="mx-8 mt-4 p-5 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-400 text-sm shrink-0">
           {error}
         </div>
       )}
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {editorMode === 'chapter' ? (
           <>
             {state.outline && (

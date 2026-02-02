@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, ReactElement } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { BookType } from '@/types/book'
@@ -17,7 +17,7 @@ const bookTypes: { type: BookType; name: string; description: string }[] = [
 
 // Award-winning minimal book cover designs
 const BookCover = ({ type, isHovered }: { type: BookType; isHovered: boolean }) => {
-  const covers: Record<BookType, JSX.Element> = {
+  const covers: Record<BookType, ReactElement> = {
     // Fiction - Bold abstract with negative space
     fiction: (
       <svg viewBox="0 0 120 160" className="w-full h-full">
