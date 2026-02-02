@@ -34,12 +34,15 @@ export default function PageThumbnails({
   )
 
   return (
-    <div className="w-36 bg-neutral-100 dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 overflow-y-auto p-3 flex flex-col gap-3 transition-colors duration-500">
-      <div className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 px-1 py-2">
+    <div className="w-36 h-full bg-neutral-100 dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col transition-colors duration-500">
+      {/* 고정 헤더 */}
+      <div className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 px-4 py-3 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
         페이지 ({pages.length})
       </div>
 
-      {sortedPages.map((page) => {
+      {/* 스크롤 가능한 썸네일 목록 */}
+      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3 min-h-0">
+        {sortedPages.map((page) => {
         const isActive = page.pageNumber === currentPage
         const preview = page.content.substring(0, 50).replace(/\n/g, ' ') || '빈 페이지'
 
@@ -88,15 +91,16 @@ export default function PageThumbnails({
         )
       })}
 
-      {/* 새 페이지 추가 */}
-      <button
-        onClick={() => onPageSelect(pages.length + 1)}
-        className="w-full aspect-[3/4] border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center text-neutral-400 dark:text-neutral-500 hover:border-neutral-400 dark:hover:border-neutral-500 hover:text-neutral-500 dark:hover:text-neutral-400 transition-all duration-300"
-      >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-        </svg>
-      </button>
+        {/* 새 페이지 추가 */}
+        <button
+          onClick={() => onPageSelect(pages.length + 1)}
+          className="w-full aspect-[3/4] border-2 border-dashed border-neutral-300 dark:border-neutral-700 flex items-center justify-center text-neutral-400 dark:text-neutral-500 hover:border-neutral-400 dark:hover:border-neutral-500 hover:text-neutral-500 dark:hover:text-neutral-400 transition-all duration-300 shrink-0"
+        >
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
     </div>
   )
 }

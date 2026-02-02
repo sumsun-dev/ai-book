@@ -13,6 +13,7 @@ interface PageCanvasProps {
   onPageChange: (pageNumber: number) => void
   onContentChange: (pageNumber: number, content: string) => void
   onGenerate: (mode: PageGenerateMode) => void
+  onDeletePage: (pageNumber: number) => void
   isGenerating: boolean
   streamingContent?: string
   zoom: number
@@ -27,6 +28,7 @@ export default function PageCanvas({
   onPageChange,
   onContentChange,
   onGenerate,
+  onDeletePage,
   isGenerating,
   streamingContent,
   zoom,
@@ -73,12 +75,12 @@ export default function PageCanvas({
       return (
         <div
           style={pageStyle}
-          className="bg-white shadow-2xl border border-gray-300 flex flex-col"
+          className="bg-white dark:bg-neutral-800 shadow-2xl border border-neutral-300 dark:border-neutral-600 flex flex-col"
         >
           <div className="flex-1 flex items-center justify-center">
             <button
               onClick={() => onPageChange(pageNumber)}
-              className="text-gray-400 hover:text-blue-500 transition-colors"
+              className="text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
             >
               <div className="text-center">
                 <span className="text-4xl block mb-2">+</span>
@@ -96,20 +98,38 @@ export default function PageCanvas({
     return (
       <div
         style={pageStyle}
-        className="bg-white shadow-2xl border border-gray-300 flex flex-col overflow-hidden"
+        className="bg-white dark:bg-neutral-800 shadow-2xl border border-neutral-300 dark:border-neutral-600 flex flex-col overflow-hidden"
       >
         {/* 페이지 헤더 */}
-        <div className="flex items-center justify-between px-4 py-2 bg-gray-50 border-b shrink-0">
-          <span className="text-sm font-medium text-gray-700">
+        <div className="flex items-center justify-between px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
             {pageNumber}
           </span>
-          {showAIButton && (
-            <AIGenerateButton
-              onGenerate={onGenerate}
-              isGenerating={isGenerating}
-              hasContent={!!content.trim()}
-            />
-          )}
+          <div className="flex items-center gap-2">
+            {/* 페이지 삭제 버튼 (2페이지 이상일 때만 표시) */}
+            {isActive && pages.length > 1 && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`${pageNumber}페이지를 삭제하시겠습니까?`))  {
+                    onDeletePage(pageNumber)
+                  }
+                }}
+                className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                title="페이지 삭제"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+            {showAIButton && (
+              <AIGenerateButton
+                onGenerate={onGenerate}
+                isGenerating={isGenerating}
+                hasContent={!!content.trim()}
+              />
+            )}
+          </div>
         </div>
 
         {/* 페이지 콘텐츠 */}
@@ -120,12 +140,13 @@ export default function PageCanvas({
             isGenerating={isGenerating && isActive}
             streamingContent={isActive ? streamingContent : undefined}
             zoom={100}
+            paperSize={paperSize}
           />
         </div>
 
         {/* 페이지 푸터 */}
-        <div className="px-4 py-1 bg-gray-50 border-t text-center shrink-0">
-          <span className="text-xs text-gray-400">{pageNumber}</span>
+        <div className="px-4 py-1 bg-neutral-50 dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-700 text-center shrink-0">
+          <span className="text-xs text-neutral-400 dark:text-neutral-500">{pageNumber}</span>
         </div>
       </div>
     )
@@ -134,7 +155,7 @@ export default function PageCanvas({
   // 연속 스크롤 모드
   if (viewMode === 'continuous') {
     return (
-      <div className="flex-1 overflow-y-auto bg-gray-300 p-8">
+      <div className="flex-1 overflow-y-auto bg-neutral-200 dark:bg-neutral-900 p-8">
         <div
           className="mx-auto space-y-8"
           style={{
@@ -149,7 +170,7 @@ export default function PageCanvas({
               id={`page-${page.pageNumber}`}
               onClick={() => onPageChange(page.pageNumber)}
               className={`cursor-pointer transition-all ${
-                page.pageNumber === currentPage ? 'ring-4 ring-blue-400' : ''
+                page.pageNumber === currentPage ? 'ring-4 ring-neutral-900 dark:ring-white' : ''
               }`}
             >
               {renderSinglePage(page, page.pageNumber, page.pageNumber === currentPage)}
@@ -163,10 +184,10 @@ export default function PageCanvas({
   // 양면 펼침 모드
   if (viewMode === 'spread') {
     return (
-      <div className="flex-1 flex flex-col bg-gray-300">
+      <div className="flex-1 flex flex-col bg-neutral-200 dark:bg-neutral-900">
         <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
           <div
-            className="flex gap-1 bg-gray-800 p-4 rounded-lg shadow-2xl"
+            className="flex gap-1 bg-neutral-800 dark:bg-neutral-950 p-4 shadow-2xl"
             style={{
               transform: `scale(${scale})`,
               transformOrigin: 'center center',
@@ -176,7 +197,7 @@ export default function PageCanvas({
             <div
               onClick={() => spreadPages.left && onPageChange(spreadPages.left.pageNumber)}
               className={`cursor-pointer transition-all ${
-                spreadPages.left?.pageNumber === currentPage ? 'ring-4 ring-blue-400' : ''
+                spreadPages.left?.pageNumber === currentPage ? 'ring-4 ring-white' : ''
               }`}
             >
               {renderSinglePage(
@@ -196,7 +217,7 @@ export default function PageCanvas({
                 }
               }}
               className={`cursor-pointer transition-all ${
-                spreadPages.right?.pageNumber === currentPage ? 'ring-4 ring-blue-400' : ''
+                spreadPages.right?.pageNumber === currentPage ? 'ring-4 ring-white' : ''
               }`}
             >
               {renderSinglePage(
@@ -219,7 +240,7 @@ export default function PageCanvas({
 
   // 단일 페이지 모드
   return (
-    <div className="flex-1 flex flex-col bg-gray-300">
+    <div className="flex-1 flex flex-col bg-neutral-200 dark:bg-neutral-900">
       <div className="flex-1 flex items-center justify-center p-4 overflow-auto">
         <div
           style={{

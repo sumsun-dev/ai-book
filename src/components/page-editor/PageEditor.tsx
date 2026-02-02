@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import PageToolbar from './PageToolbar'
 import PageThumbnails from './PageThumbnails'
 import PageCanvas from './PageCanvas'
-import { splitChapterToPages, countWords, getPageStatus } from '@/lib/page-utils'
+import { splitChapterToPages, countWords, getPageStatus, redistributePages, PAGE_CHAR_LIMITS, getTextLength } from '@/lib/page-utils'
 import type { Page, PageViewMode, PageEditorState, PageGenerateMode, ChapterOutline, PaperSize } from '@/types/book'
 
 interface PageEditorProps {
@@ -15,7 +15,7 @@ interface PageEditorProps {
   chapterOutline?: ChapterOutline
   initialContent: string
   onSave: (content: string) => Promise<void>
-  onAIGenerate: (mode: PageGenerateMode, pageNumber: number, context: string) => Promise<void>
+  onAIGenerate: (mode: PageGenerateMode, pageNumber: number, context: string) => Promise<string>
 }
 
 export default function PageEditor({
@@ -147,20 +147,44 @@ export default function PageEditor({
   }
 
   const handleContentChange = (pageNumber: number, content: string) => {
-    setState((prev) => ({
-      ...prev,
-      pages: prev.pages.map((p) =>
-        p.pageNumber === pageNumber
-          ? {
-              ...p,
-              content,
-              wordCount: countWords(content),
-              status: getPageStatus(content),
-            }
-          : p
-      ),
-      isDirty: true,
-    }))
+    setState((prev) => {
+      const maxChars = PAGE_CHAR_LIMITS[prev.paperSize]
+      const textLength = getTextLength(content)
+
+      // 오버플로우 체크 (HTML 태그 제외한 텍스트 길이)
+      if (textLength > maxChars) {
+        // 자동 페이지 분리
+        const newPages = redistributePages(
+          prev.pages,
+          pageNumber,
+          content,
+          prev.paperSize,
+          chapterId
+        )
+        return {
+          ...prev,
+          pages: newPages,
+          totalPages: newPages.length,
+          isDirty: true,
+        }
+      }
+
+      // 오버플로우가 없으면 일반 업데이트
+      return {
+        ...prev,
+        pages: prev.pages.map((p) =>
+          p.pageNumber === pageNumber
+            ? {
+                ...p,
+                content,
+                wordCount: countWords(content),
+                status: getPageStatus(content),
+              }
+            : p
+        ),
+        isDirty: true,
+      }
+    })
   }
 
   const handleZoomChange = (zoom: number) => {
@@ -175,11 +199,38 @@ export default function PageEditor({
     setState((prev) => ({ ...prev, paperSize }))
   }
 
+  const handleDeletePage = (pageNumber: number) => {
+    setState((prev) => {
+      // 페이지가 1개뿐이면 삭제 불가
+      if (prev.pages.length <= 1) return prev
+
+      // 해당 페이지 삭제 및 번호 재조정
+      const newPages = prev.pages
+        .filter((p) => p.pageNumber !== pageNumber)
+        .map((p, idx) => ({
+          ...p,
+          pageNumber: idx + 1,
+        }))
+
+      // 현재 페이지 조정
+      const newCurrentPage = pageNumber > newPages.length ? newPages.length : pageNumber
+
+      return {
+        ...prev,
+        pages: newPages,
+        currentPage: newCurrentPage,
+        totalPages: newPages.length,
+        isDirty: true,
+      }
+    })
+  }
+
   const handleGenerate = async (mode: PageGenerateMode) => {
     setIsGenerating(true)
     setStreamingContent('')
 
     try {
+      // 이전 페이지들의 내용 수집 (컨텍스트용)
       const previousPages = state.pages
         .filter((p) => p.pageNumber < state.currentPage)
         .sort((a, b) => b.pageNumber - a.pageNumber)
@@ -188,15 +239,72 @@ export default function PageEditor({
         .reverse()
         .join('\n\n')
 
+      // 현재 페이지 내용 (continue/rewrite 모드용)
+      const currentPageData = state.pages.find((p) => p.pageNumber === state.currentPage)
+      const currentPageContent = currentPageData?.content || ''
+
       const outlineContext = chapterOutline
         ? `챕터 ${chapterNumber}: ${chapterTitle}\n개요: ${chapterOutline.summary}\n핵심 포인트: ${chapterOutline.keyPoints.join(', ')}`
         : `챕터 ${chapterNumber}: ${chapterTitle}`
 
-      const context = `${outlineContext}\n\n이전 내용:\n${previousPages}`
+      // continue 모드일 때 이전 내용 + 현재 페이지 내용까지 포함
+      let context = outlineContext
+      if (previousPages || currentPageContent) {
+        const allPreviousContent = previousPages
+          ? (currentPageContent ? `${previousPages}\n\n${currentPageContent}` : previousPages)
+          : currentPageContent
+        context = `${outlineContext}\n\n이전 내용:\n${allPreviousContent}`
+      }
 
-      await onAIGenerate(mode, state.currentPage, context)
-    } catch {
-      // 생성 실패 시 상태 복원 (isGenerating이 finally에서 false로 설정됨)
+      // AI 생성 호출 및 결과 받기
+      const generatedContent = await onAIGenerate(mode, state.currentPage, context)
+
+      // 생성된 내용을 현재 페이지에 반영
+      if (generatedContent) {
+        // continue 모드면 기존 내용에 이어붙이기, 아니면 교체
+        const newContent = mode.mode === 'continue' && currentPageContent
+          ? `${currentPageContent}\n\n${generatedContent}`
+          : generatedContent
+
+        setState((prev) => {
+          const maxChars = PAGE_CHAR_LIMITS[prev.paperSize]
+          const textLength = getTextLength(newContent)
+
+          // 오버플로우 체크 및 자동 분리 (HTML 태그 제외)
+          if (textLength > maxChars) {
+            const newPages = redistributePages(
+              prev.pages,
+              state.currentPage,
+              newContent,
+              prev.paperSize,
+              chapterId
+            )
+            return {
+              ...prev,
+              pages: newPages,
+              totalPages: newPages.length,
+              isDirty: true,
+            }
+          }
+
+          return {
+            ...prev,
+            pages: prev.pages.map((p) =>
+              p.pageNumber === state.currentPage
+                ? {
+                    ...p,
+                    content: newContent,
+                    wordCount: countWords(newContent),
+                    status: getPageStatus(newContent),
+                  }
+                : p
+            ),
+            isDirty: true,
+          }
+        })
+      }
+    } catch (error) {
+      console.error('AI generation failed:', error)
     } finally {
       setIsGenerating(false)
       setStreamingContent('')
@@ -208,7 +316,7 @@ export default function PageEditor({
   }
 
   return (
-    <div className="flex flex-col h-full bg-gray-100">
+    <div className="flex flex-col h-full bg-neutral-100 dark:bg-neutral-900">
       <PageToolbar
         zoom={state.zoom}
         onZoomChange={handleZoomChange}
@@ -222,7 +330,7 @@ export default function PageEditor({
         onSave={handleManualSave}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0">
         <PageThumbnails
           pages={state.pages}
           currentPage={state.currentPage}
@@ -235,6 +343,7 @@ export default function PageEditor({
           onPageChange={handlePageChange}
           onContentChange={handleContentChange}
           onGenerate={handleGenerate}
+          onDeletePage={handleDeletePage}
           isGenerating={isGenerating}
           streamingContent={streamingContent}
           zoom={state.zoom}
@@ -244,11 +353,11 @@ export default function PageEditor({
         />
       </div>
 
-      <div className="flex items-center justify-between px-4 py-2 bg-white border-t text-sm text-gray-500">
+      <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 text-sm text-neutral-500 dark:text-neutral-400">
         <span>
           챕터 {chapterNumber} · {state.pages.length}페이지 · {state.pages.reduce((sum, p) => sum + p.wordCount, 0).toLocaleString()}단어
         </span>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 text-xs">
           <span>Ctrl+S: 저장</span>
           <span>PageUp/Down: 페이지 이동</span>
           <span>Ctrl+G: AI 생성</span>
