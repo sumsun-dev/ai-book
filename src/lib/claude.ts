@@ -6,6 +6,7 @@ export interface AgentConfig {
   name: string
   systemPrompt: string
   temperature?: number
+  maxTokens?: number
 }
 
 export async function runAgent(
@@ -19,7 +20,7 @@ export async function runAgent(
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
+    max_tokens: config.maxTokens ?? 8192,
     temperature: config.temperature ?? 0.7,
     system: systemPrompt,
     messages: [
@@ -43,7 +44,7 @@ export async function streamAgent(
 
   const stream = await anthropic.messages.stream({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 4096,
+    max_tokens: config.maxTokens ?? 8192,
     temperature: config.temperature ?? 0.7,
     system: systemPrompt,
     messages: [

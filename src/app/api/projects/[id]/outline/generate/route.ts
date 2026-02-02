@@ -220,14 +220,46 @@ ${researchContext}
     // JSON 파싱
     let outline: BookOutline
     try {
-      const jsonMatch = response.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        outline = JSON.parse(jsonMatch[0])
-      } else {
+      // 마크다운 코드 블록 제거
+      let jsonStr = response
+        .replace(/```json\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim()
+
+      // JSON 객체 추출
+      const jsonMatch = jsonStr.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
         throw new Error('No JSON found in response')
+      }
+
+      jsonStr = jsonMatch[0]
+
+      // 잘린 JSON 복구 시도 - 닫히지 않은 배열/객체 처리
+      let openBraces = 0
+      let openBrackets = 0
+      for (const char of jsonStr) {
+        if (char === '{') openBraces++
+        if (char === '}') openBraces--
+        if (char === '[') openBrackets++
+        if (char === ']') openBrackets--
+      }
+
+      // 닫히지 않은 괄호 추가
+      jsonStr += ']'.repeat(Math.max(0, openBrackets))
+      jsonStr += '}'.repeat(Math.max(0, openBraces))
+
+      // trailing comma 제거
+      jsonStr = jsonStr.replace(/,\s*([}\]])/g, '$1')
+
+      outline = JSON.parse(jsonStr)
+
+      // 필수 필드 검증
+      if (!outline.chapters || !Array.isArray(outline.chapters) || outline.chapters.length === 0) {
+        throw new Error('Invalid outline structure: missing chapters')
       }
     } catch (parseError) {
       console.error('Failed to parse outline:', parseError)
+      console.error('Raw response (first 500 chars):', response.substring(0, 500))
       // 기본 목차 제공
       const chapterCount = Math.max(5, Math.floor(targetLength / 25))
       outline = {
