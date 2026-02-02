@@ -1,7 +1,6 @@
 'use client'
 
 import { BookOutline } from '@/types/book'
-import { CheckCircleIcon } from '@heroicons/react/24/outline'
 
 interface ConfirmStepProps {
   outline: BookOutline
@@ -9,41 +8,99 @@ interface ConfirmStepProps {
 
 export default function ConfirmStep({ outline }: ConfirmStepProps) {
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-6">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-          <CheckCircleIcon className="w-6 h-6 text-green-600" />
+    <div className="space-y-8">
+      {/* 완료 헤더 */}
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 bg-neutral-900 dark:bg-white flex items-center justify-center">
+          <svg className="w-6 h-6 text-white dark:text-neutral-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
         </div>
         <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-            목차가 확정되었습니다!
+          <h2 className="text-2xl font-light text-neutral-900 dark:text-white">
+            목차 확정 완료
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-neutral-500 dark:text-neutral-400 text-sm">
             이제 본격적으로 집필을 시작할 수 있습니다
           </p>
         </div>
       </div>
 
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-        <h3 className="font-medium text-gray-900 dark:text-white mb-3">
-          확정된 목차
+      {/* 개요 */}
+      <div className="p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+        <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-4">
+          책 개요
         </h3>
-        <ol className="space-y-2">
+        <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
+          {outline.synopsis}
+        </p>
+      </div>
+
+      {/* 확정된 목차 */}
+      <div className="p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
+            확정된 목차
+          </h3>
+          <span className="text-xs text-neutral-400 dark:text-neutral-500">
+            {outline.chapters.length}개 챕터
+          </span>
+        </div>
+        <ol className="space-y-4">
           {outline.chapters.map((chapter) => (
-            <li key={chapter.number} className="flex items-start gap-2">
-              <span className="text-blue-600 font-medium">
-                {chapter.number}.
+            <li key={chapter.number} className="flex items-start gap-4">
+              <span className="w-8 h-8 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 text-sm">
+                {chapter.number}
               </span>
-              <span className="text-gray-700 dark:text-gray-300">
-                {chapter.title}
-              </span>
+              <div className="flex-1">
+                <div className="font-medium text-neutral-900 dark:text-white">
+                  {chapter.title}
+                </div>
+                {chapter.summary && (
+                  <div className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                    {chapter.summary}
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ol>
       </div>
 
-      <p className="mt-6 text-sm text-gray-500 dark:text-gray-400 text-center">
-        다음 단계로 진행하여 각 챕터를 집필해보세요.
+      {/* 통계 */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="p-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-center">
+          <div className="text-2xl font-light text-neutral-900 dark:text-white">
+            {outline.chapters.length}
+          </div>
+          <div className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mt-1">
+            챕터
+          </div>
+        </div>
+        <div className="p-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-center">
+          <div className="text-2xl font-light text-neutral-900 dark:text-white">
+            {outline.estimatedPages || '~200'}
+          </div>
+          <div className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mt-1">
+            예상 페이지
+          </div>
+        </div>
+        <div className="p-5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-center">
+          <div className="text-2xl font-light text-neutral-900 dark:text-white">
+            {outline.tone === 'formal' ? '격식체' :
+             outline.tone === 'casual' ? '친근체' :
+             outline.tone === 'academic' ? '학술체' :
+             outline.tone === 'narrative' ? '서술체' :
+             outline.tone === 'motivational' ? '동기부여' : outline.tone}
+          </div>
+          <div className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mt-1">
+            문체
+          </div>
+        </div>
+      </div>
+
+      <p className="text-center text-neutral-500 dark:text-neutral-400 text-sm pt-4">
+        상단의 "집필 시작" 버튼을 눌러 각 챕터를 집필해보세요.
       </p>
     </div>
   )
