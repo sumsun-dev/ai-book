@@ -155,8 +155,8 @@ export const projectRepository = {
     await prisma.project.delete({ where: { id } })
   },
 
-  async saveChapter(projectId: string, data: CreateChapterDto): Promise<void> {
-    await prisma.chapter.upsert({
+  async saveChapter(projectId: string, data: CreateChapterDto): Promise<{ id: string; number: number; title: string }> {
+    const chapter = await prisma.chapter.upsert({
       where: {
         projectId_number: {
           projectId,
@@ -176,6 +176,7 @@ export const projectRepository = {
         status: data.status ?? 'writing',
       },
     })
+    return { id: chapter.id, number: chapter.number, title: chapter.title }
   },
 
   async deleteChapter(projectId: string, chapterNumber: number): Promise<void> {

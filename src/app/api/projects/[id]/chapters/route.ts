@@ -27,8 +27,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    await projectRepository.saveChapter(id, { number, title, content, status })
-    return NextResponse.json({ success: true, message: '챕터가 저장되었습니다.' })
+    const chapter = await projectRepository.saveChapter(id, { number, title, content, status })
+    return NextResponse.json({ success: true, message: '챕터가 저장되었습니다.', data: chapter })
   } catch (error) {
     return NextResponse.json(
       { success: false, error: '챕터 저장에 실패했습니다.' },

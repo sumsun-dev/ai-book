@@ -45,6 +45,13 @@ export default function WritePage() {
     loadProjectData()
   }, [projectId])
 
+  // 초기 로드 후 첫 번째 챕터 자동 선택
+  useEffect(() => {
+    if (state.outline && state.outline.chapters.length > 0 && !chapterId) {
+      handleChapterSelect(1)
+    }
+  }, [state.outline])
+
   useEffect(() => {
     if (editorMode === 'chapter') {
       const interval = setInterval(() => {
@@ -212,11 +219,50 @@ export default function WritePage() {
     }
   }
 
-  const handleChapterSelect = (number: number) => {
+  const handleChapterSelect = async (number: number) => {
     setState(prev => ({ ...prev, currentChapter: number }))
     const chapter = state.chapters.get(number)
+
     if (chapter?.id) {
       setChapterId(chapter.id)
+    } else {
+      // 챕터가 DB에 없으면 자동 생성
+      const chapterOutline = state.outline?.chapters.find(ch => ch.number === number)
+      if (chapterOutline) {
+        try {
+          const res = await fetch(`/api/projects/${projectId}/chapters`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              number,
+              title: chapterOutline.title,
+              content: '',
+              status: 'pending'
+            })
+          })
+          if (res.ok) {
+            const { data } = await res.json()
+            if (data?.id) {
+              setChapterId(data.id)
+              // 로컬 상태에도 추가
+              setState(prev => {
+                const newChapters = new Map(prev.chapters)
+                newChapters.set(number, {
+                  id: data.id,
+                  number,
+                  title: chapterOutline.title,
+                  content: '',
+                  status: 'pending',
+                  revisions: []
+                })
+                return { ...prev, chapters: newChapters }
+              })
+            }
+          }
+        } catch (err) {
+          console.error('Failed to create chapter:', err)
+        }
+      }
     }
   }
 
