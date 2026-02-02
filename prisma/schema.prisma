@@ -42,6 +42,8 @@ model Project {
   sourceFile     SourceFile?
   bookMetadata   BookMetadata?
   isbn           ISBN?
+  memos          Memo[]
+  sources        Source[]
 }
 
 model SourceFile {
@@ -170,4 +172,33 @@ model ISBN {
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+// 메모 기능
+model Memo {
+  id            String   @id @default(uuid())
+  projectId     String
+  project       Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  content       String
+  chapterNumber Int?     // 특정 챕터 연결 (선택)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([projectId])
+}
+
+// 출처 관리
+model Source {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title     String
+  author    String?
+  url       String?
+  type      String   // book, article, website, other
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
 }

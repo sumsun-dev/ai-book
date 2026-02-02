@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { BookProject, BookStatus, BookOutline, AgentMessage, BookType, TableOfContents, OutlineFeedback, ProjectStage } from '@/types/book'
+import { BookProject, BookStatus, BookOutline, AgentMessage, BookType, TableOfContents, OutlineFeedback, ProjectStage, Reference } from '@/types/book'
 import { generateTableOfContents, addChapter, removeChapter, reorderChapters, addSection, removeSection } from '@/lib/outline-utils'
 
 interface BookStore {
@@ -8,6 +8,7 @@ interface BookStore {
   agentMessages: AgentMessage[]
   isProcessing: boolean
   tableOfContents: TableOfContents | null
+  sources: Reference[]
 
   // Actions
   createProject: (title: string, type: BookType, description: string) => void
@@ -18,6 +19,11 @@ interface BookStore {
   clearAgentMessages: () => void
   setProcessing: (processing: boolean) => void
   reset: () => void
+
+  // Sources actions
+  setSources: (sources: Reference[]) => void
+  addSource: (source: Reference) => void
+  removeSource: (index: number) => void
 
   // Persistence actions
   loadProject: (project: BookProject) => void
@@ -40,6 +46,7 @@ export const useBookStore = create<BookStore>((set, get) => ({
   agentMessages: [],
   isProcessing: false,
   tableOfContents: null,
+  sources: [],
 
   createProject: (title, type, description) => {
     const project: BookProject = {
@@ -116,7 +123,24 @@ export const useBookStore = create<BookStore>((set, get) => ({
       agentMessages: [],
       isProcessing: false,
       tableOfContents: null,
+      sources: [],
     })
+  },
+
+  setSources: (sources) => {
+    set({ sources })
+  },
+
+  addSource: (source) => {
+    set((state) => ({
+      sources: [...state.sources, source],
+    }))
+  },
+
+  removeSource: (index) => {
+    set((state) => ({
+      sources: state.sources.filter((_, i) => i !== index),
+    }))
   },
 
   loadProject: (project) => {

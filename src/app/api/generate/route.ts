@@ -100,6 +100,35 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      case 'inline-edit': {
+        const { originalText, instruction, context } = body as {
+          originalText: string
+          instruction: string
+          context?: string
+        }
+
+        const prompt = `당신은 전문 편집자입니다. 주어진 텍스트를 사용자의 요청에 맞게 수정해주세요.
+
+${context ? `컨텍스트: ${context}\n` : ''}
+원문:
+"""
+${originalText}
+"""
+
+수정 요청: ${instruction}
+
+수정된 텍스트만 출력해주세요. 설명이나 추가 코멘트 없이 수정된 텍스트만 반환합니다.`
+
+        const { runEditorAgent } = await import('@/agents/editor')
+        const result = await runEditorAgent(prompt, 'inline-edit', '')
+
+        return NextResponse.json({
+          original: originalText,
+          edited: result.editedContent || originalText,
+          instruction,
+        })
+      }
+
       default:
         return NextResponse.json({ error: 'Invalid phase' }, { status: 400 })
     }

@@ -6,7 +6,10 @@ import StageHeader from '@/components/project/StageHeader'
 import { ChapterList, ChapterEditor } from '@/components/write'
 import { PageEditor } from '@/components/page-editor'
 import { FileUploader, ChapterSplitter } from '@/components/upload'
+import { MemoPanel } from '@/components/MemoPanel'
+import MemoButton from '@/components/page-editor/MemoButton'
 import { BookOutline, ChapterOutline, Chapter, ParsedFile, SplitChapter, PageGenerateMode } from '@/types/book'
+import { textToHtml } from '@/lib/utils/text-to-html'
 
 interface WriteState {
   outline: BookOutline | null
@@ -40,10 +43,25 @@ export default function WritePage() {
   const [isImporting, setIsImporting] = useState(false)
   const [editorMode, setEditorMode] = useState<EditorMode>('page')
   const [chapterId, setChapterId] = useState<string | null>(null)
+  const [showMemoPanel, setShowMemoPanel] = useState(false)
+  const [memoCount, setMemoCount] = useState(0)
 
   useEffect(() => {
     loadProjectData()
+    fetchMemoCount()
   }, [projectId])
+
+  const fetchMemoCount = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/memos`)
+      const data = await response.json()
+      if (data.success) {
+        setMemoCount(data.data.length)
+      }
+    } catch (error) {
+      console.error('메모 개수 로드 실패:', error)
+    }
+  }
 
   // 초기 로드 후 첫 번째 챕터 자동 선택
   useEffect(() => {
@@ -190,13 +208,17 @@ export default function WritePage() {
         if (done) break
         const chunk = decoder.decode(value, { stream: true })
         fullContent += chunk
-        setState(prev => ({ ...prev, streamingContent: fullContent }))
+        // 스트리밍 중에도 HTML 변환 적용 (실시간 문단 표시)
+        setState(prev => ({ ...prev, streamingContent: textToHtml(fullContent) }))
       }
+
+      // 최종 콘텐츠를 HTML로 변환
+      const htmlContent = textToHtml(fullContent)
 
       const updatedChapter: Chapter = {
         number: state.currentChapter,
         title: chapterOutline.title,
-        content: fullContent,
+        content: htmlContent,
         status: 'writing',
         revisions: []
       }
@@ -503,6 +525,13 @@ export default function WritePage() {
           가져오기
         </button>
 
+        {/* Memo Button */}
+        <MemoButton
+          onClick={() => setShowMemoPanel(!showMemoPanel)}
+          isActive={showMemoPanel}
+          memoCount={memoCount}
+        />
+
         {/* Save Button */}
         <button
           onClick={handleManualSave}
@@ -536,6 +565,8 @@ export default function WritePage() {
               isWriting={state.isWriting}
               currentChapter={state.currentChapter}
               totalChapters={state.outline?.chapters.length || 0}
+              projectId={projectId}
+              chapterId={chapterId}
               onContentChange={handleContentChange}
               onAIWrite={handleAIWrite}
               onPreviousChapter={handlePreviousChapter}
@@ -670,6 +701,14 @@ export default function WritePage() {
           </div>
         </div>
       )}
+
+      {/* Memo Panel */}
+      <MemoPanel
+        projectId={projectId}
+        isOpen={showMemoPanel}
+        onClose={() => setShowMemoPanel(false)}
+        currentChapter={state.currentChapter}
+      />
     </div>
   )
 }

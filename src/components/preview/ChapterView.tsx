@@ -1,10 +1,19 @@
 'use client'
 
+import { useMemo } from 'react'
+import { marked } from 'marked'
 import type { Chapter, ChapterOutline } from '@/types/book'
 
+// marked 설정
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+})
+
 interface ChapterViewProps {
-  chapter: Chapter
+  chapter?: Chapter | null
   chapterOutline?: ChapterOutline
+  chapterNumber: number
   totalChapters: number
   onPrevious?: () => void
   onNext?: () => void
@@ -14,11 +23,20 @@ interface ChapterViewProps {
 export function ChapterView({
   chapter,
   chapterOutline,
+  chapterNumber,
   totalChapters,
   onPrevious,
   onNext,
   onBackToToc,
 }: ChapterViewProps) {
+  const title = chapter?.title ?? chapterOutline?.title ?? `챕터 ${chapterNumber}`
+  const hasContent = chapter?.content && chapter.content.trim().length > 0
+
+  const renderedContent = useMemo(() => {
+    if (!hasContent) return ''
+    return marked.parse(chapter!.content) as string
+  }, [chapter?.content, hasContent])
+
   return (
     <div className="bg-gray-800/50 rounded-xl p-8">
       {/* Header */}
@@ -33,27 +51,69 @@ export function ChapterView({
           목차로
         </button>
         <span className="text-gray-400 text-sm">
-          {chapter.number} / {totalChapters}
+          {chapterNumber} / {totalChapters}
         </span>
       </div>
 
       {/* Chapter title */}
       <div className="mb-8">
         <p className="text-blue-400 text-sm uppercase tracking-wider mb-2">
-          Chapter {chapter.number}
+          Chapter {chapterNumber}
         </p>
-        <h1 className="text-3xl font-bold text-white">{chapter.title}</h1>
+        <h1 className="text-3xl font-bold text-white">{title}</h1>
         {chapterOutline?.summary && (
           <p className="text-gray-400 mt-2 italic">{chapterOutline.summary}</p>
         )}
       </div>
 
       {/* Content */}
-      <div className="prose prose-invert prose-lg max-w-none">
-        <div className="whitespace-pre-wrap text-gray-300 leading-relaxed">
-          {chapter.content}
+      {hasContent ? (
+        <div
+          className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-em:text-gray-200 prose-a:text-blue-400 prose-blockquote:border-l-blue-500 prose-blockquote:text-gray-400 prose-code:text-purple-300 prose-pre:bg-gray-900"
+          dangerouslySetInnerHTML={{ __html: renderedContent }}
+        />
+      ) : (
+        <div className="text-gray-400 space-y-6">
+          <div className="bg-gray-700/30 rounded-lg p-6">
+            <p className="text-center text-gray-500 mb-4">
+              이 챕터는 아직 작성되지 않았습니다
+            </p>
+            {chapterOutline && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-300 mb-2">챕터 요약</h3>
+                  <p className="text-gray-400">{chapterOutline.summary}</p>
+                </div>
+                {chapterOutline.keyPoints && chapterOutline.keyPoints.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-300 mb-2">핵심 포인트</h3>
+                    <ul className="list-disc list-inside space-y-1">
+                      {chapterOutline.keyPoints.map((point, idx) => (
+                        <li key={idx} className="text-gray-400">{point}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {chapterOutline.sections && chapterOutline.sections.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-300 mb-2">섹션 구성</h3>
+                    <ul className="space-y-2">
+                      {chapterOutline.sections.map((section) => (
+                        <li key={section.id} className="text-gray-400">
+                          <span className="text-white">{section.title}</span>
+                          {section.summary && (
+                            <span className="text-gray-500"> - {section.summary}</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Navigation */}
       <div className="flex items-center justify-between mt-12 pt-8 border-t border-gray-700">

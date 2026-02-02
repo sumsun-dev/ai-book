@@ -20,6 +20,8 @@ interface PageCanvasProps {
   viewMode: PageViewMode
   paperSize: PaperSize
   chapterTitle: string
+  projectId?: string
+  chapterId?: string
 }
 
 export default function PageCanvas({
@@ -35,6 +37,8 @@ export default function PageCanvas({
   viewMode,
   paperSize,
   chapterTitle,
+  projectId,
+  chapterId,
 }: PageCanvasProps) {
   const currentPageData = useMemo(
     () => pages.find((p) => p.pageNumber === currentPage),
@@ -100,8 +104,8 @@ export default function PageCanvas({
         style={pageStyle}
         className="bg-white dark:bg-neutral-800 shadow-2xl border border-neutral-300 dark:border-neutral-600 flex flex-col overflow-hidden"
       >
-        {/* 페이지 헤더 */}
-        <div className="flex items-center justify-between px-4 py-2 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
+        {/* 페이지 헤더 - 고정 높이로 양면 모드에서 일관된 높이 유지 */}
+        <div className="flex items-center justify-between px-4 h-12 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-700 shrink-0">
           <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
             {pageNumber}
           </span>
@@ -122,13 +126,16 @@ export default function PageCanvas({
                 </svg>
               </button>
             )}
-            {showAIButton && (
-              <AIGenerateButton
-                onGenerate={onGenerate}
-                isGenerating={isGenerating}
-                hasContent={!!content.trim()}
-              />
-            )}
+            {/* AI 버튼 영역 - 항상 공간 확보하여 높이 일관성 유지 */}
+            <div className="h-8 flex items-center">
+              {showAIButton && (
+                <AIGenerateButton
+                  onGenerate={onGenerate}
+                  isGenerating={isGenerating}
+                  hasContent={!!content.trim()}
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -141,6 +148,8 @@ export default function PageCanvas({
             streamingContent={isActive ? streamingContent : undefined}
             zoom={100}
             paperSize={paperSize}
+            projectId={projectId}
+            chapterId={chapterId}
           />
         </div>
 

@@ -8,9 +8,12 @@ import { ChapterView } from './ChapterView'
 import { CoverDesigner } from '../CoverDesigner'
 import { MetadataForm } from '../metadata'
 import { ISBNInput } from '../isbn'
+import { SourcesPanel } from '../SourcesPanel'
+import { MemoPanel } from '../MemoPanel'
 
 type ViewMode = 'cover' | 'toc' | 'chapter'
 type ModalType = 'none' | 'cover' | 'metadata' | 'isbn' | 'export'
+type PanelType = 'none' | 'sources' | 'memos'
 
 interface BookPreviewProps {
   project: BookProject
@@ -33,6 +36,7 @@ export function BookPreview({
   const [localCoverUrl, setLocalCoverUrl] = useState<string | undefined>(coverImageUrl)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [activePanel, setActivePanel] = useState<PanelType>('none')
 
   const handleOpenBook = () => {
     setViewMode('toc')
@@ -93,11 +97,8 @@ export function BookPreview({
   }
 
   const handleSelectChapter = (chapterNumber: number) => {
-    const chapter = project.chapters.find((ch) => ch.number === chapterNumber)
-    if (chapter) {
-      setCurrentChapter(chapterNumber)
-      setViewMode('chapter')
-    }
+    setCurrentChapter(chapterNumber)
+    setViewMode('chapter')
   }
 
   const handleBackToToc = () => {
@@ -195,6 +196,32 @@ export function BookPreview({
               표지
             </button>
 
+            {/* 출처 버튼 */}
+            <button
+              onClick={() => setActivePanel(activePanel === 'sources' ? 'none' : 'sources')}
+              className={`px-3 py-2 transition-colors flex items-center gap-1.5 text-sm ${
+                activePanel === 'sources' ? 'text-blue-400' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              출처
+            </button>
+
+            {/* 메모 버튼 */}
+            <button
+              onClick={() => setActivePanel(activePanel === 'memos' ? 'none' : 'memos')}
+              className={`px-3 py-2 transition-colors flex items-center gap-1.5 text-sm ${
+                activePanel === 'memos' ? 'text-yellow-400' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              메모
+            </button>
+
             <button
               onClick={onEdit}
               className="px-3 py-2 text-gray-300 hover:text-white transition-colors text-sm"
@@ -279,16 +306,16 @@ export function BookPreview({
           </div>
         )}
 
-        {viewMode === 'chapter' && selectedChapter && (
+        {viewMode === 'chapter' && currentChapter && (
           <div className="max-w-4xl mx-auto">
             <ChapterView
               chapter={selectedChapter}
               chapterOutline={chapterOutline}
+              chapterNumber={currentChapter}
               totalChapters={project.outline?.chapters.length ?? project.chapters.length}
-              onPrevious={currentChapter && currentChapter > 1 ? handlePreviousChapter : undefined}
+              onPrevious={currentChapter > 1 ? handlePreviousChapter : undefined}
               onNext={
-                currentChapter &&
-                currentChapter < Math.max(...project.chapters.map((ch) => ch.number))
+                currentChapter < (project.outline?.chapters.length ?? project.chapters.length)
                   ? handleNextChapter
                   : undefined
               }
@@ -365,6 +392,20 @@ export function BookPreview({
           onClick={() => setShowExportMenu(false)}
         />
       )}
+
+      {/* Sources Panel */}
+      <SourcesPanel
+        isOpen={activePanel === 'sources'}
+        onClose={() => setActivePanel('none')}
+      />
+
+      {/* Memo Panel */}
+      <MemoPanel
+        projectId={project.id}
+        isOpen={activePanel === 'memos'}
+        onClose={() => setActivePanel('none')}
+        currentChapter={currentChapter}
+      />
     </div>
   )
 }

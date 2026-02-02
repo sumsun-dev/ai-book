@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import PageToolbar from './PageToolbar'
 import PageThumbnails from './PageThumbnails'
 import PageCanvas from './PageCanvas'
+import SourcesCollapsible from './SourcesCollapsible'
 import { splitChapterToPages, countWords, getPageStatus, redistributePages, PAGE_CHAR_LIMITS, getTextLength } from '@/lib/page-utils'
 import type { Page, PageViewMode, PageEditorState, PageGenerateMode, ChapterOutline, PaperSize } from '@/types/book'
 
@@ -38,8 +39,8 @@ export default function PageEditor({
       pages: initialPages,
       currentPage: 1,
       totalPages: initialPages.length,
-      zoom: 80,
-      viewMode: 'single' as PageViewMode,
+      zoom: 100,
+      viewMode: 'spread' as PageViewMode,
       paperSize: 'a4' as PaperSize,
       isDirty: false,
       lastSaved: null,
@@ -50,6 +51,23 @@ export default function PageEditor({
   const [isGenerating, setIsGenerating] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // 챕터 변경 시 페이지 상태 초기화 (initialContent prop 변경 감지)
+  useEffect(() => {
+    const newPages = splitChapterToPages(initialContent).map((p, idx) => ({
+      ...p,
+      id: `temp-${idx}`,
+      chapterId,
+    }))
+    setState(prev => ({
+      ...prev,
+      pages: newPages,
+      currentPage: 1,
+      totalPages: newPages.length,
+      isDirty: false,
+      lastSaved: null,
+    }))
+  }, [initialContent, chapterId])
 
   const mergePagesContent = useCallback(() => {
     return state.pages
@@ -350,8 +368,13 @@ export default function PageEditor({
           viewMode={state.viewMode}
           paperSize={state.paperSize}
           chapterTitle={`챕터 ${chapterNumber}: ${chapterTitle}`}
+          projectId={projectId}
+          chapterId={chapterId}
         />
       </div>
+
+      {/* 출처 패널 */}
+      <SourcesCollapsible projectId={projectId} />
 
       <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 text-sm text-neutral-500 dark:text-neutral-400">
         <span>

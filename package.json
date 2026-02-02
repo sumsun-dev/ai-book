@@ -7,7 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -54,10 +57,16 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jsbarcode": "^3.11.4",
     "@types/marked": "^5.0.2",
     "@types/pdf-parse": "^1.1.5",
+    "@vitejs/plugin-react": "^5.1.2",
     "canvas": "^3.2.1",
-    "prisma": "^5.22.0"
+    "jsdom": "^28.0.0",
+    "prisma": "^5.22.0",
+    "vitest": "^4.0.18"
   }
 }

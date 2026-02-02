@@ -383,6 +383,16 @@ export interface PrintOptions {
   iccProfile?: 'FOGRA39' | 'FOGRA51'
 }
 
+// 메모 타입
+export interface Memo {
+  id: string
+  projectId: string
+  content: string
+  chapterNumber: number | null
+  createdAt: Date
+  updatedAt: Date
+}
+
 // 단계별 진행 상태
 export interface StageProgress {
   research: {

@@ -8,8 +8,10 @@ import CharacterCount from '@tiptap/extension-character-count'
 import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import Highlight from '@tiptap/extension-highlight'
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 import { PAGE_CHAR_LIMITS } from '@/lib/page-utils'
+import { useAIEdit } from '@/hooks/useAIEdit'
+import AIEditModal from './AIEditModal'
 import type { PaperSize } from '@/types/book'
 
 interface PageContentProps {
@@ -20,6 +22,8 @@ interface PageContentProps {
   zoom?: number
   readOnly?: boolean
   paperSize?: PaperSize
+  projectId?: string
+  chapterId?: string | null
 }
 
 export default function PageContent({
@@ -29,11 +33,28 @@ export default function PageContent({
   streamingContent,
   paperSize = 'a4',
   readOnly = false,
+  projectId,
+  chapterId,
 }: PageContentProps) {
   const maxChars = PAGE_CHAR_LIMITS[paperSize]
   const fileInputRef = useRef<HTMLInputElement>(null)
   const isInitialMount = useRef(true)
   const isInternalUpdate = useRef(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+
+  const {
+    selectedText,
+    selectionRange,
+    isEditing,
+    editInstruction,
+    setEditInstruction,
+    handleSelectionChange,
+    handleAIEdit,
+    resetSelection,
+  } = useAIEdit({
+    projectId: projectId || '',
+    chapterId: chapterId || null,
+  })
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -120,6 +141,56 @@ export default function PageContent({
       editor.setEditable(!readOnly && !isGenerating)
     }
   }, [editor, readOnly, isGenerating])
+
+  // 텍스트 선택 감지
+  useEffect(() => {
+    if (!editor) return
+
+    const handleSelectionUpdate = () => {
+      const { from, to } = editor.state.selection
+      if (from !== to) {
+        const text = editor.state.doc.textBetween(from, to, '\n')
+        handleSelectionChange(text, { from, to })
+      } else {
+        handleSelectionChange('', null)
+      }
+    }
+
+    editor.on('selectionUpdate', handleSelectionUpdate)
+    return () => {
+      editor.off('selectionUpdate', handleSelectionUpdate)
+    }
+  }, [editor, handleSelectionChange])
+
+  // AI 수정 제출 처리
+  const handleEditSubmit = async () => {
+    if (!editor || !selectionRange) return
+
+    // 선택 범위 주변 컨텍스트 가져오기
+    const docText = editor.state.doc.textContent
+    const contextStart = Math.max(0, selectionRange.from - 500)
+    const contextEnd = Math.min(docText.length, selectionRange.to + 500)
+    const context = docText.substring(contextStart, contextEnd)
+
+    const editedText = await handleAIEdit(context)
+
+    if (editedText && editor) {
+      isInternalUpdate.current = true
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(selectionRange)
+        .deleteSelection()
+        .insertContent(editedText)
+        .run()
+
+      setTimeout(() => {
+        isInternalUpdate.current = false
+      }, 100)
+
+      setShowEditModal(false)
+    }
+  }
 
   // 이미지 리사이즈 및 압축 함수
   const resizeImage = useCallback((file: File, maxWidth: number = 800): Promise<string> => {
@@ -368,7 +439,7 @@ export default function PageContent({
         </div>
 
         {/* 이미지 */}
-        <div className="flex items-center">
+        <div className="flex items-center border-r border-neutral-200 dark:border-neutral-700 pr-1 mr-1">
           <ToolbarButton onClick={addImage} title="이미지 업로드">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -387,6 +458,22 @@ export default function PageContent({
             className="hidden"
           />
         </div>
+
+        {/* AI 수정 버튼 */}
+        {selectedText && chapterId && (
+          <div className="flex items-center border-r border-neutral-200 dark:border-neutral-700 pr-1 mr-1">
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="flex items-center gap-1.5 px-2 py-1 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium transition-colors"
+              title="선택한 텍스트를 AI로 수정"
+            >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              AI 수정
+            </button>
+          </div>
+        )}
 
         {/* 실행 취소/다시 실행 */}
         <div className="flex items-center ml-auto">
@@ -448,6 +535,20 @@ export default function PageContent({
           </span>
         </div>
       </div>
+
+      {/* AI 수정 모달 */}
+      <AIEditModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false)
+          resetSelection()
+        }}
+        selectedText={selectedText}
+        editInstruction={editInstruction}
+        onInstructionChange={setEditInstruction}
+        onSubmit={handleEditSubmit}
+        isEditing={isEditing}
+      />
     </div>
   )
 }

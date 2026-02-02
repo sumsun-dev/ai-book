@@ -17,6 +17,8 @@ interface ChapterEditorProps {
   isWriting: boolean
   currentChapter: number
   totalChapters: number
+  projectId: string
+  chapterId: string | null
   onContentChange: (content: string) => void
   onAIWrite: () => void
   onPreviousChapter: () => void
@@ -29,6 +31,8 @@ export default function ChapterEditor({
   isWriting,
   currentChapter,
   totalChapters,
+  projectId,
+  chapterId,
   onContentChange,
   onAIWrite,
   onPreviousChapter,
@@ -38,6 +42,11 @@ export default function ChapterEditor({
   const isInitialMount = useRef(true)
   const isInternalUpdate = useRef(false)
   const [showToolbar, setShowToolbar] = useState(true)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [selectedText, setSelectedText] = useState('')
+  const [editInstruction, setEditInstruction] = useState('')
+  const [isEditing, setIsEditing] = useState(false)
+  const [selectionRange, setSelectionRange] = useState<{ from: number; to: number } | null>(null)
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -78,7 +87,7 @@ export default function ChapterEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-neutral dark:prose-invert max-w-none focus:outline-none min-h-full p-8',
+        class: 'prose prose-neutral max-w-none focus:outline-none min-h-full p-8 text-neutral-900 dark:text-neutral-100',
         style: "font-family: 'Noto Serif KR', serif; font-size: 16px; line-height: 1.9;",
       },
     },
@@ -120,6 +129,85 @@ export default function ChapterEditor({
       editor.setEditable(!isWriting)
     }
   }, [editor, isWriting])
+
+  // 텍스트 선택 감지
+  const handleSelectionChange = useCallback(() => {
+    if (!editor) return
+    const { from, to } = editor.state.selection
+    if (from !== to) {
+      const text = editor.state.doc.textBetween(from, to, '\n')
+      setSelectedText(text)
+      setSelectionRange({ from, to })
+    } else {
+      setSelectedText('')
+      setSelectionRange(null)
+    }
+  }, [editor])
+
+  useEffect(() => {
+    if (editor) {
+      editor.on('selectionUpdate', handleSelectionChange)
+      return () => {
+        editor.off('selectionUpdate', handleSelectionChange)
+      }
+    }
+  }, [editor, handleSelectionChange])
+
+  // AI 수정 요청 처리
+  const handleAIEdit = async () => {
+    if (!selectedText || !editInstruction || !chapterId || !selectionRange || !editor) return
+
+    setIsEditing(true)
+    try {
+      const response = await fetch(`/api/projects/${projectId}/chapters/${chapterId}/edit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          selectedText,
+          instruction: editInstruction,
+          context: content.substring(
+            Math.max(0, selectionRange.from - 500),
+            Math.min(content.length, selectionRange.to + 500)
+          )
+        })
+      })
+
+      if (!response.body) throw new Error('No response body')
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let editedText = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        editedText += decoder.decode(value, { stream: true })
+      }
+
+      // 선택 영역을 수정된 텍스트로 교체
+      isInternalUpdate.current = true
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(selectionRange)
+        .deleteSelection()
+        .insertContent(editedText)
+        .run()
+
+      setTimeout(() => {
+        isInternalUpdate.current = false
+      }, 100)
+
+      setShowEditModal(false)
+      setEditInstruction('')
+      setSelectedText('')
+      setSelectionRange(null)
+    } catch {
+      alert('AI 수정에 실패했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsEditing(false)
+    }
+  }
 
   // 이미지 리사이즈 및 압축 함수
   const resizeImage = useCallback((file: File, maxWidth: number = 800): Promise<string> => {
@@ -467,6 +555,22 @@ export default function ChapterEditor({
             />
           </div>
 
+          {/* AI 수정 버튼 */}
+          {selectedText && chapterId && (
+            <div className="flex items-center border-r border-neutral-200 dark:border-neutral-700 pr-2 mr-2">
+              <button
+                onClick={() => setShowEditModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium transition-colors"
+                title="선택한 텍스트를 AI로 수정"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                AI 수정
+              </button>
+            </div>
+          )}
+
           {/* 실행 취소/다시 실행 */}
           <div className="flex items-center ml-auto">
             <ToolbarButton
@@ -526,6 +630,103 @@ export default function ChapterEditor({
           </span>
         </div>
       </div>
+
+      {/* AI 수정 모달 */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-neutral-900 w-full max-w-lg shadow-2xl">
+            <div className="p-5 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+              <h3 className="text-lg font-medium text-neutral-900 dark:text-white">
+                AI 수정 요청
+              </h3>
+              <button
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditInstruction('')
+                }}
+                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* 선택된 텍스트 미리보기 */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  선택한 텍스트
+                </label>
+                <div className="p-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-sm text-neutral-600 dark:text-neutral-400 max-h-32 overflow-auto">
+                  {selectedText.length > 300 ? selectedText.substring(0, 300) + '...' : selectedText}
+                </div>
+              </div>
+
+              {/* 수정 지시 입력 */}
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  수정 지시
+                </label>
+                <textarea
+                  value={editInstruction}
+                  onChange={(e) => setEditInstruction(e.target.value)}
+                  placeholder="예: 더 생동감 있게 수정해줘 / 문장을 간결하게 다듬어줘 / 비유를 추가해줘"
+                  className="w-full h-24 p-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-900 dark:text-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-violet-500"
+                />
+              </div>
+
+              {/* 빠른 수정 버튼들 */}
+              <div className="flex flex-wrap gap-2">
+                {['더 간결하게', '더 상세하게', '문체 부드럽게', '비유 추가', '대화체로'].map((quick) => (
+                  <button
+                    key={quick}
+                    onClick={() => setEditInstruction(quick)}
+                    className="px-3 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
+                  >
+                    {quick}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-neutral-200 dark:border-neutral-800 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowEditModal(false)
+                  setEditInstruction('')
+                }}
+                className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleAIEdit}
+                disabled={!editInstruction.trim() || isEditing}
+                className={`
+                  flex items-center gap-2 px-5 py-2 text-sm font-medium transition-all
+                  ${isEditing || !editInstruction.trim()
+                    ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-400 cursor-not-allowed'
+                    : 'bg-violet-600 hover:bg-violet-700 text-white'
+                  }
+                `}
+              >
+                {isEditing ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    수정 중...
+                  </>
+                ) : (
+                  'AI로 수정하기'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
