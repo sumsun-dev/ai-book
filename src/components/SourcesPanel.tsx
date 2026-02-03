@@ -58,10 +58,10 @@ export function SourcesPanel({ isOpen, onClose }: SourcesPanelProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed right-0 top-0 h-full w-96 bg-gray-900 border-l border-gray-700 shadow-xl z-50 flex flex-col">
+    <div className="fixed right-0 top-0 h-full w-96 bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-700 shadow-xl z-50 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+      <div className="flex items-center justify-between p-4 border-b border-neutral-200 dark:border-neutral-700">
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
@@ -69,7 +69,7 @@ export function SourcesPanel({ isOpen, onClose }: SourcesPanelProps) {
         </h2>
         <button
           onClick={onClose}
-          className="p-2 text-gray-400 hover:text-white transition-colors"
+          className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -80,7 +80,7 @@ export function SourcesPanel({ isOpen, onClose }: SourcesPanelProps) {
       {/* Source List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {sources.length === 0 ? (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-neutral-500 dark:text-neutral-400 py-8">
             <svg className="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={sourceTypeIcons.book} />
             </svg>
@@ -91,39 +91,39 @@ export function SourcesPanel({ isOpen, onClose }: SourcesPanelProps) {
           sources.map((source, index) => (
             <div
               key={index}
-              className="bg-gray-800/50 rounded-lg p-3 group hover:bg-gray-800 transition-colors"
+              className="bg-neutral-100 dark:bg-neutral-800/50 rounded-lg p-3 group hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
             >
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-gray-700/50 rounded-lg">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 bg-neutral-200 dark:bg-neutral-700/50 rounded-lg">
+                  <svg className="w-4 h-4 text-neutral-500 dark:text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sourceTypeIcons[source.type]} />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-medium truncate">{source.title}</h3>
+                  <h3 className="text-neutral-900 dark:text-white font-medium truncate">{source.title}</h3>
                   {source.author && (
-                    <p className="text-gray-400 text-sm">{source.author}</p>
+                    <p className="text-neutral-600 dark:text-neutral-400 text-sm">{source.author}</p>
                   )}
                   {source.url && (
                     <a
                       href={source.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-400 text-sm hover:underline truncate block"
+                      className="text-blue-600 dark:text-blue-400 text-sm hover:underline truncate block"
                     >
                       {source.url}
                     </a>
                   )}
                   {source.notes && (
-                    <p className="text-gray-500 text-sm mt-1 line-clamp-2">{source.notes}</p>
+                    <p className="text-neutral-500 dark:text-neutral-500 text-sm mt-1 line-clamp-2">{source.notes}</p>
                   )}
-                  <span className="inline-block mt-2 px-2 py-0.5 bg-gray-700 rounded text-xs text-gray-400">
+                  <span className="inline-block mt-2 px-2 py-0.5 bg-neutral-200 dark:bg-neutral-700 rounded text-xs text-neutral-600 dark:text-neutral-400">
                     {sourceTypeLabels[source.type]}
                   </span>
                 </div>
                 <button
                   onClick={() => removeSource(index)}
-                  className="p-1 text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                  className="p-1 text-neutral-400 dark:text-neutral-500 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -137,13 +137,13 @@ export function SourcesPanel({ isOpen, onClose }: SourcesPanelProps) {
 
       {/* Add Source Form */}
       {isAdding ? (
-        <div className="border-t border-gray-700 p-4 bg-gray-800/50 space-y-3">
+        <div className="border-t border-neutral-200 dark:border-neutral-700 p-4 bg-neutral-50 dark:bg-neutral-800/50 space-y-3">
           <div>
-            <label className="block text-sm text-gray-400 mb-1">유형</label>
+            <label className="block text-sm text-neutral-600 dark:text-neutral-400 mb-1">유형</label>
             <select
               value={newSource.type}
               onChange={(e) => setNewSource({ ...newSource, type: e.target.value as Reference['type'] })}
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white rounded-lg px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 focus:border-blue-500 focus:outline-none"
             >
               {Object.entries(sourceTypeLabels).map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>
@@ -151,43 +151,43 @@ export function SourcesPanel({ isOpen, onClose }: SourcesPanelProps) {
             </select>
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">제목 *</label>
+            <label className="block text-sm text-neutral-600 dark:text-neutral-400 mb-1">제목 *</label>
             <input
               type="text"
               value={newSource.title || ''}
               onChange={(e) => setNewSource({ ...newSource, title: e.target.value })}
               placeholder="출처 제목"
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white rounded-lg px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 focus:border-blue-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">저자</label>
+            <label className="block text-sm text-neutral-600 dark:text-neutral-400 mb-1">저자</label>
             <input
               type="text"
               value={newSource.author || ''}
               onChange={(e) => setNewSource({ ...newSource, author: e.target.value })}
               placeholder="저자명"
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white rounded-lg px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 focus:border-blue-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">URL</label>
+            <label className="block text-sm text-neutral-600 dark:text-neutral-400 mb-1">URL</label>
             <input
               type="url"
               value={newSource.url || ''}
               onChange={(e) => setNewSource({ ...newSource, url: e.target.value })}
               placeholder="https://..."
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none"
+              className="w-full bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white rounded-lg px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 focus:border-blue-500 focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-400 mb-1">메모</label>
+            <label className="block text-sm text-neutral-600 dark:text-neutral-400 mb-1">메모</label>
             <textarea
               value={newSource.notes || ''}
               onChange={(e) => setNewSource({ ...newSource, notes: e.target.value })}
               placeholder="참고 사항..."
               rows={2}
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 text-sm border border-gray-600 focus:border-blue-500 focus:outline-none resize-none"
+              className="w-full bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white rounded-lg px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 focus:border-blue-500 focus:outline-none resize-none"
             />
           </div>
           <div className="flex gap-2">
@@ -200,17 +200,17 @@ export function SourcesPanel({ isOpen, onClose }: SourcesPanelProps) {
             </button>
             <button
               onClick={() => setIsAdding(false)}
-              className="flex-1 bg-gray-700 text-gray-300 rounded-lg py-2 text-sm font-medium hover:bg-gray-600 transition-colors"
+              className="flex-1 bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 rounded-lg py-2 text-sm font-medium hover:bg-neutral-300 dark:hover:bg-neutral-600 transition-colors"
             >
               취소
             </button>
           </div>
         </div>
       ) : (
-        <div className="border-t border-gray-700 p-4">
+        <div className="border-t border-neutral-200 dark:border-neutral-700 p-4">
           <button
             onClick={() => setIsAdding(true)}
-            className="w-full flex items-center justify-center gap-2 bg-gray-800 text-gray-300 rounded-lg py-3 hover:bg-gray-700 hover:text-white transition-colors"
+            className="w-full flex items-center justify-center gap-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 rounded-lg py-3 hover:bg-neutral-200 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-white transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

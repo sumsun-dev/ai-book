@@ -393,6 +393,23 @@ export interface Memo {
   updatedAt: Date
 }
 
+// AI Chat 타입
+export interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: Date
+  chapterNumber?: number
+  pageNumber?: number
+}
+
+export interface ChatContext {
+  chapterNumber: number
+  pageNumber?: number
+  selectedText?: string
+  fullContent?: string
+}
+
 // 단계별 진행 상태
 export interface StageProgress {
   research: {

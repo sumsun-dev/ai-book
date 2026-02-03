@@ -657,7 +657,7 @@ export default function ResearchPage() {
                     책 계획 요약
                   </h3>
                   <div
-                    className="prose prose-neutral dark:prose-invert max-w-none prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-p:leading-relaxed"
+                    className="prose prose-neutral dark:prose-invert max-w-none text-neutral-900 dark:text-neutral-100 prose-headings:text-neutral-900 dark:prose-headings:text-white prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-p:leading-relaxed prose-strong:text-neutral-900 dark:prose-strong:text-white prose-li:text-neutral-700 dark:prose-li:text-neutral-300"
                     dangerouslySetInnerHTML={{ __html: state.researchSummary }}
                   />
                 </div>

@@ -11,6 +11,8 @@ import Highlight from '@tiptap/extension-highlight'
 import { useEffect, useCallback, useRef, useState } from 'react'
 import { ChapterOutline } from '@/types/book'
 
+type AIWriteMode = 'new' | 'continue'
+
 interface ChapterEditorProps {
   chapterOutline: ChapterOutline | null
   content: string
@@ -20,7 +22,7 @@ interface ChapterEditorProps {
   projectId: string
   chapterId: string | null
   onContentChange: (content: string) => void
-  onAIWrite: () => void
+  onAIWrite: (mode: AIWriteMode) => void
   onPreviousChapter: () => void
   onNextChapter: () => void
 }
@@ -47,6 +49,19 @@ export default function ChapterEditor({
   const [editInstruction, setEditInstruction] = useState('')
   const [isEditing, setIsEditing] = useState(false)
   const [selectionRange, setSelectionRange] = useState<{ from: number; to: number } | null>(null)
+  const [showWriteMenu, setShowWriteMenu] = useState(false)
+  const writeMenuRef = useRef<HTMLDivElement>(null)
+
+  // 메뉴 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (writeMenuRef.current && !writeMenuRef.current.contains(event.target as Node)) {
+        setShowWriteMenu(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -363,34 +378,81 @@ export default function ChapterEditor({
             </svg>
           </button>
 
-          <button
-            onClick={onAIWrite}
-            disabled={isWriting}
-            className={`
-              flex items-center gap-2 px-5 py-2.5 text-sm font-medium tracking-wide transition-all duration-500
-              ${isWriting
-                ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed'
-                : 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200'
-              }
-            `}
-          >
+          {/* AI 작성 버튼 - 내용 있으면 드롭다운 */}
+          <div className="relative" ref={writeMenuRef}>
             {isWriting ? (
-              <>
+              <button
+                disabled
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium tracking-wide bg-neutral-100 dark:bg-neutral-800 text-neutral-400 dark:text-neutral-600 cursor-not-allowed"
+              >
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 AI 집필 중...
+              </button>
+            ) : content && content.trim() && content !== '<p></p>' ? (
+              <>
+                <button
+                  onClick={() => setShowWriteMenu(!showWriteMenu)}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium tracking-wide bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200 transition-all duration-500"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                  AI로 작성
+                  <svg className={`w-3 h-3 transition-transform ${showWriteMenu ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showWriteMenu && (
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-lg z-50">
+                    <button
+                      onClick={() => {
+                        setShowWriteMenu(false)
+                        onAIWrite('continue')
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m0 0l-4-4m4 4l4-4" />
+                      </svg>
+                      <div>
+                        <div className="font-medium text-neutral-900 dark:text-white">이어서 작성</div>
+                        <div className="text-xs text-neutral-500">기존 내용에 이어서 작성</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowWriteMenu(false)
+                        onAIWrite('new')
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-sm text-left hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors border-t border-neutral-100 dark:border-neutral-700"
+                    >
+                      <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                      <div>
+                        <div className="font-medium text-neutral-900 dark:text-white">새로 작성</div>
+                        <div className="text-xs text-neutral-500">챕터 전체 다시 작성</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
-              <>
+              <button
+                onClick={() => onAIWrite('new')}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium tracking-wide bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200 transition-all duration-500"
+              >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
                 AI로 작성
-              </>
+              </button>
             )}
-          </button>
+          </div>
         </div>
       </div>
 
