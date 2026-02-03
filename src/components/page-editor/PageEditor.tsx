@@ -5,11 +5,15 @@ import PageToolbar from './PageToolbar'
 import PageThumbnails from './PageThumbnails'
 import PageCanvas from './PageCanvas'
 import SourcesCollapsible from './SourcesCollapsible'
+import { AIChatPanel } from '@/components/ai-chat'
 import { splitChapterToPages, countWords, getPageStatus, redistributePages, PAGE_CHAR_LIMITS, getTextLength } from '@/lib/page-utils'
+import { useToast } from '@/hooks/useToast'
+import { getErrorMessage, ERROR_CODES } from '@/lib/errors'
 import type { Page, PageViewMode, PageEditorState, PageGenerateMode, ChapterOutline, PaperSize } from '@/types/book'
 
 interface PageEditorProps {
   projectId: string
+  projectTitle?: string
   chapterId: string
   chapterNumber: number
   chapterTitle: string
@@ -21,6 +25,7 @@ interface PageEditorProps {
 
 export default function PageEditor({
   projectId,
+  projectTitle,
   chapterId,
   chapterNumber,
   chapterTitle,
@@ -51,6 +56,28 @@ export default function PageEditor({
   const [isGenerating, setIsGenerating] = useState(false)
   const [streamingContent, setStreamingContent] = useState('')
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const prevInitialContentRef = useRef(initialContent)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const { showToast } = useToast()
+
+  // initialContent가 외부에서 변경되면 상태 동기화
+  useEffect(() => {
+    if (initialContent !== prevInitialContentRef.current) {
+      prevInitialContentRef.current = initialContent
+      const newPages = splitChapterToPages(initialContent).map((p, idx) => ({
+        ...p,
+        id: `temp-${idx}`,
+        chapterId,
+      }))
+      setState((prev) => ({
+        ...prev,
+        pages: newPages,
+        totalPages: newPages.length,
+        currentPage: Math.min(prev.currentPage, newPages.length || 1),
+        isDirty: false,
+      }))
+    }
+  }, [initialContent, chapterId])
 
   const mergePagesContent = useCallback(() => {
     return state.pages
@@ -68,17 +95,23 @@ export default function PageEditor({
     try {
       const content = mergePagesContent()
       await onSave(content)
+      prevInitialContentRef.current = content
       setState((prev) => ({
         ...prev,
         isDirty: false,
         lastSaved: new Date(),
       }))
-    } catch {
-      // 저장 실패 시 상태 유지 (다음 저장 시 재시도)
+    } catch (error) {
+      showToast({
+        type: 'error',
+        message: getErrorMessage(error),
+        action: { label: '지금 저장', onClick: () => saveContent() },
+      })
+      setTimeout(() => saveContent(), 5000)
     } finally {
       setIsSaving(false)
     }
-  }, [state.isDirty, mergePagesContent, onSave])
+  }, [state.isDirty, mergePagesContent, onSave, showToast])
 
   useEffect(() => {
     if (state.isDirty) {
@@ -96,6 +129,18 @@ export default function PageEditor({
       }
     }
   }, [state.isDirty, saveContent])
+
+  // beforeunload 경고 - 저장되지 않은 변경사항 또는 AI 생성 중일 때
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (state.isDirty || isGenerating) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [state.isDirty, isGenerating])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -258,12 +303,30 @@ export default function PageEditor({
     }
   }
 
+  const handleCancelGenerate = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    setIsGenerating(false)
+    setStreamingContent('')
+    showToast({
+      type: 'info',
+      message: 'AI 작성이 취소되었습니다',
+    })
+  }, [showToast])
+
   const handleGenerate = async (mode: PageGenerateMode) => {
+    // 이전 요청이 있으면 취소
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+    abortControllerRef.current = new AbortController()
+
     setIsGenerating(true)
     setStreamingContent('')
 
     try {
-      // 이전 페이지들의 내용 수집 (컨텍스트용)
       const previousPages = state.pages
         .filter((p) => p.pageNumber < state.currentPage)
         .sort((a, b) => b.pageNumber - a.pageNumber)
@@ -272,7 +335,6 @@ export default function PageEditor({
         .reverse()
         .join('\n\n')
 
-      // 현재 페이지 내용 (continue/rewrite 모드용)
       const currentPageData = state.pages.find((p) => p.pageNumber === state.currentPage)
       const currentPageContent = currentPageData?.content || ''
 
@@ -280,7 +342,6 @@ export default function PageEditor({
         ? `챕터 ${chapterNumber}: ${chapterTitle}\n개요: ${chapterOutline.summary}\n핵심 포인트: ${chapterOutline.keyPoints.join(', ')}`
         : `챕터 ${chapterNumber}: ${chapterTitle}`
 
-      // continue 모드일 때 이전 내용 + 현재 페이지 내용까지 포함
       let context = outlineContext
       if (previousPages || currentPageContent) {
         const allPreviousContent = previousPages
@@ -289,12 +350,14 @@ export default function PageEditor({
         context = `${outlineContext}\n\n이전 내용:\n${allPreviousContent}`
       }
 
-      // AI 생성 호출 및 결과 받기
       const generatedContent = await onAIGenerate(mode, state.currentPage, context)
 
-      // 생성된 내용을 현재 페이지에 반영
+      // 취소된 경우 결과 무시
+      if (abortControllerRef.current?.signal.aborted) {
+        return
+      }
+
       if (generatedContent) {
-        // continue 모드면 기존 내용에 이어붙이기, 아니면 교체
         const newContent = mode.mode === 'continue' && currentPageContent
           ? `${currentPageContent}\n\n${generatedContent}`
           : generatedContent
@@ -303,7 +366,6 @@ export default function PageEditor({
           const maxChars = PAGE_CHAR_LIMITS[prev.paperSize]
           const textLength = getTextLength(newContent)
 
-          // 오버플로우 체크 및 자동 분리 (HTML 태그 제외)
           if (textLength > maxChars) {
             const newPages = redistributePages(
               prev.pages,
@@ -337,10 +399,17 @@ export default function PageEditor({
         })
       }
     } catch (error) {
-      console.error('AI generation failed:', error)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return
+      }
+      showToast({
+        type: 'error',
+        message: getErrorMessage(error),
+      })
     } finally {
       setIsGenerating(false)
       setStreamingContent('')
+      abortControllerRef.current = null
     }
   }
 
@@ -349,49 +418,87 @@ export default function PageEditor({
   }
 
   return (
-    <div className="flex flex-col h-full bg-neutral-100 dark:bg-neutral-900">
-      <PageToolbar
-        zoom={state.zoom}
-        onZoomChange={handleZoomChange}
-        viewMode={state.viewMode}
-        onViewModeChange={handleViewModeChange}
-        paperSize={state.paperSize}
-        onPaperSizeChange={handlePaperSizeChange}
-        isSaving={isSaving}
-        lastSaved={state.lastSaved}
-        isDirty={state.isDirty}
-        onSave={handleManualSave}
-      />
-
-      <div className="flex-1 flex min-h-0">
-        <PageThumbnails
-          pages={state.pages}
+    <div className="flex flex-col h-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+      <div className="shrink-0">
+        <PageToolbar
+          projectId={projectId}
+          projectTitle={projectTitle}
+          chapterNumber={chapterNumber}
+          chapterTitle={chapterTitle}
           currentPage={state.currentPage}
-          onPageSelect={handlePageChange}
-        />
-
-        <PageCanvas
-          pages={state.pages}
-          currentPage={state.currentPage}
-          onPageChange={handlePageChange}
-          onContentChange={handleContentChange}
-          onGenerate={handleGenerate}
-          onDeletePage={handleDeletePage}
-          isGenerating={isGenerating}
-          streamingContent={streamingContent}
+          totalPages={state.totalPages}
           zoom={state.zoom}
+          onZoomChange={handleZoomChange}
           viewMode={state.viewMode}
+          onViewModeChange={handleViewModeChange}
           paperSize={state.paperSize}
-          chapterTitle={`챕터 ${chapterNumber}: ${chapterTitle}`}
+          onPaperSizeChange={handlePaperSizeChange}
+          isSaving={isSaving}
+          lastSaved={state.lastSaved}
+          isDirty={state.isDirty}
+          onSave={handleManualSave}
+        />
+      </div>
+
+      {/* 메인 콘텐츠 영역: Edit Area + AI Panel (가로 배치) */}
+      <div className="flex-1 flex min-h-0">
+        {/* 좌측: 썸네일 + 캔버스 */}
+        <div className="flex-1 flex min-w-0">
+          <PageThumbnails
+            pages={state.pages}
+            currentPage={state.currentPage}
+            onPageSelect={handlePageChange}
+          />
+
+          <PageCanvas
+            pages={state.pages}
+            currentPage={state.currentPage}
+            onPageChange={handlePageChange}
+            onContentChange={handleContentChange}
+            onGenerate={handleGenerate}
+            onCancelGenerate={handleCancelGenerate}
+            onDeletePage={handleDeletePage}
+            isGenerating={isGenerating}
+            streamingContent={streamingContent}
+            zoom={state.zoom}
+            viewMode={state.viewMode}
+            paperSize={state.paperSize}
+            chapterTitle={`챕터 ${chapterNumber}: ${chapterTitle}`}
+            projectId={projectId}
+            chapterId={chapterId}
+          />
+        </div>
+
+        {/* 우측: AI 채팅 패널 */}
+        <AIChatPanel
           projectId={projectId}
           chapterId={chapterId}
+          chapterNumber={chapterNumber}
+          pages={state.pages}
+          getPageContent={(pageNumber) => {
+            if (pageNumber === null) {
+              return state.pages
+                .slice()
+                .sort((a, b) => a.pageNumber - b.pageNumber)
+                .map((p) => p.content)
+                .filter((c) => c.trim())
+                .join('\n\n')
+            }
+            const page = state.pages.find((p) => p.pageNumber === pageNumber)
+            return page?.content || ''
+          }}
+          onApplyContent={(content) => {
+            handleContentChange(state.currentPage, content)
+          }}
         />
       </div>
 
       {/* 출처 패널 */}
-      <SourcesCollapsible projectId={projectId} />
+      <div className="shrink-0">
+        <SourcesCollapsible projectId={projectId} />
+      </div>
 
-      <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 text-sm text-neutral-500 dark:text-neutral-400">
+      <div className="shrink-0 flex items-center justify-between px-4 h-10 bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 text-sm text-neutral-500 dark:text-neutral-400">
         <span>
           챕터 {chapterNumber} · {state.pages.length}페이지 · {state.pages.reduce((sum, p) => sum + p.wordCount, 0).toLocaleString()}단어
         </span>

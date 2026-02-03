@@ -1,10 +1,17 @@
 'use client'
 
 import type { ReactElement } from 'react'
+import Link from 'next/link'
 import type { PageViewMode, PaperSize } from '@/types/book'
 import { PAPER_SIZES } from '@/types/book'
 
 interface PageToolbarProps {
+  projectId?: string
+  projectTitle?: string
+  chapterNumber?: number
+  chapterTitle?: string
+  currentPage?: number
+  totalPages?: number
   zoom: number
   onZoomChange: (zoom: number) => void
   viewMode: PageViewMode
@@ -18,6 +25,12 @@ interface PageToolbarProps {
 }
 
 export default function PageToolbar({
+  projectId,
+  projectTitle,
+  chapterNumber,
+  chapterTitle,
+  currentPage,
+  totalPages,
   zoom,
   onZoomChange,
   viewMode,
@@ -79,8 +92,36 @@ export default function PageToolbar({
   }
 
   return (
-    <div className="flex items-center justify-between px-4 py-2 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+    <div className="flex items-center justify-between px-4 h-12 bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
       <div className="flex items-center gap-3">
+        {/* 브레드크럼 네비게이션 */}
+        {projectId && (
+          <nav className="flex items-center gap-1.5 text-sm mr-4 pr-4 border-r border-neutral-200 dark:border-neutral-700">
+            <Link
+              href={`/projects/${projectId}`}
+              className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors max-w-[120px] truncate"
+              title={projectTitle}
+            >
+              {projectTitle || '프로젝트'}
+            </Link>
+            {chapterNumber !== undefined && (
+              <>
+                <span className="text-neutral-400 dark:text-neutral-500">/</span>
+                <span className="text-neutral-700 dark:text-neutral-300 max-w-[150px] truncate" title={chapterTitle}>
+                  챕터 {chapterNumber}{chapterTitle && `: ${chapterTitle}`}
+                </span>
+              </>
+            )}
+            {currentPage !== undefined && totalPages !== undefined && (
+              <>
+                <span className="text-neutral-400 dark:text-neutral-500">/</span>
+                <span className="text-neutral-900 dark:text-white font-medium">
+                  {currentPage} / {totalPages}
+                </span>
+              </>
+            )}
+          </nav>
+        )}
         {/* 용지 크기 선택 */}
         <div className="flex items-center gap-2 border border-neutral-200 dark:border-neutral-700 px-3 py-1.5">
           <svg className="w-4 h-4 text-neutral-500 dark:text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">

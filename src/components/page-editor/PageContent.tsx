@@ -98,7 +98,7 @@ export default function PageContent({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-neutral dark:prose-invert max-w-none focus:outline-none min-h-full p-6',
+        class: 'prose prose-neutral dark:prose-invert max-w-none focus:outline-none min-h-full p-6 text-neutral-900 dark:text-neutral-100 prose-headings:text-neutral-900 dark:prose-headings:text-white prose-p:text-neutral-800 dark:prose-p:text-neutral-200 prose-strong:text-neutral-900 dark:prose-strong:text-white prose-li:text-neutral-800 dark:prose-li:text-neutral-200',
         style: "font-family: 'Noto Serif KR', serif; font-size: 15px; line-height: 1.8;",
       },
     },

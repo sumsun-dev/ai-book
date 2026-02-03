@@ -5,12 +5,14 @@ import type { PageGenerateMode } from '@/types/book'
 
 interface AIGenerateButtonProps {
   onGenerate: (mode: PageGenerateMode) => void
+  onCancel?: () => void
   isGenerating: boolean
   hasContent: boolean
 }
 
 export default function AIGenerateButton({
   onGenerate,
+  onCancel,
   isGenerating,
   hasContent,
 }: AIGenerateButtonProps) {
@@ -60,8 +62,19 @@ export default function AIGenerateButton({
   if (isGenerating) {
     return (
       <div className="flex items-center gap-2 px-4 py-1.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900">
-        <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin" />
+        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
         <span className="text-sm font-medium tracking-wide">AI 작성 중...</span>
+        {onCancel && (
+          <button
+            onClick={onCancel}
+            className="ml-1 p-1 rounded hover:bg-white/20 dark:hover:bg-neutral-900/20 transition-colors"
+            title="작성 취소"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
     )
   }

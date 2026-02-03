@@ -13,6 +13,7 @@ interface PageCanvasProps {
   onPageChange: (pageNumber: number) => void
   onContentChange: (pageNumber: number, content: string) => void
   onGenerate: (mode: PageGenerateMode) => void
+  onCancelGenerate?: () => void
   onDeletePage: (pageNumber: number) => void
   isGenerating: boolean
   streamingContent?: string
@@ -30,6 +31,7 @@ export default function PageCanvas({
   onPageChange,
   onContentChange,
   onGenerate,
+  onCancelGenerate,
   onDeletePage,
   isGenerating,
   streamingContent,
@@ -131,6 +133,7 @@ export default function PageCanvas({
               {showAIButton && (
                 <AIGenerateButton
                   onGenerate={onGenerate}
+                  onCancel={onCancelGenerate}
                   isGenerating={isGenerating}
                   hasContent={!!content.trim()}
                 />
