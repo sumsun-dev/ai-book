@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
+import { buildBibleContext, parseBibleJson } from '@/lib/bible-context'
 
 // TODO: 인증 미들웨어 추가 필요 (Task #2)
 
@@ -23,6 +24,8 @@ const WriteChapterSchema = z.object({
   chapterNumber: z.number().int().positive(),
   chapterOutline: ChapterOutlineSchema,
   previousChapters: z.array(PreviousChapterSchema).max(50),
+  mode: z.enum(['new', 'continue']).optional().default('new'),
+  existingContent: z.string().max(50000).optional(),
 })
 
 function sanitizeForPrompt(text: string): string {
@@ -282,10 +285,18 @@ export async function POST(
       )
     }
 
-    const { chapterNumber, chapterOutline, previousChapters } = parseResult.data
+    const { chapterNumber, chapterOutline, previousChapters, mode, existingContent } = parseResult.data
 
     const project = await prisma.project.findUnique({
-      where: { id }
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        targetAudience: true,
+        tone: true,
+        bible: true,
+      }
     })
 
     if (!project) {
@@ -295,6 +306,13 @@ export async function POST(
       )
     }
 
+    // Bible 컨텍스트 빌드
+    const bible = parseBibleJson(project.bible)
+    const bibleContext = buildBibleContext(bible, {
+      currentChapter: chapterNumber,
+      maxContextLength: 4000,
+    })
+
     const previousContext = previousChapters.length > 0
       ? '\n\n**이전 챕터 요약:**\n' +
         previousChapters.map(ch =>
@@ -302,10 +320,23 @@ export async function POST(
         ).join('\n')
       : ''
 
+    // continue 모드일 때 기존 내용 컨텍스트 추가
+    const existingContentContext = mode === 'continue' && existingContent
+      ? `\n\n**현재까지 작성된 내용:**
+${sanitizeForPrompt(existingContent.replace(/<[^>]*>/g, ' ').substring(0, 3000))}
+
+위 내용에 이어서 자연스럽게 계속 작성해주세요. 기존 내용을 반복하지 말고, 새로운 내용만 작성해주세요.`
+      : ''
+
+    const writeInstruction = mode === 'continue'
+      ? '위 정보를 바탕으로 기존 내용에 이어서 자연스럽게 계속 작성해주세요. 기존 내용을 다시 쓰지 말고 새로운 부분만 작성하세요.'
+      : '위 정보를 바탕으로 이 챕터의 본문을 작성해주세요.'
+
     const prompt = `**책 제목**: ${sanitizeForPrompt(project.title)}
 **책 유형**: ${project.type}
 **타겟 독자**: ${sanitizeForPrompt(project.targetAudience || '일반 독자')}
 **문체**: ${sanitizeForPrompt(project.tone || '친근체')}
+${bibleContext}
 ${previousContext}
 
 **현재 챕터 정보:**
@@ -313,8 +344,9 @@ ${previousContext}
 - 챕터 제목: ${sanitizeForPrompt(chapterOutline.title)}
 - 챕터 요약: ${sanitizeForPrompt(chapterOutline.summary)}
 - 핵심 포인트: ${chapterOutline.keyPoints?.map(sanitizeForPrompt).join(', ') || '없음'}
+${existingContentContext}
 
-위 정보를 바탕으로 이 챕터의 본문을 작성해주세요.`
+${writeInstruction}`
 
     // 스트리밍 응답 생성
     const encoder = new TextEncoder()

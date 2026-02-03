@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
+import { buildBibleContext, parseBibleJson } from '@/lib/bible-context'
 
 // TODO: 인증 미들웨어 추가 필요 (Task #2)
 
@@ -277,6 +278,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const project = chapter.project
 
+    // Bible 컨텍스트 빌드
+    const bible = parseBibleJson(project.bible)
+    const bibleContext = buildBibleContext(bible, {
+      currentChapter: chapter.number,
+      maxContextLength: 3000, // 페이지 생성 시 더 짧게
+    })
+
     const sanitizedContext = sanitizeForPrompt(context)
     const sanitizedCurrentContent = currentContent ? sanitizeForPrompt(currentContent) : ''
 
@@ -284,6 +292,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 **책 유형**: ${project.type}
 **타겟 독자**: ${sanitizeForPrompt(project.targetAudience || '일반 독자')}
 **문체**: ${sanitizeForPrompt(project.tone || '친근체')}
+${bibleContext}
 
 **챕터 정보**:
 ${sanitizedContext}
