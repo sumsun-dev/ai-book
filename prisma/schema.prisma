@@ -27,6 +27,7 @@ model Project {
   status         String        @default("draft")
   stage          String        @default("research") // research, outline, write, edit, review
   outline        String?       // JSON stored as string
+  bible          String?       // JSON: BookBible 객체 (Fiction/SelfHelp)
   targetAudience String?
   targetLength   Int?          // 목표 페이지 수
   tone           String?       // 문체/어투
@@ -201,4 +202,19 @@ model Source {
   updatedAt DateTime @updatedAt
 
   @@index([projectId])
+}
+
+// AI 채팅 메시지 히스토리
+model ChatMessage {
+  id          String   @id @default(uuid())
+  projectId   String
+  chapterId   String?
+  pageNumber  Int?
+  role        String   // user, assistant
+  content     String
+  createdAt   DateTime @default(now())
+
+  @@index([projectId])
+  @@index([chapterId])
+  @@index([projectId, chapterId])
 }
