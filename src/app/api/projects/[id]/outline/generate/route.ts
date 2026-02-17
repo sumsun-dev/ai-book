@@ -299,8 +299,8 @@ ${researchContext}
           sections: []
         })),
         estimatedPages: targetLength ?? 200,
-        targetAudience,
-        tone
+        targetAudience: targetAudience ?? '일반 독자',
+        tone: tone ?? 'casual'
       }
     }
 
