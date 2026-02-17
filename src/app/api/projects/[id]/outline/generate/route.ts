@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import { BookOutline } from '@/types/book'
+
+const GenerateOutlineSchema = z.object({
+  targetAudience: z.string().max(500).optional(),
+  targetLength: z.number().int().positive().max(10000).optional(),
+  tone: z.string().max(100).optional(),
+  customTone: z.string().max(2000).optional(),
+})
 
 const BOOK_TYPE_GUIDELINES: Record<string, string> = {
   'practical': `
@@ -142,7 +150,15 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { targetAudience, targetLength, tone, customTone } = await request.json()
+    const body = await request.json()
+    const parseResult = GenerateOutlineSchema.safeParse(body)
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: parseResult.error.flatten() },
+        { status: 400 }
+      )
+    }
+    const { targetAudience, targetLength, tone, customTone } = parseResult.data
 
     const project = await prisma.project.findUnique({
       where: { id },
@@ -210,8 +226,8 @@ ${typeGuidelines}`
 
 # 설정
 
-**타겟 독자**: ${targetAudience}
-**목표 분량**: ${targetLength}페이지
+**타겟 독자**: ${targetAudience ?? '일반 독자'}
+**목표 분량**: ${targetLength ?? 200}페이지
 **문체**: ${toneGuide}
 
 ${researchContext}
@@ -272,7 +288,7 @@ ${researchContext}
       }
     } catch {
       // 기본 목차 제공
-      const chapterCount = Math.max(5, Math.floor(targetLength / 25))
+      const chapterCount = Math.max(5, Math.floor((targetLength ?? 200) / 25))
       outline = {
         synopsis: `${project.title}은(는) ${targetAudience}를 위한 ${project.type} 도서입니다. 이 책을 통해 독자들은 새로운 관점과 실질적인 도움을 얻게 될 것입니다.`,
         chapters: Array.from({ length: Math.min(chapterCount, 15) }, (_, i) => ({
@@ -282,7 +298,7 @@ ${researchContext}
           keyPoints: [],
           sections: []
         })),
-        estimatedPages: targetLength,
+        estimatedPages: targetLength ?? 200,
         targetAudience,
         tone
       }
@@ -302,8 +318,7 @@ ${researchContext}
     })
 
     return NextResponse.json({ outline })
-  } catch (error) {
-    console.error('Failed to generate outline:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to generate outline' },
       { status: 500 }
