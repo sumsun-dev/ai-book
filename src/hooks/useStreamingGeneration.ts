@@ -121,7 +121,10 @@ export function useStreamingGeneration(): UseStreamingGenerationReturn {
                   throw new Error(data.error)
                 }
               } catch (parseError) {
-                // Ignore JSON parse errors for non-data lines
+                if (parseError instanceof SyntaxError) {
+                  continue
+                }
+                throw parseError
               }
             }
           }

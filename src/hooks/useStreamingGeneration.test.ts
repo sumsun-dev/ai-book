@@ -190,10 +190,10 @@ describe('useStreamingGeneration', () => {
     expect(content).toBe('full replacement')
   })
 
-  it('data.error가 내부 catch에 잡혀 스트림이 계속된다', async () => {
+  it('data.error가 에러를 전파한다', async () => {
     const encoder = new TextEncoder()
     const chunks = [
-      encoder.encode('data: {"error":"서버 오류"}\ndata: {"text":"after error"}\n\n'),
+      encoder.encode('data: {"error":"서버 오류"}\n\n'),
     ]
 
     let chunkIndex = 0
@@ -213,17 +213,19 @@ describe('useStreamingGeneration', () => {
 
     const { result } = renderHook(() => useStreamingGeneration())
 
-    let content = ''
     await act(async () => {
-      content = await result.current.startStreaming(
-        'fiction',
-        createMockOutline(1),
-        createMockChapterOutline(1)
-      )
+      try {
+        await result.current.startStreaming(
+          'fiction',
+          createMockOutline(1),
+          createMockChapterOutline(1)
+        )
+      } catch {
+        // expected
+      }
     })
 
-    // data.error throws → caught by inner catch → stream continues
-    expect(content).toBe('after error')
+    expect(result.current.error).toBe('서버 오류')
     expect(result.current.isStreaming).toBe(false)
   })
 
