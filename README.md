@@ -27,7 +27,14 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 - **Outline** — 장르별 목차 자동 생성, 드래그앤드롭 편집, 11가지 문체 프리셋 + 커스텀 문체
 - **Write** — InDesign 스타일 페이지 에디터, 챕터 에디터, AI 자동 작성 (새로 작성/이어쓰기/다시쓰기)
 - **Edit** — AI 기반 교정 및 수정 제안
-- **Review** — 최종 검토 및 승인
+- **Review** — 최종 검토 및 승인, 자동 피드백 루프, 일관성 검사
+
+### 차별화 기능
+- **자동 피드백 루프** — Editor-Critic 에이전트가 최대 3회 자동 반복 개선 (SSE 실시간 스트리밍)
+- **플롯 구조 템플릿** — 3막 구조, 영웅의 여정, Save the Cat, 기승전결, 피히테 곡선, 자유 구조
+- **일관성 검사** — 챕터 간 캐릭터, 타임라인, 설정, 플롯 교차 검증 Agent
+- **ISBN 발급 가이드** — 한국 ISBN Agency 3단계 신청 절차 안내 + 상태 추적 (draft→applied→issued)
+- **뉴스레터** — 이메일 구독 API + 기능 소개(/features) 및 가격(/pricing) 페이지
 
 ### Book Bible 시스템
 - 장르, 스타일, 톤, 캐릭터, 세계관 등 컨텍스트 관리
@@ -48,14 +55,14 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 - **EPUB 내보내기** — 전자책 / Amazon Kindle 지원
 - **표지 디자인** — AI 생성 또는 템플릿 기반
 - **CMYK 변환** — 인쇄용 표지 출력
-- **ISBN 관리** — ISBN-10/13 검증 및 바코드 생성
+- **ISBN 관리** — ISBN-10/13 검증, 바코드 생성, 발급 상태 추적
 - **메타데이터** — 저자, 출판사, 저작권 정보 관리
 
 ### 사용자 인증
 - **NextAuth.js v5** 기반 인증 시스템 (JWT 세션)
 - 이메일/비밀번호 로그인 (bcryptjs 해싱)
 - Google OAuth 지원 (선택)
-- 모든 API 라우트 인증 보호 (28개 라우트)
+- 모든 API 라우트 인증 보호 (34개 라우트)
 - 프로젝트 소유권 검증 (데이터 격리)
 - 미들웨어 기반 라우트 보호
 
@@ -68,7 +75,7 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 ### 국제화 (i18n)
 - **next-intl** 기반 다국어 지원 (한국어/영어)
 - 쿠키 기반 로케일 전환 (URL 구조 변경 없음)
-- 17개 네임스페이스, 200+ 번역 키
+- 26개 네임스페이스, 400+ 번역 키
 - ko/en 키 일치 자동 검증 테스트
 
 ### UX
@@ -110,17 +117,20 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 ```
 ai-book/
 ├── src/
-│   ├── agents/              # AI 에이전트 (research, outliner, writer, editor, critic)
+│   ├── agents/              # AI 에이전트 (research, outliner, writer, editor, critic, consistency)
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── auth/        # 인증 (NextAuth, 회원가입)
 │   │   │   ├── cover/       # 표지 생성 API
 │   │   │   ├── generate/    # AI 생성 API
-│   │   │   ├── projects/    # 프로젝트 CRUD, outline, write, edit, review
+│   │   │   ├── newsletter/   # 뉴스레터 구독 API
+│   │   │   ├── projects/    # 프로젝트 CRUD, outline, write, edit, review, consistency
 │   │   │   ├── stream/      # 스트리밍 API
 │   │   │   └── upload/      # 파일 업로드 API
 │   │   ├── auth/            # 로그인/회원가입/에러 페이지
+│   │   ├── features/        # 기능 소개 페이지
 │   │   ├── new/             # 새 프로젝트 생성
+│   │   ├── pricing/         # 가격 안내 페이지
 │   │   ├── project/[id]/    # 5단계 워크플로우 (research → outline → write → edit → review)
 │   │   ├── projects/        # 프로젝트 목록
 │   │   ├── preview/[id]/    # 북 프리뷰
@@ -130,14 +140,16 @@ ai-book/
 │   │   ├── ai-chat/         # 챕터별 AI 채팅
 │   │   ├── bible/           # Book Bible 컨텍스트 빌더
 │   │   ├── cover/           # 표지 디자인 (*)
-│   │   ├── isbn/            # ISBN 입력/바코드
+│   │   ├── isbn/            # ISBN 입력/바코드/발급 가이드/상태 트래커
 │   │   ├── metadata/        # 메타데이터 폼
-│   │   ├── outline/         # 드래그앤드롭 목차 에디터
+│   │   ├── landing/          # 랜딩 페이지 (뉴스레터 등)
+│   │   ├── outline/         # 드래그앤드롭 목차 에디터, 플롯 구조 선택
 │   │   ├── page-editor/     # TipTap 페이지 에디터
 │   │   ├── preview/         # 북 프리뷰
 │   │   ├── project/         # 프로젝트 공통 컴포넌트
 │   │   ├── ui/              # 공통 UI (Toast 등)
 │   │   ├── upload/          # 파일 업로드
+│   │   ├── review/          # 피드백 루프, 일관성 검사 리포트
 │   │   └── write/           # 집필 관련 컴포넌트
 │   ├── hooks/
 │   │   ├── useAIChat.ts     # AI 채팅 훅
@@ -155,6 +167,7 @@ ai-book/
 │   │   ├── errors.ts        # 에러 처리 유틸
 │   │   ├── file-parser.ts   # 파일 파싱 (docx, pdf, txt)
 │   │   ├── isbn.ts          # ISBN 유틸리티
+│   │   ├── plot-structures.ts # 플롯 구조 템플릿 (6종)
 │   │   ├── pdf.ts           # PDF 내보내기
 │   │   ├── store.ts         # Zustand 스토어
 │   │   ├── db/              # Prisma 클라이언트
@@ -164,7 +177,7 @@ ai-book/
 │       └── book-bible.ts    # Book Bible 타입
 ├── messages/                 # i18n 번역 파일 (ko.json, en.json)
 ├── e2e/                     # E2E 테스트 (Playwright)
-├── prisma/schema.prisma     # DB 스키마
+├── prisma/schema.prisma     # DB 스키마 (18 models)
 └── vitest.config.ts         # 테스트 설정
 ```
 
@@ -226,7 +239,7 @@ AUTH_TRUST_HOST=true  # 로컬 개발용
 - [x] 다크/라이트 모드 완전 지원
 - [x] 카테고리 선택 UI (BISAC/KDC/DDC/custom)
 - [x] 사용자 인증 (NextAuth.js v5, JWT, Google OAuth)
-- [x] 테스트 커버리지 80% 달성 (전체 95.38% stmts / 83.15% branch, 54 files / 595 tests)
+- [x] 테스트 커버리지 80% 달성 (67 files / 657 tests)
 - [x] 커버리지 미달 파일 개선 완료 (useAIChat, file-parser, useStreamingGeneration, isbn 등)
 - [x] 프로젝트 검색/필터/정렬
 - [x] 전역 에러 바운더리 & 404
@@ -242,3 +255,8 @@ AUTH_TRUST_HOST=true  # 로컬 개발용
 - [x] 접근성(a11y) 개선 (aria-*, role, axe 검증)
 - [x] E2E 테스트 (Playwright, 12 spec)
 - [x] Next.js 16 + React 19 업그레이드
+- [x] 자동 피드백 루프 (Editor-Critic 최대 3회 반복, SSE 스트리밍)
+- [x] 플롯 구조 템플릿 (3막 구조, 영웅의 여정 등 6종)
+- [x] 챕터 간 일관성 검사 Agent (캐릭터, 타임라인, 설정 교차 검증)
+- [x] 뉴스레터 구독 + /features, /pricing 페이지
+- [x] ISBN 발급 가이드 + 상태 추적 (draft→applied→issued)
