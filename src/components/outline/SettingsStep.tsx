@@ -1,10 +1,14 @@
 'use client'
 
+import { PlotStructureType, BookType } from '@/types/book'
+import PlotStructureSelector from './PlotStructureSelector'
+
 interface Settings {
   targetAudience: string
   targetLength: number
   tone: string
   customTone?: string
+  plotStructure?: PlotStructureType
 }
 
 interface SettingsStepProps {
@@ -12,6 +16,7 @@ interface SettingsStepProps {
   onSettingsChange: (settings: Settings) => void
   onSubmit: () => void
   isLoading: boolean
+  bookType?: BookType
 }
 
 const TONE_OPTIONS = [
@@ -96,7 +101,7 @@ const LENGTH_PRESETS = [
   { value: 500, label: '대작', description: '450p+' }
 ]
 
-export default function SettingsStep({ settings, onSettingsChange, onSubmit, isLoading }: SettingsStepProps) {
+export default function SettingsStep({ settings, onSettingsChange, onSubmit, isLoading, bookType }: SettingsStepProps) {
   return (
     <div className="space-y-12">
       {/* 타겟 독자 */}
@@ -244,6 +249,15 @@ export default function SettingsStep({ settings, onSettingsChange, onSubmit, isL
           })}
         </div>
       </div>
+
+      {/* 플롯 구조 선택 (fiction/children/essay) */}
+      {bookType && (
+        <PlotStructureSelector
+          bookType={bookType}
+          value={settings.plotStructure || 'none'}
+          onChange={(plotStructure) => onSettingsChange({ ...settings, plotStructure })}
+        />
+      )}
 
       {/* 제출 버튼 */}
       <button

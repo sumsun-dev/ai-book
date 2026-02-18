@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
+import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { validateAndParseISBN, formatISBN, convertISBN13to10 } from '@/lib/isbn'
-import { ISBNData } from '@/types/book'
+import { ISBNData, ISBNStatus } from '@/types/book'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -40,6 +41,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       barcodeUrl: isbn.barcodeUrl || undefined,
       isValid: isbn.isValid,
       assignedAt: isbn.assignedAt || undefined,
+      status: (isbn.status as ISBNStatus) || 'draft',
+      appliedAt: isbn.appliedAt || undefined,
+      issuedAt: isbn.issuedAt || undefined,
       createdAt: isbn.createdAt,
       updatedAt: isbn.updatedAt,
     }
@@ -122,6 +126,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       barcodeUrl: isbn.barcodeUrl || undefined,
       isValid: isbn.isValid,
       assignedAt: isbn.assignedAt || undefined,
+      status: (isbn.status as ISBNStatus) || 'draft',
+      appliedAt: isbn.appliedAt || undefined,
+      issuedAt: isbn.issuedAt || undefined,
       createdAt: isbn.createdAt,
       updatedAt: isbn.updatedAt,
     }
@@ -135,6 +142,55 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.error('Failed to save ISBN:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to save ISBN' },
+      { status: 500 }
+    )
+  }
+}
+
+// PATCH: ISBN 상태 변경
+const PatchISBNSchema = z.object({
+  status: z.enum(['draft', 'applied', 'issued']),
+})
+
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
+    const { id: projectId } = await params
+    const body = await request.json()
+    const { status } = PatchISBNSchema.parse(body)
+
+    const updateData: Record<string, unknown> = { status }
+    if (status === 'applied') {
+      updateData.appliedAt = new Date()
+    } else if (status === 'issued') {
+      updateData.issuedAt = new Date()
+    }
+
+    const isbn = await prisma.iSBN.update({
+      where: { projectId },
+      data: updateData,
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        status: isbn.status,
+        appliedAt: isbn.appliedAt,
+        issuedAt: isbn.issuedAt,
+      },
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid status value' },
+        { status: 400 }
+      )
+    }
+    console.error('Failed to update ISBN status:', error)
+    return NextResponse.json(
+      { success: false, error: 'Failed to update ISBN status' },
       { status: 500 }
     )
   }

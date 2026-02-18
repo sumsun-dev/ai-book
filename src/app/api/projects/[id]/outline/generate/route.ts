@@ -3,13 +3,15 @@ import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
-import { BookOutline } from '@/types/book'
+import { BookOutline, PlotStructureType } from '@/types/book'
+import { PLOT_STRUCTURES } from '@/lib/plot-structures'
 
 const GenerateOutlineSchema = z.object({
   targetAudience: z.string().max(500).optional(),
   targetLength: z.number().int().positive().max(10000).optional(),
   tone: z.string().max(100).optional(),
   customTone: z.string().max(2000).optional(),
+  plotStructure: z.enum(['three_act', 'heros_journey', 'save_the_cat', 'kishotenketsu', 'fichtean_curve', 'none']).optional(),
 })
 
 const BOOK_TYPE_GUIDELINES: Record<string, string> = {
@@ -162,7 +164,7 @@ export async function POST(
         { status: 400 }
       )
     }
-    const { targetAudience, targetLength, tone, customTone } = parseResult.data
+    const { targetAudience, targetLength, tone, customTone, plotStructure } = parseResult.data
 
     const project = await prisma.project.findUnique({
       where: { id },
@@ -218,9 +220,18 @@ ${findings}
       toneGuide = toneGuides[tone as string] || '일반적인 문체'
     }
 
+    // 플롯 구조 가이드 주입
+    let plotGuide = ''
+    if (plotStructure && plotStructure !== 'none') {
+      const structure = PLOT_STRUCTURES[plotStructure as PlotStructureType]
+      if (structure?.promptGuide) {
+        plotGuide = `\n\n## 플롯 구조 가이드\n${structure.promptGuide}`
+      }
+    }
+
     const systemPrompt = `${OUTLINE_GENERATION_PROMPT}
 
-${typeGuidelines}`
+${typeGuidelines}${plotGuide}`
 
     const userPrompt = `# 책 정보
 
@@ -306,6 +317,11 @@ ${researchContext}
         targetAudience: targetAudience ?? '일반 독자',
         tone: tone ?? 'casual'
       }
+    }
+
+    // plotStructure를 outline JSON에 포함
+    if (plotStructure && plotStructure !== 'none') {
+      outline.plotStructure = plotStructure as PlotStructureType
     }
 
     // 프로젝트 업데이트

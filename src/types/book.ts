@@ -44,12 +44,21 @@ export type BookStatus =
   | 'reviewing'
   | 'completed'
 
+export type PlotStructureType =
+  | 'three_act'
+  | 'heros_journey'
+  | 'save_the_cat'
+  | 'kishotenketsu'
+  | 'fichtean_curve'
+  | 'none'
+
 export interface BookOutline {
   synopsis: string
   chapters: ChapterOutline[]
   estimatedPages: number
   targetAudience: string
   tone: string
+  plotStructure?: PlotStructureType
 }
 
 export interface Section {
@@ -327,6 +336,8 @@ export interface BookMetadata {
 
 // ===== ISBN 타입 =====
 
+export type ISBNStatus = 'draft' | 'applied' | 'issued'
+
 export interface ISBNData {
   id: string
   projectId: string
@@ -340,6 +351,9 @@ export interface ISBNData {
   barcodeUrl?: string
   isValid: boolean
   assignedAt?: Date
+  status: ISBNStatus
+  appliedAt?: Date
+  issuedAt?: Date
   createdAt?: Date
   updatedAt?: Date
 }
@@ -448,6 +462,35 @@ export interface AgentCustomConfig {
   writer?: Partial<WriterConfig>
   editor?: Partial<EditorConfig>
   critic?: Partial<CriticConfig>
+}
+
+// ===== 일관성 검사 타입 =====
+
+export type ConsistencyIssueType =
+  | 'character_name'
+  | 'character_trait'
+  | 'timeline'
+  | 'setting'
+  | 'plot'
+  | 'style'
+
+export type ConsistencyIssueSeverity = 'error' | 'warning' | 'info'
+
+export interface ConsistencyIssue {
+  type: ConsistencyIssueType
+  severity: ConsistencyIssueSeverity
+  chapterA: number
+  chapterB: number
+  title: string
+  description: string
+  suggestion?: string
+}
+
+export interface ConsistencyReport {
+  issues: ConsistencyIssue[]
+  checkedAt: Date
+  chapterCount: number
+  summary: string
 }
 
 // 단계별 진행 상태

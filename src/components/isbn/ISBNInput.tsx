@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { ISBNData } from '@/types/book'
+import { ISBNData, ISBNStatus } from '@/types/book'
 import { formatISBN, validateAndParseISBN, generateDraftISBN } from '@/lib/isbn'
 import { generateBarcodeDataURL, downloadBarcode } from '@/lib/barcode'
+import ISBNAgencyGuide from './ISBNAgencyGuide'
+import ISBNStatusTracker from './ISBNStatusTracker'
 
 interface ISBNInputProps {
   projectId: string
@@ -283,8 +285,22 @@ export default function ISBNInput({ projectId, onSave }: ISBNInputProps) {
               </span>
             </div>
           </div>
+
+          {/* ISBN 상태 트래커 */}
+          <ISBNStatusTracker
+            projectId={projectId}
+            currentStatus={savedISBN.status || 'draft'}
+            appliedAt={savedISBN.appliedAt}
+            issuedAt={savedISBN.issuedAt}
+            onStatusChange={(status: ISBNStatus) => {
+              setSavedISBN({ ...savedISBN, status })
+            }}
+          />
         </div>
       )}
+
+      {/* ISBN 신청 가이드 */}
+      <ISBNAgencyGuide />
     </div>
   )
 }

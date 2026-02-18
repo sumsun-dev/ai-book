@@ -6,6 +6,7 @@ import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'fra
 import { useTranslations } from 'next-intl'
 import FloatingBookThree from '@/components/FloatingBookThree'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import NewsletterForm from '@/components/landing/NewsletterForm'
 
 // ============================================================================
 // Static Data (visual properties only — text comes from translations)
@@ -849,14 +850,6 @@ function Footer() {
             <p className="text-stone-400 max-w-sm font-light leading-relaxed mb-8">
               We combine human creativity with artificial intelligence to unfold stories that have never been told before.
             </p>
-            <div className="flex gap-4">
-              {['Twitter', 'Instagram', 'LinkedIn'].map(social => (
-                <a key={social} href="#" className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-white hover:text-ink transition-all">
-                  <span className="sr-only">{social}</span>
-                  <div className="w-4 h-4 bg-current rounded-full opacity-50" />
-                </a>
-              ))}
-            </div>
           </div>
 
           <div className="md:col-span-3">
@@ -869,21 +862,12 @@ function Footer() {
           </div>
 
           <div className="md:col-span-4">
-            <h4 className="font-serif text-lg mb-6 text-gold">Newsletter</h4>
-            <p className="text-sm text-stone-400 mb-4 font-light">Subscribe to our weekly editorial reflections.</p>
-            <div className="flex border-b border-white/20 pb-2">
-              <input type="email" placeholder="Email address" className="bg-transparent w-full outline-none text-white placeholder-stone-700 text-sm" />
-              <button className="text-gold uppercase text-[10px] font-bold tracking-[0.2em] hover:text-white transition-colors">Join</button>
-            </div>
+            <NewsletterForm />
           </div>
         </div>
 
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 text-xs text-stone-600 uppercase tracking-widest">
-          <p>© 2024 AI Book Inc. All rights reserved.</p>
-          <div className="flex gap-8 mt-4 md:mt-0">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-          </div>
+          <p>&copy; {new Date().getFullYear()} AI Book. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -26,3 +26,4 @@ export {
   type QualityDecision,
   type FeedbackLoopOptions,
 } from './editor-critic'
+export { runConsistencyCheck } from './consistency-checker'

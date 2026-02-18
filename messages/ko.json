@@ -315,8 +315,53 @@
       "originality": "독창성",
       "targetFit": "적합도"
     },
+    "consistency": {
+      "title": "일관성 검사",
+      "description": "챕터 간 일관성 문제를 검출합니다",
+      "check": "검사 실행",
+      "checking": "검사 중...",
+      "noIssues": "일관성 문제가 발견되지 않았습니다.",
+      "issueCount": "{count}개의 문제 발견",
+      "summary": "검사 요약",
+      "chapters": "챕터 {a} ↔ {b}",
+      "severity": {
+        "error": "오류",
+        "warning": "경고",
+        "info": "정보"
+      },
+      "types": {
+        "character_name": "캐릭터 이름",
+        "character_trait": "캐릭터 특성",
+        "timeline": "타임라인",
+        "setting": "배경 설정",
+        "plot": "플롯",
+        "style": "문체"
+      },
+      "suggestion": "제안"
+    },
     "finalize": "완료 및 미리보기",
     "allApproved": "모든 챕터가 승인되었습니다. 책을 마무리하고 미리보기를 확인하세요."
+  },
+  "feedbackLoop": {
+    "title": "자동 품질 개선",
+    "description": "AI가 자동으로 챕터 품질을 반복 개선합니다",
+    "start": "자동 개선 시작",
+    "maxIterations": "최대 반복",
+    "progress": "반복 {current}/{total}",
+    "iteration": "반복 {n}회차",
+    "pass": "통과",
+    "revise": "수정 필요",
+    "statusPassed": "품질 검사를 통과했습니다",
+    "statusMaxReached": "최대 반복 횟수에 도달했습니다",
+    "reload": "새로고침",
+    "error": "피드백 루프 실행 중 오류가 발생했습니다",
+    "scores": {
+      "grammar": "문법",
+      "clarity": "명확성",
+      "coherence": "일관성",
+      "engagement": "몰입도",
+      "targetFit": "적합도"
+    }
   },
   "preview": {
     "loading": "로딩 중...",
@@ -382,6 +427,138 @@
     "writer": "작가 에이전트",
     "editor": "편집자 에이전트",
     "critic": "비평가 에이전트"
+  },
+  "plotStructures": {
+    "title": "플롯 구조",
+    "description": "이야기의 뼈대가 될 플롯 구조를 선택하세요",
+    "three_act": {
+      "name": "3막 구조",
+      "description": "설정 → 대립 → 해결의 고전적 구조",
+      "genres": "소설, 아동도서"
+    },
+    "heros_journey": {
+      "name": "영웅의 여정",
+      "description": "일상 → 모험 → 변화의 12단계 서사",
+      "genres": "소설"
+    },
+    "save_the_cat": {
+      "name": "Save the Cat",
+      "description": "오프닝부터 피날레까지 15개 비트 구조",
+      "genres": "소설"
+    },
+    "kishotenketsu": {
+      "name": "기승전결",
+      "description": "도입 → 전개 → 전환 → 결말의 동아시아 전통 구조",
+      "genres": "소설, 아동도서, 에세이"
+    },
+    "fichtean_curve": {
+      "name": "피히테 곡선",
+      "description": "위기로 시작해 긴장을 점진적으로 고조하는 구조",
+      "genres": "소설"
+    },
+    "none": {
+      "name": "자유 구조",
+      "description": "정해진 틀 없이 자유롭게 구성",
+      "genres": "모든 장르"
+    }
+  },
+  "newsletter": {
+    "title": "뉴스레터 구독",
+    "description": "새로운 기능과 업데이트 소식을 받아보세요",
+    "placeholder": "이메일 주소",
+    "subscribe": "구독",
+    "subscribing": "구독 중...",
+    "success": "구독이 완료되었습니다!",
+    "error": "구독 처리 중 오류가 발생했습니다.",
+    "invalidEmail": "올바른 이메일 주소를 입력해주세요."
+  },
+  "isbn": {
+    "guide": {
+      "title": "ISBN 신청 가이드",
+      "description": "한국 ISBN 센터를 통한 ISBN 발급 절차",
+      "step1": {
+        "title": "출판사 등록",
+        "description": "국립중앙도서관 한국서지번호센터에서 출판사 등록을 합니다."
+      },
+      "step2": {
+        "title": "ISBN 신청",
+        "description": "등록된 출판사로 ISBN을 신청합니다. 온라인으로 신청 가능합니다."
+      },
+      "step3": {
+        "title": "발급 확인",
+        "description": "신청 후 발급된 ISBN을 확인하고 도서에 적용합니다."
+      },
+      "agencyUrl": "한국서지번호센터",
+      "learnMore": "자세히 알아보기"
+    },
+    "status": {
+      "draft": "초안",
+      "applied": "신청 완료",
+      "issued": "발급 완료",
+      "updateStatus": "상태 변경",
+      "appliedAt": "신청일",
+      "issuedAt": "발급일"
+    }
+  },
+  "features": {
+    "title": "주요 기능",
+    "subtitle": "AI Book이 제공하는 혁신적인 기능들",
+    "agents": {
+      "title": "5개 AI 에이전트 파이프라인",
+      "description": "리서치부터 비평까지, 전문화된 AI 에이전트가 체계적으로 책을 완성합니다."
+    },
+    "bible": {
+      "title": "Book Bible 시스템",
+      "description": "캐릭터, 플롯, 배경 등을 관리하여 일관된 스토리를 유지합니다."
+    },
+    "editor": {
+      "title": "InDesign급 페이지 에디터",
+      "description": "TipTap 기반의 리치 텍스트 에디터로 전문적인 편집이 가능합니다."
+    },
+    "export": {
+      "title": "PDF/EPUB 내보내기",
+      "description": "완성된 원고를 PDF, EPUB 형식으로 즉시 내보낼 수 있습니다."
+    },
+    "consistency": {
+      "title": "챕터 간 일관성 검사",
+      "description": "AI가 캐릭터, 타임라인, 설정의 일관성을 자동으로 검증합니다."
+    },
+    "feedback": {
+      "title": "자동 피드백 루프",
+      "description": "편집자-비평가 루프가 자동으로 원고 품질을 개선합니다."
+    }
+  },
+  "pricing": {
+    "title": "요금제",
+    "subtitle": "현재 무료 베타 서비스 중입니다",
+    "beta": {
+      "title": "무료 베타",
+      "price": "₩0",
+      "period": "베타 기간 동안",
+      "description": "모든 기능을 무료로 사용할 수 있습니다.",
+      "features": {
+        "agents": "5개 AI 에이전트 전체 사용",
+        "projects": "무제한 프로젝트",
+        "export": "PDF/EPUB 내보내기",
+        "bible": "Book Bible 시스템",
+        "consistency": "일관성 검사",
+        "feedback": "자동 피드백 루프"
+      },
+      "cta": "무료로 시작하기"
+    },
+    "notice": "베타 종료 후 요금제가 변경될 수 있습니다."
+  },
+  "footer": {
+    "product": "제품",
+    "features": "기능",
+    "pricing": "요금제",
+    "resources": "리소스",
+    "docs": "문서",
+    "blog": "블로그",
+    "legal": "법적 고지",
+    "privacy": "개인정보 처리방침",
+    "terms": "이용약관",
+    "copyright": "© {year} AI Book. All rights reserved."
   },
   "error": {
     "title": "문제가 발생했습니다",

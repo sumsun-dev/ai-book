@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import StageHeader from '@/components/project/StageHeader'
+import FeedbackLoopPanel from '@/components/review/FeedbackLoopPanel'
+import ConsistencyReport from '@/components/review/ConsistencyReport'
 import { BookOutline, Chapter } from '@/types/book'
 
 interface ReviewState {
@@ -37,6 +39,7 @@ export default function ReviewPage() {
     evaluation: null
   })
   const [selectedChapter, setSelectedChapter] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<'quality' | 'consistency'>('quality')
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -282,8 +285,47 @@ export default function ReviewPage() {
           )}
         </section>
 
+        {/* Feedback Loop Panel - shows when score < 7 */}
+        {state.evaluation && (
+          <FeedbackLoopPanel
+            projectId={projectId}
+            chapterNumber={selectedChapter || 1}
+            overallScore={state.overallScore}
+            onComplete={loadProjectData}
+          />
+        )}
+
+        {/* Tab Navigation */}
+        <div className="flex gap-0 mb-0 mt-12 border-b border-neutral-200 dark:border-neutral-800">
+          <button
+            onClick={() => setActiveTab('quality')}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'quality'
+                ? 'text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
+          >
+            {t('chapters.title')}
+          </button>
+          <button
+            onClick={() => setActiveTab('consistency')}
+            className={`px-6 py-3 text-sm font-medium transition-colors ${
+              activeTab === 'consistency'
+                ? 'text-neutral-900 dark:text-white border-b-2 border-neutral-900 dark:border-white'
+                : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300'
+            }`}
+          >
+            {t('consistency.title')}
+          </button>
+        </div>
+
+        {/* Consistency Report Tab */}
+        {activeTab === 'consistency' && (
+          <ConsistencyReport projectId={projectId} />
+        )}
+
         {/* Chapter Review Section */}
-        <section className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+        {activeTab === 'quality' && <section className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-xl font-light text-neutral-900 dark:text-white mb-1">
@@ -375,7 +417,7 @@ export default function ReviewPage() {
               )
             })}
           </div>
-        </section>
+        </section>}
 
         {/* Complete Button */}
         {allApproved && (

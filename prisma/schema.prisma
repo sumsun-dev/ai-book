@@ -211,6 +211,10 @@ model ISBN {
   isValid     Boolean   @default(false)
   assignedAt  DateTime?
 
+  status      String    @default("draft")  // draft | applied | issued
+  appliedAt   DateTime?
+  issuedAt    DateTime?
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -257,6 +261,15 @@ model ProjectSnapshot {
   createdAt    DateTime @default(now())
 
   @@index([projectId])
+}
+
+// 뉴스레터 구독
+model NewsletterSubscriber {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  subscribedAt DateTime @default(now())
+  locale       String   @default("ko")
+  isActive     Boolean  @default(true)
 }
 
 // AI 채팅 메시지 히스토리

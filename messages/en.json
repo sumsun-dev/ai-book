@@ -315,8 +315,53 @@
       "originality": "Originality",
       "targetFit": "Target Fit"
     },
+    "consistency": {
+      "title": "Consistency Check",
+      "description": "Detect consistency issues between chapters",
+      "check": "Run Check",
+      "checking": "Checking...",
+      "noIssues": "No consistency issues found.",
+      "issueCount": "{count} issues found",
+      "summary": "Check Summary",
+      "chapters": "Chapter {a} ↔ {b}",
+      "severity": {
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Info"
+      },
+      "types": {
+        "character_name": "Character Name",
+        "character_trait": "Character Trait",
+        "timeline": "Timeline",
+        "setting": "Setting",
+        "plot": "Plot",
+        "style": "Style"
+      },
+      "suggestion": "Suggestion"
+    },
     "finalize": "Finalize & Preview",
     "allApproved": "All chapters approved. Finalize the book and check the preview."
+  },
+  "feedbackLoop": {
+    "title": "Auto Quality Improvement",
+    "description": "AI automatically improves chapter quality through iterative feedback",
+    "start": "Start Auto Improvement",
+    "maxIterations": "Max Iterations",
+    "progress": "Iteration {current}/{total}",
+    "iteration": "Iteration {n}",
+    "pass": "PASS",
+    "revise": "REVISE",
+    "statusPassed": "Quality check passed",
+    "statusMaxReached": "Max iterations reached",
+    "reload": "Reload",
+    "error": "An error occurred during feedback loop",
+    "scores": {
+      "grammar": "Grammar",
+      "clarity": "Clarity",
+      "coherence": "Coherence",
+      "engagement": "Engagement",
+      "targetFit": "Target Fit"
+    }
   },
   "preview": {
     "loading": "Loading...",
@@ -382,6 +427,138 @@
     "writer": "Writer Agent",
     "editor": "Editor Agent",
     "critic": "Critic Agent"
+  },
+  "plotStructures": {
+    "title": "Plot Structure",
+    "description": "Choose a plot structure as the backbone of your story",
+    "three_act": {
+      "name": "Three-Act Structure",
+      "description": "Classic setup → confrontation → resolution",
+      "genres": "Fiction, Children's"
+    },
+    "heros_journey": {
+      "name": "Hero's Journey",
+      "description": "12-stage narrative from ordinary world to transformation",
+      "genres": "Fiction"
+    },
+    "save_the_cat": {
+      "name": "Save the Cat",
+      "description": "15-beat structure from opening to finale",
+      "genres": "Fiction"
+    },
+    "kishotenketsu": {
+      "name": "Kishōtenketsu",
+      "description": "Introduction → development → twist → conclusion",
+      "genres": "Fiction, Children's, Essay"
+    },
+    "fichtean_curve": {
+      "name": "Fichtean Curve",
+      "description": "Starts with crisis, gradually builds tension",
+      "genres": "Fiction"
+    },
+    "none": {
+      "name": "Free Structure",
+      "description": "No fixed framework, freely composed",
+      "genres": "All genres"
+    }
+  },
+  "newsletter": {
+    "title": "Newsletter",
+    "description": "Get notified about new features and updates",
+    "placeholder": "Email address",
+    "subscribe": "Subscribe",
+    "subscribing": "Subscribing...",
+    "success": "Successfully subscribed!",
+    "error": "An error occurred while subscribing.",
+    "invalidEmail": "Please enter a valid email address."
+  },
+  "isbn": {
+    "guide": {
+      "title": "ISBN Application Guide",
+      "description": "ISBN issuance process through Korea ISBN Agency",
+      "step1": {
+        "title": "Register Publisher",
+        "description": "Register your publisher at the National Library of Korea's ISBN Center."
+      },
+      "step2": {
+        "title": "Apply for ISBN",
+        "description": "Apply for ISBN as a registered publisher. Online application is available."
+      },
+      "step3": {
+        "title": "Confirm Issuance",
+        "description": "Confirm the issued ISBN and apply it to your book."
+      },
+      "agencyUrl": "Korea ISBN Center",
+      "learnMore": "Learn More"
+    },
+    "status": {
+      "draft": "Draft",
+      "applied": "Applied",
+      "issued": "Issued",
+      "updateStatus": "Update Status",
+      "appliedAt": "Applied Date",
+      "issuedAt": "Issued Date"
+    }
+  },
+  "features": {
+    "title": "Features",
+    "subtitle": "Innovative features offered by AI Book",
+    "agents": {
+      "title": "5 AI Agent Pipeline",
+      "description": "From research to critique, specialized AI agents systematically complete your book."
+    },
+    "bible": {
+      "title": "Book Bible System",
+      "description": "Manage characters, plot, settings to maintain consistent storytelling."
+    },
+    "editor": {
+      "title": "InDesign-grade Page Editor",
+      "description": "Professional editing with TipTap-based rich text editor."
+    },
+    "export": {
+      "title": "PDF/EPUB Export",
+      "description": "Instantly export your finished manuscript in PDF or EPUB format."
+    },
+    "consistency": {
+      "title": "Cross-Chapter Consistency Check",
+      "description": "AI automatically verifies consistency of characters, timeline, and settings."
+    },
+    "feedback": {
+      "title": "Auto Feedback Loop",
+      "description": "Editor-Critic loop automatically improves manuscript quality."
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "Currently in free beta",
+    "beta": {
+      "title": "Free Beta",
+      "price": "$0",
+      "period": "During beta",
+      "description": "All features available for free.",
+      "features": {
+        "agents": "Full access to 5 AI agents",
+        "projects": "Unlimited projects",
+        "export": "PDF/EPUB export",
+        "bible": "Book Bible system",
+        "consistency": "Consistency check",
+        "feedback": "Auto feedback loop"
+      },
+      "cta": "Get Started Free"
+    },
+    "notice": "Pricing may change after beta ends."
+  },
+  "footer": {
+    "product": "Product",
+    "features": "Features",
+    "pricing": "Pricing",
+    "resources": "Resources",
+    "docs": "Docs",
+    "blog": "Blog",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "copyright": "© {year} AI Book. All rights reserved."
   },
   "error": {
     "title": "Something went wrong",
