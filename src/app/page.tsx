@@ -3,131 +3,51 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
+import { useTranslations } from 'next-intl'
 import FloatingBookThree from '@/components/FloatingBookThree'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 
 // ============================================================================
-// Types
+// Static Data (visual properties only — text comes from translations)
 // ============================================================================
-interface Agent {
-  id: string
-  name: string
-  nameKo: string
-  description: string
-  icon: React.ReactNode
-}
+const agentIds = ['research', 'outliner', 'writer', 'editor', 'critic'] as const
+const agentEngNames = ['Research', 'Outliner', 'Writer', 'Editor', 'Critic']
 
-interface BookSample {
-  id: string
-  title: string
-  author: string
-  category: string
-  color: string
-  cover?: string
-}
-
-interface Testimonial {
-  id: string
-  quote: string
-  author: string
-  role: string
-  avatar?: string
-}
-
-// ============================================================================
-// Data
-// ============================================================================
-const agents: Agent[] = [
-  {
-    id: 'research',
-    name: 'Research',
-    nameKo: '리서치',
-    description: '관련 자료를 수집하고 팩트를 검증합니다',
-    icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-    ),
-  },
-  {
-    id: 'outliner',
-    name: 'Outliner',
-    nameKo: '아웃라이너',
-    description: '책의 구조를 설계하고 목차를 구성합니다',
-    icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
-  },
-  {
-    id: 'writer',
-    name: 'Writer',
-    nameKo: '작가',
-    description: '섹션별로 본문을 작성하고 스토리를 전개합니다',
-    icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-      </svg>
-    ),
-  },
-  {
-    id: 'editor',
-    name: 'Editor',
-    nameKo: '편집자',
-    description: '문장을 다듬고 일관성을 검토합니다',
-    icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-      </svg>
-    ),
-  },
-  {
-    id: 'critic',
-    name: 'Critic',
-    nameKo: '비평가',
-    description: '품질을 평가하고 개선 방향을 제시합니다',
-    icon: (
-      <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
+const agentIcons: React.ReactNode[] = [
+  <svg key="research" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+  </svg>,
+  <svg key="outliner" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+  </svg>,
+  <svg key="writer" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+  </svg>,
+  <svg key="editor" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  </svg>,
+  <svg key="critic" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>,
 ]
 
-const bookSamples: BookSample[] = [
-  { id: '6', title: '마음의 시', author: 'AI 작가', category: '시집', color: '#6b4423', cover: '/images/cover_poetry.png' },
-  { id: '2', title: '성공하는 습관의 비밀', author: 'AI 작가', category: '자기계발', color: '#2d4a3e', cover: '/images/cover_habit.png' },
-  { id: '3', title: '커피 한 잔의 여유', author: 'AI 작가', category: '에세이', color: '#4a3728', cover: '/images/cover_coffee.png' },
-  { id: '4', title: '아이와 함께하는 동화', author: 'AI 작가', category: '동화', color: '#5c4a7d', cover: '/images/cover_fairy.png' },
-  { id: '5', title: 'React 마스터하기', author: 'AI 작가', category: '기술서적', color: '#1e3a5f', cover: '/images/cover_react.png' },
-  { id: '1', title: '별이 빛나는 밤에', author: 'AI 작가', category: '소설', color: '#704214', cover: '/gallery_starry_night_emotional.png' },
+const bookSampleData = [
+  { key: 'poetry', id: '6', color: '#6b4423', cover: '/images/cover_poetry.png' },
+  { key: 'selfhelp', id: '2', color: '#2d4a3e', cover: '/images/cover_habit.png' },
+  { key: 'essay', id: '3', color: '#4a3728', cover: '/images/cover_coffee.png' },
+  { key: 'children', id: '4', color: '#5c4a7d', cover: '/images/cover_fairy.png' },
+  { key: 'technical', id: '5', color: '#1e3a5f', cover: '/images/cover_react.png' },
+  { key: 'fiction', id: '1', color: '#704214', cover: '/gallery_starry_night_emotional.png' },
 ]
 
-const testimonials: Testimonial[] = [
-  {
-    id: '1',
-    quote: '오랫동안 머릿속에만 있던 이야기를 드디어 책으로 만들 수 있었어요. AI가 제 아이디어를 정말 잘 이해하고 발전시켜주었습니다.',
-    author: '김지영',
-    role: '첫 소설 출간 작가',
-    avatar: '/images/ko_avatar2.png'
-  },
-  {
-    id: '2',
-    quote: '전문 작가가 아니어도 책을 쓸 수 있다는 게 놀라웠어요. 마치 베테랑 편집자와 함께 작업하는 느낌이었습니다.',
-    author: '이현우',
-    role: '자기계발서 저자',
-    avatar: '/images/ko_avatar1.png'
-  },
-  {
-    id: '3',
-    quote: '아이에게 들려줄 동화를 직접 만들 수 있어서 정말 특별한 경험이었어요. 세상에 하나뿐인 책이 되었죠.',
-    author: '박서연',
-    role: '에디터 겸 작가',
-    avatar: '/images/ko_avatar3.png'
-  },
-]
+const categoryKeys = ['all', 'fiction', 'selfhelp', 'essay', 'children', 'technical', 'poetry'] as const
 
-const categories = ['전체', '소설', '자기계발', '에세이', '동화', '기술서적', '시집']
+const testimonialIds = ['1', '2', '3'] as const
+const testimonialAvatars: Record<string, string> = {
+  '1': '/images/ko_avatar2.png',
+  '2': '/images/ko_avatar1.png',
+  '3': '/images/ko_avatar3.png',
+}
 
 // ============================================================================
 // Components
@@ -198,6 +118,7 @@ function BrushStroke({ className = '' }: { className?: string }) {
 
 function Navigation() {
   const [scrolled, setScrolled] = useState(false)
+  const t = useTranslations('landing')
 
   useEffect(() => {
     const handleScroll = () => {
@@ -221,11 +142,12 @@ function Navigation() {
         </Link>
         <div className="flex items-center gap-6">
           <Link href="/projects" className="text-brown dark:text-warm-gray hover:text-deep-brown dark:hover:text-cream-light transition-colors">
-            내 프로젝트
+            {t('nav.myProjects')}
           </Link>
+          <LanguageSwitcher />
           <ThemeToggle />
           <Link href="/new" className="cta-button text-sm py-2 px-5">
-            시작하기
+            {t('nav.start')}
           </Link>
         </div>
       </div>
@@ -548,6 +470,7 @@ function FloatingBook() {
 
 function HeroSection() {
   const ref = useRef(null)
+  const t = useTranslations('landing')
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end start'],
@@ -590,7 +513,7 @@ function HeroSection() {
                 className="font-serif text-5xl md:text-7xl lg:text-7xl font-bold mb-8 leading-[1.2] tracking-tight text-balance"
                 variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 1, ease: [0.16, 1, 0.3, 1] } } }}
               >
-                <span className="block text-ink dark:text-cream">누구나 책을 쓰는 시대,</span>
+                <span className="block text-ink dark:text-cream">{t('hero.title')}</span>
                 <span className="block text-gold-dim italic drop-shadow-sm">with AI Book</span>
               </motion.h1>
 
@@ -598,8 +521,8 @@ function HeroSection() {
                 className="text-lg md:text-xl text-stone dark:text-warm-gray max-w-xl mb-12 leading-relaxed font-sans font-light"
                 variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] } } }}
               >
-                당신의 생각과 지식이 책으로 만들어집니다.<br className="hidden md:block" />
-                5개의 전문 AI 에이전트가 당신만의 책을 쓸 수 있게 도와줍니다.
+                {t('hero.subtitle')}<br className="hidden md:block" />
+                {t('hero.description')}
               </motion.p>
 
               <motion.div
@@ -607,12 +530,12 @@ function HeroSection() {
                 variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.6 } } }}
               >
                 <Link href="/new" className="group relative px-10 py-5 bg-gold text-ink font-bold tracking-widest uppercase overflow-hidden transition-all duration-300 rounded-sm shadow-[0_10px_30px_-10px_rgba(212,175,55,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(212,175,55,0.6)] hover:-translate-y-1 active:translate-y-0 active:shadow-inner">
-                  <span className="relative z-10">지금 바로 나만의 책 쓰기</span>
+                  <span className="relative z-10">{t('hero.cta')}</span>
                   <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 </Link>
 
                 <a href="#how-it-works" className="group flex items-center gap-3 text-ink dark:text-cream font-medium transition-colors hover:text-gold py-2">
-                  <span>프로세스 알아보기</span>
+                  <span>{t('hero.learnMore')}</span>
                   <div className="w-10 h-10 rounded-full border border-ink/20 dark:border-cream/20 flex items-center justify-center group-hover:border-gold group-hover:bg-gold/10 transition-all">
                     <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -665,6 +588,7 @@ function MarqueeSection() {
 
 function ProcessSection() {
   const containerRef = useRef(null)
+  const t = useTranslations('landing')
 
   return (
     <section id="how-it-works" ref={containerRef} className="relative py-32 bg-cream-dark dark:bg-cream-dark overflow-hidden">
@@ -675,17 +599,18 @@ function ProcessSection() {
             Collaboration <span className="italic text-gold">Orchestra</span>
           </h2>
           <p className="text-stone max-w-lg mx-auto text-base font-light leading-relaxed">
-            체계적인 5단계 파이프라인. <br />
-            각 분야의 최고 AI 전문가들이 당신의 원고를 위해 협주합니다.
+            {t('pipeline.title')}
+            <br />
+            {t('pipeline.subtitle')}
           </p>
         </div>
 
         {/* Improved Grid for uniform sizing */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
-          {agents.map((agent, index) => {
+          {agentIds.map((id, index) => {
             return (
               <motion.div
-                key={agent.id}
+                key={id}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
@@ -700,14 +625,14 @@ function ProcessSection() {
                   </div>
 
                   <div className="w-16 h-16 bg-gold/5 rounded-2xl flex items-center justify-center text-gold mb-6 group-hover:scale-110 group-hover:bg-gold/10 transition-all duration-300">
-                    {agent.icon}
+                    {agentIcons[index]}
                   </div>
 
-                  <h3 className="font-serif text-xl font-bold mb-2 text-ink dark:text-cream">{agent.name}</h3>
-                  <p className="text-xs font-bold text-gold uppercase tracking-wider mb-4">{agent.nameKo}</p>
+                  <h3 className="font-serif text-xl font-bold mb-2 text-ink dark:text-cream">{agentEngNames[index]}</h3>
+                  <p className="text-xs font-bold text-gold uppercase tracking-wider mb-4">{t(`agents.${id}.name`)}</p>
 
                   <p className="text-sm text-stone dark:text-stone/60 leading-relaxed font-light">
-                    {agent.description}
+                    {t(`agents.${id}.description`)}
                   </p>
                 </div>
               </motion.div>
@@ -720,11 +645,12 @@ function ProcessSection() {
 }
 
 function GallerySection() {
-  const [selectedCategory, setSelectedCategory] = useState('전체')
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const t = useTranslations('landing')
 
-  const filteredBooks = selectedCategory === '전체'
-    ? bookSamples
-    : bookSamples.filter(book => book.category === selectedCategory)
+  const filteredBooks = selectedCategory === 'all'
+    ? bookSampleData
+    : bookSampleData.filter(book => book.key === selectedCategory)
 
   return (
     <section className="py-32 bg-cream dark:bg-ink">
@@ -739,16 +665,16 @@ function GallerySection() {
 
           {/* Minimalist Filter */}
           <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
+            {categoryKeys.map((key) => (
               <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-xs font-medium tracking-wider transition-all duration-300 border ${selectedCategory === category
+                key={key}
+                onClick={() => setSelectedCategory(key)}
+                className={`px-4 py-2 rounded-full text-xs font-medium tracking-wider transition-all duration-300 border ${selectedCategory === key
                   ? 'bg-ink dark:bg-cream text-cream dark:text-ink border-ink dark:border-cream'
                   : 'bg-transparent text-stone dark:text-stone/60 border-stone/20 hover:border-gold hover:text-gold'
                   }`}
               >
-                {category}
+                {t(`showcase.categories.${key}`)}
               </button>
             ))}
           </div>
@@ -776,7 +702,7 @@ function GallerySection() {
                   {/* Image Cover */}
                   <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105 bg-stone/10">
                     {book.cover ? (
-                      <img src={book.cover} alt={book.title} className="w-full h-full object-cover" />
+                      <img src={book.cover} alt={t(`samples.${book.key}.title`)} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full" style={{ background: book.color }} />
                     )}
@@ -789,13 +715,13 @@ function GallerySection() {
                   <div className="absolute inset-0 p-6 flex flex-col justify-end">
                     <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
                       <span className="inline-block px-2 py-1 bg-white/10 backdrop-blur-md rounded-sm text-[10px] text-white/90 mb-2 border border-white/10 tracking-wider uppercase">
-                        {book.category}
+                        {t(`samples.${book.key}.category`)}
                       </span>
                       <h3 className={`font-serif font-bold text-white mb-1 leading-tight ${isLarge ? 'text-3xl lg:text-4xl' : 'text-lg lg:text-xl'}`}>
-                        {book.title}
+                        {t(`samples.${book.key}.title`)}
                       </h3>
                       <p className="text-white/70 text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100 font-serif italic">
-                        by {book.author}
+                        by {t(`samples.${book.key}.author`)}
                       </p>
                     </div>
                   </div>
@@ -810,6 +736,8 @@ function GallerySection() {
 }
 
 function TestimonialsSection() {
+  const t = useTranslations('landing')
+
   return (
     <section className="py-32 bg-cream-dark dark:bg-charcoal/20">
       <div className="max-w-6xl mx-auto px-6">
@@ -821,31 +749,31 @@ function TestimonialsSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
+          {testimonialIds.map((id, index) => (
             <motion.div
-              key={testimonial.id}
+              key={id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.15 }}
               className="bg-cream dark:bg-ink p-8 rounded-xl border border-stone/10 shadow-sm relative group hover:border-gold/30 transition-all flex flex-col"
             >
-              <div className="absolute -top-4 -left-2 text-6xl text-gold/20 font-serif leading-none">“</div>
+              <div className="absolute -top-4 -left-2 text-6xl text-gold/20 font-serif leading-none">"</div>
               <p className="text-stone dark:text-stone/60 leading-relaxed mb-8 relative z-10 pt-4 font-light italic flex-grow">
-                {testimonial.quote}
+                {t(`testimonials.${id}.quote`)}
               </p>
 
               <div className="border-t border-stone/10 pt-6 flex items-center gap-5">
                 <div className="shrink-0 w-14 h-14 rounded-full overflow-hidden border-2 border-gold/20 group-hover:border-gold transition-all">
-                  {testimonial.avatar ? (
-                    <img src={testimonial.avatar} alt={testimonial.author} className="w-full h-full object-cover" />
+                  {testimonialAvatars[id] ? (
+                    <img src={testimonialAvatars[id]} alt={t(`testimonials.${id}.author`)} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gold/10" />
                   )}
                 </div>
                 <div className="flex flex-col">
-                  <p className="font-serif font-bold text-ink dark:text-cream text-lg leading-snug">{testimonial.author}</p>
-                  <p className="text-[10px] text-gold uppercase tracking-widest font-bold mt-1">{testimonial.role}</p>
+                  <p className="font-serif font-bold text-ink dark:text-cream text-lg leading-snug">{t(`testimonials.${id}.author`)}</p>
+                  <p className="text-[10px] text-gold uppercase tracking-widest font-bold mt-1">{t(`testimonials.${id}.role`)}</p>
                 </div>
               </div>
             </motion.div>
@@ -857,6 +785,8 @@ function TestimonialsSection() {
 }
 
 function CTASection() {
+  const t = useTranslations('landing')
+
   return (
     <section className="relative py-48 bg-ink text-cream overflow-hidden flex items-center justify-center">
       {/* Abstract Background Animation */}
@@ -881,7 +811,7 @@ function CTASection() {
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
           <h2 className="text-5xl md:text-7xl lg:text-9xl font-serif font-bold mb-16 tracking-tighter leading-none">
-            당신의 이야기를 <br /><span className="text-gold italic font-light">완성하세요.</span>
+            {t('cta.line1')} <br /><span className="text-gold italic font-light">{t('cta.line2')}</span>
           </h2>
 
           <div className="flex flex-col items-center">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { FileUploader, ChapterSplitter } from '@/components/upload'
 import { useBookStore } from '@/lib/store'
 import { SkeletonCard } from '@/components/Skeleton'
@@ -9,45 +10,17 @@ import { ProjectFilters } from '@/components/projects/ProjectFilters'
 import { useProjectFilters } from '@/components/projects/useProjectFilters'
 import type { BookProject, BookType, ParsedFile, SplitChapter } from '@/types/book'
 
-const bookTypes: { value: BookType; label: string }[] = [
-  { value: 'fiction', label: '소설' },
-  { value: 'nonfiction', label: '논픽션' },
-  { value: 'selfhelp', label: '자기계발' },
-  { value: 'technical', label: '기술서' },
-  { value: 'essay', label: '에세이' },
-  { value: 'children', label: '아동도서' },
-  { value: 'poetry', label: '시집' },
+const BOOK_TYPE_VALUES: BookType[] = [
+  'fiction', 'nonfiction', 'selfhelp', 'technical', 'essay', 'children', 'poetry',
 ]
 
 type CreateMode = 'new' | 'upload'
 type UploadStep = 'upload' | 'split'
 
-function getStatusLabel(status: string): string {
-  const labels: Record<string, string> = {
-    draft: '초안',
-    researching: '리서치',
-    outlining: '목차',
-    writing: '집필',
-    editing: '편집',
-    reviewing: '검토',
-    completed: '완료'
-  }
-  return labels[status] || status
-}
-
-function getStageLabel(stage: string): string {
-  const labels: Record<string, string> = {
-    research: '리서치',
-    outline: '목차',
-    write: '집필',
-    edit: '편집',
-    review: '검토'
-  }
-  return labels[stage] || stage
-}
-
 export default function ProjectsPage() {
   const router = useRouter()
+  const t = useTranslations('projects')
+  const tc = useTranslations('common')
   const [projects, setProjects] = useState<BookProject[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -81,7 +54,7 @@ export default function ProjectsPage() {
         setError(data.error)
       }
     } catch {
-      setError('프로젝트 목록을 불러오는데 실패했습니다.')
+      setError(t('fetchError'))
     } finally {
       setIsLoading(false)
     }
@@ -103,7 +76,7 @@ export default function ProjectsPage() {
         alert(data.error)
       }
     } catch {
-      alert('프로젝트 생성에 실패했습니다.')
+      alert(t('createError'))
     }
   }
 
@@ -150,7 +123,7 @@ export default function ProjectsPage() {
         alert(data.error)
       }
     } catch {
-      alert('프로젝트 생성에 실패했습니다.')
+      alert(t('createError'))
     } finally {
       setIsCreating(false)
     }
@@ -171,7 +144,7 @@ export default function ProjectsPage() {
 
   const handleDeleteProject = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    if (!confirm(t('deleteConfirm'))) return
 
     try {
       const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' })
@@ -182,7 +155,7 @@ export default function ProjectsPage() {
         alert(data.error)
       }
     } catch {
-      alert('프로젝트 삭제에 실패했습니다.')
+      alert(t('deleteError'))
     }
   }
 
@@ -223,7 +196,7 @@ export default function ProjectsPage() {
               <span className="text-white dark:text-neutral-900 text-xs font-bold">B</span>
             </div>
             <span className="text-sm text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors duration-300">
-              홈으로
+              {tc('home')}
             </span>
           </button>
 
@@ -231,7 +204,7 @@ export default function ProjectsPage() {
             onClick={() => setShowNewForm(true)}
             className="px-6 py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium tracking-wide transition-all duration-500 hover:bg-neutral-700 dark:hover:bg-neutral-200"
           >
-            새 프로젝트
+            {t('newProject')}
           </button>
         </div>
       </header>
@@ -240,10 +213,10 @@ export default function ProjectsPage() {
         {/* Title Section */}
         <div className="mb-16">
           <h1 className="text-5xl md:text-6xl font-extralight tracking-tight text-neutral-900 dark:text-white mb-4">
-            내 프로젝트
+            {t('title')}
           </h1>
           <p className="text-lg text-neutral-500 dark:text-neutral-400 font-light">
-            {projects.length}권의 책 진행 중
+            {t('count', { count: projects.length })}
           </p>
         </div>
 
@@ -259,7 +232,7 @@ export default function ProjectsPage() {
             <div className="bg-white dark:bg-neutral-900 w-full max-w-2xl max-h-[90vh] overflow-auto shadow-2xl">
               <div className="p-8 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
                 <h2 className="text-2xl font-light text-neutral-900 dark:text-white tracking-tight">
-                  {uploadStep === 'split' ? '챕터 분할' : '프로젝트 생성'}
+                  {uploadStep === 'split' ? t('modal.title') : t('modal.title')}
                 </h2>
                 <button
                   onClick={resetForm}
@@ -284,7 +257,7 @@ export default function ProjectsPage() {
                             : 'border-transparent text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'
                         }`}
                       >
-                        새로 작성
+                        {t('modal.newWrite')}
                       </button>
                       <button
                         onClick={() => setCreateMode('upload')}
@@ -294,7 +267,7 @@ export default function ProjectsPage() {
                             : 'border-transparent text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300'
                         }`}
                       >
-                        파일 가져오기
+                        {t('modal.importFile')}
                       </button>
                     </div>
 
@@ -302,35 +275,35 @@ export default function ProjectsPage() {
                       <form onSubmit={handleCreateProject} className="space-y-8">
                         <div>
                           <label className="block text-xs font-medium tracking-widest text-neutral-500 dark:text-neutral-400 uppercase mb-3">
-                            제목
+                            {t('modal.bookTitle')}
                           </label>
                           <input
                             type="text"
                             value={newProject.title}
                             onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
                             className="w-full px-0 py-4 bg-transparent border-0 border-b border-neutral-300 dark:border-neutral-700 text-xl text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors"
-                            placeholder="책 제목을 입력하세요"
+                            placeholder={t('modal.bookTitlePlaceholder')}
                             required
                           />
                         </div>
 
                         <div>
                           <label className="block text-xs font-medium tracking-widest text-neutral-500 dark:text-neutral-400 uppercase mb-3">
-                            장르
+                            {t('modal.genre')}
                           </label>
                           <div className="grid grid-cols-4 gap-2">
-                            {bookTypes.map((type) => (
+                            {BOOK_TYPE_VALUES.map((type) => (
                               <button
-                                key={type.value}
+                                key={type}
                                 type="button"
-                                onClick={() => setNewProject({ ...newProject, type: type.value })}
+                                onClick={() => setNewProject({ ...newProject, type })}
                                 className={`py-3 px-4 text-sm transition-all duration-300 ${
-                                  newProject.type === type.value
+                                  newProject.type === type
                                     ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900'
                                     : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                                 }`}
                               >
-                                {type.label}
+                                {tc(`bookTypes.${type}`)}
                               </button>
                             ))}
                           </div>
@@ -338,13 +311,13 @@ export default function ProjectsPage() {
 
                         <div>
                           <label className="block text-xs font-medium tracking-widest text-neutral-500 dark:text-neutral-400 uppercase mb-3">
-                            설명
+                            {t('modal.description')}
                           </label>
                           <textarea
                             value={newProject.description}
                             onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
                             className="w-full px-0 py-4 bg-transparent border-0 border-b border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors resize-none"
-                            placeholder="책에 대한 간단한 설명"
+                            placeholder={t('modal.descriptionPlaceholder')}
                             rows={3}
                             required
                           />
@@ -356,13 +329,13 @@ export default function ProjectsPage() {
                             onClick={resetForm}
                             className="flex-1 py-4 text-sm font-medium tracking-wide text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                           >
-                            취소
+                            {t('modal.cancel')}
                           </button>
                           <button
                             type="submit"
                             className="flex-1 py-4 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium tracking-wide transition-all duration-500 hover:bg-neutral-700 dark:hover:bg-neutral-200"
                           >
-                            프로젝트 생성
+                            {t('modal.create')}
                           </button>
                         </div>
                       </form>
@@ -371,28 +344,28 @@ export default function ProjectsPage() {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label className="block text-xs font-medium tracking-widest text-neutral-500 dark:text-neutral-400 uppercase mb-3">
-                              제목 (선택)
+                              {t('modal.bookTitle')}
                             </label>
                             <input
                               type="text"
                               value={newProject.title}
                               onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
                               className="w-full px-0 py-3 bg-transparent border-0 border-b border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors"
-                              placeholder="파일명에서 자동 추출"
+                              placeholder={t('modal.bookTitlePlaceholder')}
                             />
                           </div>
                           <div>
                             <label className="block text-xs font-medium tracking-widest text-neutral-500 dark:text-neutral-400 uppercase mb-3">
-                              Genre
+                              {t('modal.genre')}
                             </label>
                             <select
                               value={newProject.type}
                               onChange={(e) => setNewProject({ ...newProject, type: e.target.value as BookType })}
                               className="w-full px-0 py-3 bg-transparent border-0 border-b border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors"
                             >
-                              {bookTypes.map((type) => (
-                                <option key={type.value} value={type.value} className="bg-white dark:bg-neutral-900">
-                                  {type.label}
+                              {BOOK_TYPE_VALUES.map((type) => (
+                                <option key={type} value={type} className="bg-white dark:bg-neutral-900">
+                                  {tc(`bookTypes.${type}`)}
                                 </option>
                               ))}
                             </select>
@@ -440,12 +413,12 @@ export default function ProjectsPage() {
                 <span className="text-4xl text-neutral-300 dark:text-neutral-600">+</span>
               </div>
             </div>
-            <p className="text-neutral-500 dark:text-neutral-400 text-lg mb-6">아직 프로젝트가 없습니다</p>
+            <p className="text-neutral-500 dark:text-neutral-400 text-lg mb-6">{t('empty')}</p>
             <button
               onClick={() => setShowNewForm(true)}
               className="px-8 py-4 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium tracking-wide transition-all duration-500 hover:bg-neutral-700 dark:hover:bg-neutral-200"
             >
-              첫 번째 책 만들기
+              {t('createFirst')}
             </button>
           </div>
         ) : (
@@ -453,13 +426,13 @@ export default function ProjectsPage() {
             {filterHook.filteredProjects.length === 0 && projects.length > 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20">
                 <p className="text-neutral-500 dark:text-neutral-400 text-lg mb-4">
-                  검색 결과가 없습니다
+                  {t('noResults')}
                 </p>
                 <button
                   onClick={() => filterHook.resetFilters()}
                   className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
                 >
-                  필터 초기화
+                  {t('resetFilter')}
                 </button>
               </div>
             ) : null}
@@ -564,7 +537,7 @@ export default function ProjectsPage() {
                   {/* Status Badge */}
                   <div className="absolute top-4 left-4">
                     <span className="px-3 py-1.5 bg-white/90 dark:bg-black/80 text-xs font-medium tracking-wider text-neutral-700 dark:text-neutral-300 backdrop-blur-sm">
-                      {getStageLabel(project.stage)}
+                      {tc(`stages.${project.stage}`)}
                     </span>
                   </div>
 
@@ -591,11 +564,11 @@ export default function ProjectsPage() {
                   </p>
                   <div className="flex items-center gap-3 pt-2">
                     <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                      {bookTypes.find(t => t.value === project.type)?.label}
+                      {tc(`bookTypes.${project.type}`)}
                     </span>
                     <span className="text-xs text-neutral-300 dark:text-neutral-700">|</span>
                     <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                      {getStatusLabel(project.status)}
+                      {tc(`status.${project.status}`)}
                     </span>
                   </div>
                 </div>

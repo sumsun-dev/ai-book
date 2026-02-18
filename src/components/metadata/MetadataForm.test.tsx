@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { axe } from 'vitest-axe'
 import MetadataForm from './MetadataForm'
 
 vi.mock('./AuthorEditor', () => ({
@@ -71,7 +72,7 @@ describe('MetadataForm', () => {
     render(<MetadataForm projectId="test-1" />)
 
     await waitFor(() => {
-      expect(screen.getByText('메타데이터를 불러오는데 실패했습니다.')).toBeInTheDocument()
+      expect(screen.getByText('fetchError')).toBeInTheDocument()
     })
   })
 
@@ -91,10 +92,10 @@ describe('MetadataForm', () => {
     render(<MetadataForm projectId="test-1" />)
 
     await waitFor(() => {
-      expect(screen.getByText('저장')).toBeInTheDocument()
+      expect(screen.getByText('save')).toBeInTheDocument()
     })
 
-    fireEvent.submit(screen.getByText('저장').closest('form')!)
+    fireEvent.submit(screen.getByText('save').closest('form')!)
 
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalledWith(
@@ -121,10 +122,10 @@ describe('MetadataForm', () => {
     render(<MetadataForm projectId="test-1" onSave={onSave} onClose={onClose} />)
 
     await waitFor(() => {
-      expect(screen.getByText('저장')).toBeInTheDocument()
+      expect(screen.getByText('save')).toBeInTheDocument()
     })
 
-    fireEvent.submit(screen.getByText('저장').closest('form')!)
+    fireEvent.submit(screen.getByText('save').closest('form')!)
 
     await waitFor(() => {
       expect(onSave).toHaveBeenCalledWith(mockMetadata)
@@ -145,13 +146,13 @@ describe('MetadataForm', () => {
     render(<MetadataForm projectId="test-1" />)
 
     await waitFor(() => {
-      expect(screen.getByText('저장')).toBeInTheDocument()
+      expect(screen.getByText('save')).toBeInTheDocument()
     })
 
-    fireEvent.submit(screen.getByText('저장').closest('form')!)
+    fireEvent.submit(screen.getByText('save').closest('form')!)
 
     await waitFor(() => {
-      expect(screen.getByText('메타데이터 저장에 실패했습니다.')).toBeInTheDocument()
+      expect(screen.getByText('saveError')).toBeInTheDocument()
     })
   })
 
@@ -169,13 +170,13 @@ describe('MetadataForm', () => {
     render(<MetadataForm projectId="test-1" />)
 
     await waitFor(() => {
-      expect(screen.getByText('저장')).toBeInTheDocument()
+      expect(screen.getByText('save')).toBeInTheDocument()
     })
 
-    fireEvent.submit(screen.getByText('저장').closest('form')!)
+    fireEvent.submit(screen.getByText('save').closest('form')!)
 
     await waitFor(() => {
-      const saveButton = screen.getByText('저장 중...')
+      const saveButton = screen.getByText('saving')
       expect(saveButton).toBeInTheDocument()
       expect(saveButton.closest('button')).toBeDisabled()
     })
@@ -191,11 +192,68 @@ describe('MetadataForm', () => {
     render(<MetadataForm projectId="test-1" onClose={onClose} />)
 
     await waitFor(() => {
-      expect(screen.getByText('취소')).toBeInTheDocument()
+      expect(screen.getByText('cancel')).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByText('취소'))
+    fireEvent.click(screen.getByText('cancel'))
 
     expect(onClose).toHaveBeenCalled()
+  })
+})
+
+describe('MetadataForm a11y', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('axe 접근성 위반이 없어야 한다', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ data: null }),
+    })
+
+    const { container } = render(<MetadataForm projectId="test-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('save')).toBeInTheDocument()
+    })
+
+    const results = await axe(container)
+    expect(results).toHaveNoViolations()
+  })
+
+  it('11개 필드에 htmlFor+id 연결이 되어야 한다', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ data: null }),
+    })
+
+    render(<MetadataForm projectId="test-1" />)
+
+    await waitFor(() => {
+      expect(screen.getByText('save')).toBeInTheDocument()
+    })
+
+    // 각 label의 텍스트로 input을 찾을 수 있어야 함 (htmlFor+id 연결)
+    expect(screen.getByLabelText('fields.subtitle')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.publisher')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.publishDate')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.publisherAddress')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.edition')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.printRun')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.keywords')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.language')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.copyrightNotice')).toBeInTheDocument()
+    expect(screen.getByLabelText('fields.license')).toBeInTheDocument()
+  })
+
+  it('에러 메시지에 role="alert"가 적용되어야 한다', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
+
+    render(<MetadataForm projectId="test-1" />)
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert')
+      expect(alert).toBeInTheDocument()
+      expect(alert).toHaveTextContent('fetchError')
+    })
   })
 })

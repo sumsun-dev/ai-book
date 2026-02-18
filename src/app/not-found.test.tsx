@@ -11,13 +11,13 @@ describe('NotFound', () => {
   it('should render descriptive heading', () => {
     render(<NotFound />)
     expect(
-      screen.getByText('페이지를 찾을 수 없습니다')
+      screen.getByText('title')
     ).toBeInTheDocument()
   })
 
   it('should render link to projects page', () => {
     render(<NotFound />)
-    const link = screen.getByText('프로젝트 목록으로')
+    const link = screen.getByText('backToProjects')
     expect(link.closest('a')).toHaveAttribute('href', '/projects')
   })
 

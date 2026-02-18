@@ -1,0 +1,397 @@
+{
+  "common": {
+    "home": "Home",
+    "save": "Save",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close",
+    "loading": "Loading...",
+    "error": "Error",
+    "retry": "Retry",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "create": "Create",
+    "import": "Import",
+    "export": "Export",
+    "apply": "Apply",
+    "reset": "Reset",
+    "back": "Back",
+    "projects": "Projects",
+    "start": "Get started",
+    "skipToContent": "Skip to content",
+    "notification": "Notifications",
+    "bookTypes": {
+      "fiction": "Fiction",
+      "nonfiction": "Non-fiction",
+      "selfhelp": "Self-help",
+      "technical": "Technical",
+      "essay": "Essay",
+      "children": "Children's",
+      "poetry": "Poetry"
+    },
+    "stages": {
+      "research": "Research",
+      "outline": "Outline",
+      "write": "Write",
+      "edit": "Edit",
+      "review": "Review"
+    },
+    "status": {
+      "draft": "Draft",
+      "researching": "Researching",
+      "outlining": "Outlining",
+      "writing": "Writing",
+      "editing": "Editing",
+      "reviewing": "Reviewing",
+      "completed": "Completed"
+    }
+  },
+  "landing": {
+    "nav": {
+      "myProjects": "My Projects",
+      "start": "Get Started"
+    },
+    "hero": {
+      "title": "Anyone Can Write a Book,",
+      "subtitle": "Turn your thoughts and knowledge into a book.",
+      "description": "5 specialized AI agents help you write your own book.",
+      "cta": "Start Writing Your Own Book",
+      "learnMore": "Learn About the Process"
+    },
+    "pipeline": {
+      "title": "Systematic 5-Step Pipeline",
+      "subtitle": "The best AI experts in each field collaborate on your manuscript."
+    },
+    "agents": {
+      "research": { "name": "Researcher", "description": "Collects relevant materials and verifies facts" },
+      "outliner": { "name": "Outliner", "description": "Designs book structure and organizes the table of contents" },
+      "writer": { "name": "Writer", "description": "Writes the main text section by section and develops the story" },
+      "editor": { "name": "Editor", "description": "Polishes sentences and reviews consistency" },
+      "critic": { "name": "Critic", "description": "Evaluates quality and suggests improvements" }
+    },
+    "showcase": {
+      "title": "Complete Your Story.",
+      "categories": { "all": "All", "fiction": "Fiction", "selfhelp": "Self-help", "essay": "Essay", "children": "Children's", "technical": "Technical", "poetry": "Poetry" }
+    },
+    "samples": {
+      "poetry": { "title": "Poems of the Heart", "author": "AI Writer", "category": "Poetry" },
+      "selfhelp": { "title": "Secrets of Successful Habits", "author": "AI Writer", "category": "Self-help" },
+      "essay": { "title": "A Moment with Coffee", "author": "AI Writer", "category": "Essay" },
+      "children": { "title": "Stories with Children", "author": "AI Writer", "category": "Children's" },
+      "technical": { "title": "Mastering React", "author": "AI Writer", "category": "Technical" },
+      "fiction": { "title": "Under the Starlit Sky", "author": "AI Writer", "category": "Fiction" }
+    },
+    "testimonials": {
+      "1": { "quote": "I was finally able to turn the story that had been only in my head into a book. The AI truly understood and developed my ideas.", "author": "Jiyoung Kim", "role": "First-time novelist" },
+      "2": { "quote": "I was amazed that I could write a book even without being a professional writer. It felt like working with a veteran editor.", "author": "Hyunwoo Lee", "role": "Self-help author" },
+      "3": { "quote": "Being able to create a fairy tale for my child was a truly special experience. It became the only book of its kind in the world.", "author": "Seoyeon Park", "role": "Editor & Writer" }
+    },
+    "cta": {
+      "line1": "Complete",
+      "line2": "Your Story."
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Login",
+      "noAccount": "Don't have an account?",
+      "register": "Sign up",
+      "email": "Email",
+      "password": "Password",
+      "passwordPlaceholder": "8+ characters",
+      "submitting": "Logging in...",
+      "submit": "Login",
+      "invalidCredentials": "Email or password is incorrect.",
+      "error": "An error occurred during login."
+    },
+    "register": {
+      "title": "Sign Up",
+      "hasAccount": "Already have an account?",
+      "login": "Login",
+      "name": "Name",
+      "nameOptional": "(optional)",
+      "email": "Email",
+      "password": "Password",
+      "passwordPlaceholder": "8+ characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPlaceholder": "Re-enter your password",
+      "submitting": "Signing up...",
+      "submit": "Sign Up",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "error": "Sign up failed.",
+      "unknownError": "An error occurred during sign up."
+    }
+  },
+  "projects": {
+    "title": "My Projects",
+    "count": "{count} books in progress",
+    "newProject": "New Project",
+    "fetchError": "Failed to load project list.",
+    "createError": "Failed to create project.",
+    "deleteConfirm": "Are you sure you want to delete?",
+    "deleteError": "Failed to delete project.",
+    "empty": "No projects yet",
+    "createFirst": "Create Your First Book",
+    "noResults": "No search results",
+    "resetFilter": "Reset filters",
+    "modal": {
+      "title": "Create Project",
+      "newWrite": "Write New",
+      "importFile": "Import File",
+      "bookTitle": "Title",
+      "bookTitlePlaceholder": "Enter book title",
+      "genre": "Genre",
+      "description": "Description",
+      "descriptionPlaceholder": "Brief description of the book",
+      "cancel": "Cancel",
+      "create": "Create Project"
+    }
+  },
+  "newProject": {
+    "heading": "What story will you begin?",
+    "otherGenre": "Other Genre",
+    "titleStep": "Tell us the title",
+    "titleHint": "You can change it anytime later",
+    "titlePlaceholder": "Book Title",
+    "descriptionPlaceholder": "Brief description (optional)",
+    "creating": "Creating",
+    "start": "Get Started",
+    "createError": "Failed to create project.",
+    "genres": {
+      "fiction": { "name": "Fiction", "description": "Novels, fantasy, sci-fi, romance, etc." },
+      "nonfiction": { "name": "Non-fiction", "description": "History, science, society, economics, etc." },
+      "selfhelp": { "name": "Self-help", "description": "Success, habits, motivation, leadership, etc." },
+      "technical": { "name": "Technical", "description": "Programming, engineering, science & technology, etc." },
+      "essay": { "name": "Essay", "description": "Daily life, travel, culture, philosophy, etc." },
+      "children": { "name": "Children's", "description": "Fairy tales, picture books, educational books, etc." },
+      "poetry": { "name": "Poetry", "description": "Modern poetry, prose poetry, traditional verse, etc." }
+    }
+  },
+  "project": {
+    "sidebar": {
+      "projects": "Projects"
+    }
+  },
+  "research": {
+    "title": "Research",
+    "description": "Define your book's concept and direction",
+    "nextLabel": "Go to Outline",
+    "steps": {
+      "idea": "Idea",
+      "explore": "Explore",
+      "plan": "Plan",
+      "complete": "Complete"
+    },
+    "preview": "{step} step preview",
+    "initialIdea": "Initial Idea",
+    "question": "Question {index}",
+    "returnToCurrent": "Return to current step",
+    "restartFromHere": "Restart from this step",
+    "ideaPrompt": "What story do you want to tell?",
+    "ideaDescription": "Share your initial idea. AI will refine it through questions.",
+    "ideaPlaceholder": "Describe your book idea, topic, or concept...",
+    "preparingQuestions": "Preparing questions...",
+    "developIdea": "Develop Idea",
+    "questionProgress": "Question {current} / {total}",
+    "answerPlaceholder": "Enter your answer...",
+    "completeAndPlan": "Complete & Generate Plan",
+    "nextQuestion": "Next Question",
+    "generatingPlan": "Writing book plan",
+    "analyzingResponses": "Analyzing responses for optimal structure...",
+    "complete": "Research Complete",
+    "conceptDeveloped": "Book concept has been developed",
+    "editButton": "Edit",
+    "editQA": "Edit Q&A",
+    "qaTitle": "Q&A",
+    "editPlanSummary": "Edit Book Plan Summary",
+    "planSummary": "Book Plan Summary",
+    "saveButton": "Save",
+    "readyForOutline": "Ready to design the table of contents. Proceed to the next step."
+  },
+  "outline": {
+    "title": "Outline",
+    "description": "Design your book structure and table of contents",
+    "nextLabel": "Start Writing",
+    "previousLabel": "Research",
+    "tabs": {
+      "outline": "Outline",
+      "bible": "Book Bible"
+    },
+    "newBadge": "NEW",
+    "steps": {
+      "settings": "Settings",
+      "generate": "Generate",
+      "edit": "Edit",
+      "confirm": "Confirm"
+    },
+    "preview": "{step} step preview",
+    "targetAudience": "Target Audience",
+    "targetPages": "Target Length",
+    "writingStyle": "Writing Style",
+    "bookOverview": "Book Overview",
+    "chapterList": "Chapter List ({count})",
+    "returnToCurrent": "Return to current step",
+    "restartFromHere": "Restart from this step",
+    "tones": {
+      "formal": "Formal",
+      "casual": "Casual",
+      "academic": "Academic",
+      "conversational": "Conversational",
+      "narrative": "Narrative",
+      "descriptive": "Descriptive",
+      "persuasive": "Persuasive",
+      "humorous": "Humorous",
+      "poetic": "Poetic",
+      "technical": "Technical",
+      "journalistic": "Journalistic",
+      "lyrical": "Lyrical"
+    }
+  },
+  "write": {
+    "title": "Write",
+    "description": "Write each chapter of your book",
+    "nextLabel": "Edit & Review",
+    "previousLabel": "Outline",
+    "chapter": "Chapter",
+    "page": "Page",
+    "save": "Save",
+    "import": "Import",
+    "bible": "Bible",
+    "newBadge": "NEW",
+    "applying": "Applying",
+    "importModal": {
+      "title": "Import Chapter",
+      "description": "Upload a manuscript file to add or replace chapters.",
+      "titleLabel": "Title (optional)"
+    }
+  },
+  "edit": {
+    "title": "Edit",
+    "description": "AI reviews grammar, style, and content",
+    "nextLabel": "Final Review",
+    "previousLabel": "Write",
+    "chapter": "Chapter",
+    "charCount": "{count} chars",
+    "save": "Save",
+    "analyzing": "Analyzing...",
+    "analyze": "AI Analysis",
+    "suggestions": "Suggestions ({count})"
+  },
+  "review": {
+    "title": "Review",
+    "description": "Evaluate quality and approve final content",
+    "previousLabel": "Edit",
+    "quality": {
+      "title": "Quality Evaluation",
+      "description": "Evaluate the manuscript with AI",
+      "evaluating": "Evaluating...",
+      "evaluate": "Run Evaluation",
+      "overallScore": "Overall Score",
+      "outOf": "/ 10",
+      "readyToPublish": "Ready to Publish",
+      "aiFeedback": "AI Feedback"
+    },
+    "chapters": {
+      "title": "Chapter Review",
+      "description": "Approve each chapter for final publication",
+      "approveAll": "Approve All",
+      "charCount": "{count} chars",
+      "approve": "Approve"
+    },
+    "metrics": {
+      "coherence": "Coherence",
+      "creativity": "Creativity",
+      "grammar": "Grammar",
+      "structure": "Structure",
+      "engagement": "Engagement",
+      "clarity": "Clarity",
+      "originality": "Originality",
+      "targetFit": "Target Fit"
+    },
+    "finalize": "Finalize & Preview",
+    "allApproved": "All chapters approved. Finalize the book and check the preview."
+  },
+  "preview": {
+    "loading": "Loading...",
+    "notFound": "Project not found.",
+    "backToProjects": "Back to Projects"
+  },
+  "editor": {
+    "bookBible": "Book Bible"
+  },
+  "bible": {},
+  "metadata": {
+    "fetchError": "Failed to load metadata.",
+    "saveError": "Failed to save metadata.",
+    "saveFailed": "Save failed",
+    "sections": {
+      "basic": "Basic Information",
+      "publishing": "Publishing Information",
+      "classification": "Classification",
+      "copyright": "Copyright"
+    },
+    "fields": {
+      "subtitle": "Subtitle",
+      "subtitlePlaceholder": "Book subtitle (optional)",
+      "publisher": "Publisher",
+      "publisherPlaceholder": "Publisher name",
+      "publishDate": "Publish Date",
+      "publisherAddress": "Publisher Address",
+      "publisherAddressPlaceholder": "Publisher address (optional)",
+      "edition": "Edition",
+      "editionPlaceholder": "e.g., 1st edition, revised",
+      "printRun": "Print Run",
+      "printRunPlaceholder": "e.g., 1000",
+      "keywords": "Keywords (comma separated)",
+      "keywordsPlaceholder": "e.g., fiction, fantasy, growth",
+      "language": "Language",
+      "copyrightNotice": "Copyright Notice",
+      "copyrightPlaceholder": "© {year} Author. All rights reserved.",
+      "license": "License"
+    },
+    "languages": {
+      "ko": "Korean",
+      "en": "English",
+      "ja": "Japanese",
+      "zh": "Chinese"
+    },
+    "licenses": {
+      "all-rights-reserved": "All Rights Reserved",
+      "cc-by": "CC BY (Attribution)",
+      "cc-by-sa": "CC BY-SA (Attribution-ShareAlike)",
+      "cc-by-nc": "CC BY-NC (Attribution-NonCommercial)",
+      "cc-by-nc-sa": "CC BY-NC-SA (Attribution-NonCommercial-ShareAlike)",
+      "cc-by-nd": "CC BY-ND (Attribution-NoDerivs)",
+      "cc0": "CC0 (Public Domain)"
+    }
+  },
+  "chat": {
+    "inputLabel": "AI chat message input",
+    "sendLabel": "Send message"
+  },
+  "agents": {
+    "research": "Research Agent",
+    "outliner": "Outliner Agent",
+    "writer": "Writer Agent",
+    "editor": "Editor Agent",
+    "critic": "Critic Agent"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "fallback": "An unexpected error occurred. Please try again.",
+    "retry": "Retry",
+    "goHome": "Go to Home"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "description": "The page you requested does not exist or has been moved.",
+    "backToProjects": "Back to Projects"
+  }
+}

@@ -3,16 +3,11 @@
 import { useState, ReactElement } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 import { BookType } from '@/types/book'
 
-const bookTypes: { type: BookType; name: string; description: string }[] = [
-  { type: 'fiction', name: '소설', description: '장편/단편, 로맨스, 판타지, SF' },
-  { type: 'nonfiction', name: '논픽션', description: '역사, 과학, 사회, 인문' },
-  { type: 'selfhelp', name: '자기계발', description: '성공, 습관, 동기부여' },
-  { type: 'technical', name: '기술서적', description: '프로그래밍, IT, 전문기술' },
-  { type: 'essay', name: '에세이', description: '개인 경험, 일상, 여행' },
-  { type: 'children', name: '동화', description: '그림책, 아동문학' },
-  { type: 'poetry', name: '시집', description: '현대시, 서정시, 시 모음' },
+const BOOK_TYPE_VALUES: BookType[] = [
+  'fiction', 'nonfiction', 'selfhelp', 'technical', 'essay', 'children', 'poetry',
 ]
 
 // Award-winning minimal book cover designs
@@ -192,6 +187,8 @@ const BookCover = ({ type, isHovered }: { type: BookType; isHovered: boolean }) 
 
 export default function NewProjectPage() {
   const router = useRouter()
+  const t = useTranslations('newProject')
+  const tc = useTranslations('common')
   const [step, setStep] = useState<'type' | 'details'>('type')
   const [selectedType, setSelectedType] = useState<BookType | null>(null)
   const [hoveredType, setHoveredType] = useState<BookType | null>(null)
@@ -217,7 +214,7 @@ export default function NewProjectPage() {
         body: JSON.stringify({
           title: title.trim(),
           type: selectedType,
-          description: description.trim() || `${title} - ${bookTypes.find(b => b.type === selectedType)?.name}`
+          description: description.trim() || `${title} - ${t(`genres.${selectedType}.name`)}`
         })
       })
 
@@ -225,11 +222,11 @@ export default function NewProjectPage() {
       if (data.success && data.data?.id) {
         router.push(`/project/${data.data.id}/research`)
       } else {
-        setError(data.error || '프로젝트 생성에 실패했습니다.')
+        setError(data.error || t('createError'))
         setIsCreating(false)
       }
     } catch {
-      setError('프로젝트 생성에 실패했습니다. 다시 시도해주세요.')
+      setError(t('createError'))
       setIsCreating(false)
     }
   }
@@ -249,7 +246,7 @@ export default function NewProjectPage() {
             href="/projects"
             className="text-xs text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors tracking-wide"
           >
-            프로젝트
+            {tc('projects')}
           </Link>
         </div>
       </header>
@@ -262,9 +259,7 @@ export default function NewProjectPage() {
             <div className="pt-20 pb-16 px-6">
               <div className="max-w-7xl mx-auto">
                 <h1 className="text-[clamp(2rem,5vw,4rem)] font-light tracking-tight text-neutral-900 dark:text-white leading-[1.1]">
-                  어떤 이야기를
-                  <br />
-                  <span className="font-normal">시작할까요?</span>
+                  {t('heading')}
                 </h1>
               </div>
             </div>
@@ -273,26 +268,26 @@ export default function NewProjectPage() {
             <div className="flex-1 px-6 pb-20">
               <div className="max-w-7xl mx-auto">
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-6 lg:gap-8">
-                  {bookTypes.map((book) => (
+                  {BOOK_TYPE_VALUES.map((bookType) => (
                     <button
-                      key={book.type}
-                      onClick={() => handleTypeSelect(book.type)}
-                      onMouseEnter={() => setHoveredType(book.type)}
+                      key={bookType}
+                      onClick={() => handleTypeSelect(bookType)}
+                      onMouseEnter={() => setHoveredType(bookType)}
                       onMouseLeave={() => setHoveredType(null)}
                       className="group text-left focus:outline-none"
                     >
                       {/* Book cover */}
                       <div className="aspect-[3/4] mb-4">
-                        <BookCover type={book.type} isHovered={hoveredType === book.type} />
+                        <BookCover type={bookType} isHovered={hoveredType === bookType} />
                       </div>
 
                       {/* Label */}
                       <div className="space-y-1">
                         <h3 className="text-sm font-medium text-neutral-900 dark:text-white tracking-wide">
-                          {book.name}
+                          {t(`genres.${bookType}.name`)}
                         </h3>
                         <p className="text-[11px] text-neutral-400 leading-relaxed tracking-wide">
-                          {book.description}
+                          {t(`genres.${bookType}.description`)}
                         </p>
                       </div>
                     </button>
@@ -315,7 +310,7 @@ export default function NewProjectPage() {
                 <svg className="w-3 h-3 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
-                다른 장르
+                {t('otherGenre')}
               </button>
 
               <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-start">
@@ -324,7 +319,7 @@ export default function NewProjectPage() {
                   <div className="w-48 lg:w-64 mx-auto lg:mx-0">
                     <BookCover type={selectedType} isHovered={true} />
                     <p className="mt-6 text-sm font-medium text-neutral-900 dark:text-white text-center lg:text-left tracking-wide">
-                      {bookTypes.find(b => b.type === selectedType)?.name}
+                      {t(`genres.${selectedType}.name`)}
                     </p>
                   </div>
                 </div>
@@ -332,10 +327,10 @@ export default function NewProjectPage() {
                 {/* Form */}
                 <div className="max-w-md">
                   <h1 className="text-3xl lg:text-4xl font-light text-neutral-900 dark:text-white mb-3 tracking-tight">
-                    제목을 알려주세요
+                    {t('titleStep')}
                   </h1>
                   <p className="text-sm text-neutral-400 mb-12 tracking-wide">
-                    나중에 언제든 변경할 수 있습니다
+                    {t('titleHint')}
                   </p>
 
                   <div className="space-y-8">
@@ -345,7 +340,7 @@ export default function NewProjectPage() {
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        placeholder="책 제목"
+                        placeholder={t('titlePlaceholder')}
                         className="w-full px-0 py-4 text-2xl lg:text-3xl font-light
                           bg-transparent border-0 border-b border-neutral-200 dark:border-neutral-800
                           text-neutral-900 dark:text-white
@@ -361,7 +356,7 @@ export default function NewProjectPage() {
                       <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="간단한 설명 (선택)"
+                        placeholder={t('descriptionPlaceholder')}
                         rows={3}
                         className="w-full px-0 py-4 text-base
                           bg-transparent border-0 border-b border-neutral-200 dark:border-neutral-800
@@ -396,10 +391,10 @@ export default function NewProjectPage() {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                           </svg>
-                          <span>생성 중</span>
+                          <span>{t('creating')}</span>
                         </>
                       ) : (
-                        <span>시작하기</span>
+                        <span>{t('start')}</span>
                       )}
                     </button>
                   </div>

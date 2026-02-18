@@ -65,6 +65,12 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 - **버전 관리** — 프로젝트 스냅샷 생성/복원 (최대 20개, 자동 백업)
 - **AI 에이전트 설정** — Writer/Editor/Critic 커스터마이징 (문체, 창의성, 엄격도)
 
+### 국제화 (i18n)
+- **next-intl** 기반 다국어 지원 (한국어/영어)
+- 쿠키 기반 로케일 전환 (URL 구조 변경 없음)
+- 17개 네임스페이스, 200+ 번역 키
+- ko/en 키 일치 자동 검증 테스트
+
 ### UX
 - 3D 인터랙티브 랜딩 페이지 (Three.js + React Three Fiber)
 - Toast 알림 시스템
@@ -75,12 +81,13 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 - AI 생성 진행 표시 (실시간 단어 수, 경과 시간, 프로그레스바)
 - 출처 관리 & 인용 (인라인 인용, 참고문헌 자동 생성)
 - 환경 변수 검증 (Zod + Proxy 패턴)
+- 접근성(a11y) 강화 (aria-*, role, axe 검증)
 
 ## 기술 스택
 
 | 분류 | 기술 |
 |------|------|
-| **Framework** | Next.js 14 (App Router), React 18, TypeScript 5 |
+| **Framework** | Next.js 16 (App Router), React 19, TypeScript 5 |
 | **Styling** | Tailwind CSS 4, Tailwind Typography, Framer Motion |
 | **Editor** | TipTap (rich text) |
 | **AI** | Anthropic Claude API (@anthropic-ai/sdk) |
@@ -91,7 +98,8 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 | **Validation** | Zod |
 | **File Parsing** | mammoth (docx), pdf-parse (pdf), sharp (image) |
 | **Auth** | NextAuth.js v5 (JWT), bcryptjs, @auth/prisma-adapter |
-| **Testing** | Vitest, Testing Library |
+| **i18n** | next-intl (cookie 기반 로케일, ko/en) |
+| **Testing** | Vitest, Testing Library, Playwright (E2E) |
 
 ## 책 종류
 
@@ -154,6 +162,8 @@ ai-book/
 │   └── types/
 │       ├── book.ts          # 도메인 타입 정의
 │       └── book-bible.ts    # Book Bible 타입
+├── messages/                 # i18n 번역 파일 (ko.json, en.json)
+├── e2e/                     # E2E 테스트 (Playwright)
 ├── prisma/schema.prisma     # DB 스키마
 └── vitest.config.ts         # 테스트 설정
 ```
@@ -183,6 +193,7 @@ npm run build         # 프로덕션 빌드
 npm test              # Vitest watch 모드
 npm run test:run      # 단일 테스트 실행
 npm run test:coverage # 커버리지 리포트
+npm run test:e2e      # E2E 테스트 (Playwright)
 ```
 
 ## 환경 변수
@@ -227,3 +238,7 @@ AUTH_TRUST_HOST=true  # 로컬 개발용
 - [x] 출처 관리 & 인용
 - [x] 프로젝트 버전 관리 (스냅샷)
 - [x] AI 에이전트 커스터마이징
+- [x] 국제화 i18n (next-intl, 한국어/영어)
+- [x] 접근성(a11y) 개선 (aria-*, role, axe 검증)
+- [x] E2E 테스트 (Playwright, 12 spec)
+- [x] Next.js 16 + React 19 업그레이드

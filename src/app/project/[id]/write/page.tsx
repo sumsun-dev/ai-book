@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import StageHeader from '@/components/project/StageHeader'
 import { ChapterList, ChapterEditor } from '@/components/write'
 import { PageEditor } from '@/components/page-editor'
@@ -31,6 +32,8 @@ export default function WritePage() {
   const router = useRouter()
   const projectId = params.id as string
   const { showToast } = useToast()
+  const t = useTranslations('write')
+  const tc = useTranslations('common')
 
   const [state, setState] = useState<WriteState>({
     outline: null,
@@ -562,13 +565,13 @@ export default function WritePage() {
   return (
     <div className="h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col overflow-hidden transition-colors duration-700">
       <StageHeader
-        title="집필"
-        description="책의 각 챕터를 작성하세요"
+        title={t('title')}
+        description={t('description')}
         stage="write"
         onPrevious={handlePreviousStage}
         onNext={allChaptersDone() ? handleNextStage : undefined}
-        nextLabel="편집 및 검토"
-        previousLabel="목차"
+        nextLabel={t('nextLabel')}
+        previousLabel={t('previousLabel')}
       >
         {/* Save Status */}
         <div className="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
@@ -578,7 +581,7 @@ export default function WritePage() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              저장 중...
+              {tc('saving')}
             </>
           ) : lastSaved ? (
             <>
@@ -600,7 +603,7 @@ export default function WritePage() {
                 : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
             }`}
           >
-            챕터
+            {t('chapter')}
           </button>
           <button
             onClick={() => setEditorMode('page')}
@@ -610,7 +613,7 @@ export default function WritePage() {
                 : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
             }`}
           >
-            페이지
+            {t('page')}
           </button>
         </div>
 
@@ -622,7 +625,7 @@ export default function WritePage() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
           </svg>
-          가져오기
+          {t('import')}
         </button>
 
         {/* Bible Button - fiction/selfhelp 타입에만 표시 */}
@@ -641,15 +644,15 @@ export default function WritePage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            Bible
+            {t('bible')}
             {isFirstBibleVisit && (
               <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[10px] bg-emerald-500 text-white rounded-full">
-                NEW
+                {t('newBadge')}
               </span>
             )}
             {hasBibleContent && state.isWriting && (
               <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1 py-0.5 text-[9px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-300 rounded whitespace-nowrap">
-                적용 중
+                {t('applying')}
               </span>
             )}
           </button>
@@ -667,7 +670,7 @@ export default function WritePage() {
           onClick={handleManualSave}
           className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
         >
-          저장
+          {t('save')}
         </button>
       </StageHeader>
 
@@ -724,7 +727,7 @@ export default function WritePage() {
               <aside className="w-56 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 overflow-auto">
                 <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
                   <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
-                    챕터
+                    {t('chapter')}
                   </h3>
                 </div>
                 <div className="py-2">
@@ -809,7 +812,7 @@ export default function WritePage() {
           <div className="bg-white dark:bg-neutral-900 w-full max-w-4xl max-h-[90vh] overflow-auto shadow-2xl">
             <div className="p-6 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
               <h2 className="text-xl font-light text-neutral-900 dark:text-white">
-                챕터 가져오기
+                {t('importModal.title')}
               </h2>
               <button
                 onClick={closeImportModal}
@@ -825,7 +828,7 @@ export default function WritePage() {
               {importStep === 'upload' && (
                 <>
                   <p className="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
-                    원고 파일을 업로드하여 챕터를 추가하거나 대체하세요.
+                    {t('importModal.description')}
                   </p>
                   <FileUploader
                     onFileLoaded={handleFileLoaded}

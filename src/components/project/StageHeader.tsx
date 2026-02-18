@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ProjectStage } from '@/types/book'
 
 interface StageHeaderProps {
@@ -16,13 +17,6 @@ interface StageHeaderProps {
 }
 
 const stageOrder: ProjectStage[] = ['research', 'outline', 'write', 'edit', 'review']
-const stageLabels: Record<ProjectStage, string> = {
-  research: '리서치',
-  outline: '목차',
-  write: '집필',
-  edit: '편집',
-  review: '검토'
-}
 
 export default function StageHeader({
   title,
@@ -30,13 +24,17 @@ export default function StageHeader({
   stage,
   onPrevious,
   onNext,
-  nextLabel = '다음',
-  previousLabel = '이전',
+  nextLabel,
+  previousLabel,
   nextDisabled = false,
   children
 }: StageHeaderProps) {
   const router = useRouter()
+  const t = useTranslations('common')
   const currentIndex = stageOrder.indexOf(stage)
+
+  const resolvedNextLabel = nextLabel ?? t('next')
+  const resolvedPreviousLabel = previousLabel ?? t('previous')
 
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 dark:bg-neutral-950/80 border-b border-neutral-200/50 dark:border-neutral-800/50">
@@ -51,7 +49,7 @@ export default function StageHeader({
               <svg className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-              프로젝트
+              {t('projects')}
             </button>
 
             {/* Stage Progress */}
@@ -69,7 +67,7 @@ export default function StageHeader({
                       }
                     `}
                   >
-                    {stageLabels[s]}
+                    {t(`stages.${s}`)}
                   </div>
                   {i < stageOrder.length - 1 && (
                     <div
@@ -110,7 +108,7 @@ export default function StageHeader({
                 <svg className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                {previousLabel}
+                {resolvedPreviousLabel}
               </button>
             )}
 
@@ -126,7 +124,7 @@ export default function StageHeader({
                   }
                 `}
               >
-                {nextLabel}
+                {resolvedNextLabel}
                 <svg className={`w-4 h-4 transition-transform duration-300 ${!nextDisabled ? 'group-hover:translate-x-1' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>

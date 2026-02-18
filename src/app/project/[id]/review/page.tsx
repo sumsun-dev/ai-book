@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import StageHeader from '@/components/project/StageHeader'
 import { BookOutline, Chapter } from '@/types/book'
 
@@ -25,6 +26,7 @@ export default function ReviewPage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.id as string
+  const t = useTranslations('review')
 
   const [state, setState] = useState<ReviewState>({
     outline: null,
@@ -167,21 +169,21 @@ export default function ReviewPage() {
   }
 
   const evaluationMetrics = [
-    { key: 'coherence', label: '일관성' },
-    { key: 'engagement', label: '몰입도' },
-    { key: 'clarity', label: '명확성' },
-    { key: 'originality', label: '독창성' },
-    { key: 'targetFit', label: '적합도' }
+    { key: 'coherence', label: t('metrics.coherence') },
+    { key: 'engagement', label: t('metrics.engagement') },
+    { key: 'clarity', label: t('metrics.clarity') },
+    { key: 'originality', label: t('metrics.originality') },
+    { key: 'targetFit', label: t('metrics.targetFit') }
   ]
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-700">
       <StageHeader
-        title="검토"
-        description="품질을 평가하고 최종 콘텐츠를 승인하세요"
+        title={t('title')}
+        description={t('description')}
         stage="review"
         onPrevious={handlePreviousStage}
-        previousLabel="편집"
+        previousLabel={t('previousLabel')}
       />
 
       <main className="max-w-5xl mx-auto px-8 py-12">
@@ -196,10 +198,10 @@ export default function ReviewPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-xl font-light text-neutral-900 dark:text-white mb-1">
-                품질 평가
+                {t('quality.title')}
               </h2>
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                AI로 원고를 평가합니다
+                {t('quality.description')}
               </p>
             </div>
             <button
@@ -219,10 +221,10 @@ export default function ReviewPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  평가 중...
+                  {t('quality.evaluating')}
                 </>
               ) : (
-                '평가 실행'
+                t('quality.evaluate')
               )}
             </button>
           </div>
@@ -248,10 +250,10 @@ export default function ReviewPage() {
                 <div className="flex items-center justify-between p-6 bg-neutral-50 dark:bg-neutral-800">
                   <div>
                     <span className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
-                      종합 점수
+                      {t('quality.overallScore')}
                     </span>
                     <div className={`text-4xl font-light ${getScoreColor(state.overallScore)}`}>
-                      {state.overallScore} <span className="text-lg text-neutral-400">/ 10</span>
+                      {state.overallScore} <span className="text-lg text-neutral-400">{t('quality.outOf')}</span>
                     </div>
                   </div>
                   {state.overallScore >= 7 && (
@@ -259,7 +261,7 @@ export default function ReviewPage() {
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                         <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
                       </svg>
-                      <span className="font-medium">출판 준비 완료</span>
+                      <span className="font-medium">{t('quality.readyToPublish')}</span>
                     </div>
                   )}
                 </div>
@@ -269,7 +271,7 @@ export default function ReviewPage() {
               {state.evaluation.feedback && (
                 <div className="mt-6 p-6 border-l-2 border-neutral-300 dark:border-neutral-700">
                   <h4 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-3">
-                    AI 피드백
+                    {t('quality.aiFeedback')}
                   </h4>
                   <p className="text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     {state.evaluation.feedback}
@@ -285,10 +287,10 @@ export default function ReviewPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-xl font-light text-neutral-900 dark:text-white mb-1">
-                챕터 검토
+                {t('chapters.title')}
               </h2>
               <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                최종 출판을 위해 각 챕터를 승인하세요
+                {t('chapters.description')}
               </p>
             </div>
             {!allApproved && (
@@ -296,7 +298,7 @@ export default function ReviewPage() {
                 onClick={handleApproveAll}
                 className="text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
               >
-                전체 승인
+                {t('chapters.approveAll')}
               </button>
             )}
           </div>
@@ -344,7 +346,7 @@ export default function ReviewPage() {
                           {chapter.number}. {chapter.title}
                         </div>
                         <div className="text-xs text-neutral-500 dark:text-neutral-400">
-                          {chapterContent?.content?.length?.toLocaleString() || 0}자
+                          {t('chapters.charCount', { count: chapterContent?.content?.length?.toLocaleString() || 0 })}
                         </div>
                       </div>
                     </div>
@@ -356,7 +358,7 @@ export default function ReviewPage() {
                         }}
                         className="px-4 py-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium transition-all duration-300 hover:bg-neutral-700 dark:hover:bg-neutral-200"
                       >
-                        승인
+                        {t('chapters.approve')}
                       </button>
                     )}
                   </div>
@@ -382,10 +384,10 @@ export default function ReviewPage() {
               onClick={handleComplete}
               className="px-12 py-5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium tracking-widest uppercase transition-all duration-500 hover:bg-neutral-700 dark:hover:bg-neutral-200"
             >
-              완료 및 미리보기
+              {t('finalize')}
             </button>
             <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
-              모든 챕터가 승인되었습니다. 책을 마무리하고 미리보기를 확인하세요.
+              {t('allApproved')}
             </p>
           </div>
         )}

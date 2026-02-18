@@ -109,6 +109,7 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
           value={outline.synopsis}
           onChange={(e) => onOutlineChange({ ...outline, synopsis: e.target.value })}
           rows={3}
+          aria-label="책 개요"
           className="w-full p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors resize-none"
         />
       </div>
@@ -138,6 +139,7 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
                   <button
                     onClick={() => moveChapter(index, 'up')}
                     disabled={index === 0}
+                    aria-label={`${chapter.title} 위로 이동`}
                     className="p-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -147,6 +149,7 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
                   <button
                     onClick={() => moveChapter(index, 'down')}
                     disabled={index === outline.chapters.length - 1}
+                    aria-label={`${chapter.title} 아래로 이동`}
                     className="p-1 text-neutral-400 hover:text-neutral-900 dark:hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -185,6 +188,8 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => toggleChapter(index)}
+                    aria-expanded={expandedChapters.has(index)}
+                    aria-label={`${chapter.title} ${expandedChapters.has(index) ? '접기' : '펼치기'}`}
                     className="p-2 text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
                   >
                     <svg className={`w-5 h-5 transition-transform ${expandedChapters.has(index) ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,6 +198,7 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
                   </button>
                   <button
                     onClick={() => handleRemoveChapter(index)}
+                    aria-label={`${chapter.title} 삭제`}
                     className="p-2 text-neutral-400 hover:text-red-600 transition-colors"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -257,11 +263,13 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
             onChange={(e) => setNewChapterTitle(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAddChapter()}
             placeholder="새 챕터 제목..."
+            aria-label="새 챕터 제목"
             className="flex-1 p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors"
           />
           <button
             onClick={handleAddChapter}
             disabled={!newChapterTitle.trim()}
+            aria-label="새 챕터 추가"
             className="px-6 py-4 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

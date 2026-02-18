@@ -47,3 +47,9 @@ next-env.d.ts
 # Prisma
 prisma/dev.db
 prisma/dev.db-journal
+prisma/test-e2e.db*
+
+# Playwright
+e2e/.auth/
+playwright-report/
+test-results/

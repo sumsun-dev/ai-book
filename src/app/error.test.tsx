@@ -16,20 +16,20 @@ describe('ErrorPage', () => {
   it('should render default message when error has no message', () => {
     render(<ErrorPage error={new Error('')} reset={vi.fn()} />)
     expect(
-      screen.getByText('예상치 못한 오류가 발생했습니다. 다시 시도해주세요.')
+      screen.getByText('fallback')
     ).toBeInTheDocument()
   })
 
   it('should call reset when retry button is clicked', () => {
     const reset = vi.fn()
     render(<ErrorPage error={new Error('err')} reset={reset} />)
-    fireEvent.click(screen.getByText('다시 시도'))
+    fireEvent.click(screen.getByText('retry'))
     expect(reset).toHaveBeenCalledOnce()
   })
 
   it('should render link to projects page', () => {
     render(<ErrorPage {...defaultProps} />)
-    const link = screen.getByText('홈으로 돌아가기')
+    const link = screen.getByText('goHome')
     expect(link).toBeInTheDocument()
     expect(link.closest('a')).toHaveAttribute('href', '/projects')
   })

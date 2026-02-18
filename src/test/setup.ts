@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom'
+import 'vitest-axe/extend-expect'
 import React from 'react'
-import { afterEach, vi } from 'vitest'
+import { afterEach, expect, vi } from 'vitest'
+import * as matchers from 'vitest-axe/matchers'
+
+expect.extend(matchers)
 import { cleanup } from '@testing-library/react'
 
 // React 테스트 후 정리
@@ -71,4 +75,45 @@ global.matchMedia = vi.fn().mockImplementation((query) => ({
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
+}))
+
+// next-intl 모킹
+vi.mock('next-intl', () => ({
+  useTranslations: () => {
+    const t = (key: string, params?: Record<string, unknown>) => {
+      if (params) {
+        return Object.entries(params).reduce(
+          (str, [k, v]) => str.replace(`{${k}}`, String(v)),
+          key
+        )
+      }
+      return key
+    }
+    t.rich = (key: string) => key
+    t.raw = (key: string) => key
+    t.has = () => true
+    return t
+  },
+  useLocale: () => 'ko',
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => children,
+}))
+
+vi.mock('next-intl/server', () => ({
+  getTranslations: vi.fn().mockImplementation(() => {
+    const t = (key: string, params?: Record<string, unknown>) => {
+      if (params) {
+        return Object.entries(params).reduce(
+          (str, [k, v]) => str.replace(`{${k}}`, String(v)),
+          key
+        )
+      }
+      return key
+    }
+    t.rich = (key: string) => key
+    t.raw = (key: string) => key
+    t.has = () => true
+    return Promise.resolve(t)
+  }),
+  getLocale: vi.fn().mockResolvedValue('ko'),
+  getMessages: vi.fn().mockResolvedValue({}),
 }))

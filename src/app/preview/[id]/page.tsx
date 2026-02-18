@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { BookPreview } from '@/components/preview/BookPreview'
 import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { useBookStore } from '@/lib/store'
@@ -11,6 +12,7 @@ export default function PreviewPage() {
   const params = useParams()
   const router = useRouter()
   const id = params.id as string
+  const t = useTranslations('preview')
 
   const [project, setProject] = useState<BookProject | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -26,13 +28,13 @@ export default function PreviewPage() {
         const data = await res.json()
 
         if (!data.success) {
-          setError(data.error || '프로젝트를 찾을 수 없습니다.')
+          setError(data.error || t('notFound'))
           return
         }
 
         setProject(data.data)
       } catch {
-        setError('프로젝트를 불러오는데 실패했습니다.')
+        setError(t('notFound'))
       } finally {
         setIsLoading(false)
       }
@@ -65,7 +67,7 @@ export default function PreviewPage() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-900">
-        <LoadingSpinner size="lg" text="로딩 중..." />
+        <LoadingSpinner size="lg" text={t('loading')} />
       </div>
     )
   }
@@ -75,12 +77,12 @@ export default function PreviewPage() {
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-900 text-white">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">404</h1>
-          <p className="text-gray-400 mb-8">{error || '프로젝트를 찾을 수 없습니다.'}</p>
+          <p className="text-gray-400 mb-8">{error || t('notFound')}</p>
           <button
             onClick={() => router.push('/projects')}
             className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            프로젝트 목록으로
+            {t('backToProjects')}
           </button>
         </div>
       </div>

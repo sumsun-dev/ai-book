@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 export default function RegisterForm() {
   const router = useRouter()
+  const t = useTranslations('auth.register')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -18,12 +20,12 @@ export default function RegisterForm() {
     setError('')
 
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.')
+      setError(t('passwordMismatch'))
       return
     }
 
     if (password.length < 8) {
-      setError('비밀번호는 최소 8자 이상이어야 합니다.')
+      setError(t('passwordMinLength'))
       return
     }
 
@@ -39,7 +41,7 @@ export default function RegisterForm() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || '회원가입에 실패했습니다.')
+        setError(data.error || t('error'))
         return
       }
 
@@ -58,7 +60,7 @@ export default function RegisterForm() {
         router.refresh()
       }
     } catch {
-      setError('회원가입 중 오류가 발생했습니다.')
+      setError(t('unknownError'))
     } finally {
       setLoading(false)
     }
@@ -67,7 +69,11 @@ export default function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
+        <div
+          id="register-error"
+          role="alert"
+          className="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400"
+        >
           {error}
         </div>
       )}
@@ -77,7 +83,7 @@ export default function RegisterForm() {
           htmlFor="name"
           className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
-          이름 <span className="text-neutral-400 dark:text-neutral-500">(선택)</span>
+          {t('name')} <span className="text-neutral-400 dark:text-neutral-500">{t('nameOptional')}</span>
         </label>
         <input
           id="name"
@@ -94,7 +100,7 @@ export default function RegisterForm() {
           htmlFor="email"
           className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
-          이메일
+          {t('email')}
         </label>
         <input
           id="email"
@@ -112,7 +118,7 @@ export default function RegisterForm() {
           htmlFor="password"
           className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
-          비밀번호
+          {t('password')}
         </label>
         <input
           id="password"
@@ -121,8 +127,10 @@ export default function RegisterForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
           minLength={8}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? 'register-error' : undefined}
           className="mt-1 block w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="8자 이상"
+          placeholder={t('passwordPlaceholder')}
         />
       </div>
 
@@ -131,7 +139,7 @@ export default function RegisterForm() {
           htmlFor="confirmPassword"
           className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
-          비밀번호 확인
+          {t('confirmPassword')}
         </label>
         <input
           id="confirmPassword"
@@ -139,8 +147,10 @@ export default function RegisterForm() {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? 'register-error' : undefined}
           className="mt-1 block w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="비밀번호를 다시 입력해주세요"
+          placeholder={t('confirmPlaceholder')}
         />
       </div>
 
@@ -149,7 +159,7 @@ export default function RegisterForm() {
         disabled={loading}
         className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {loading ? '가입 중...' : '회원가입'}
+        {loading ? t('submitting') : t('submit')}
       </button>
     </form>
   )

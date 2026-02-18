@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import AuthorEditor from './AuthorEditor'
 import CategoryEditor from './CategoryEditor'
 import { BookMetadata, Author, BookCategory } from '@/types/book'
@@ -11,24 +12,21 @@ interface MetadataFormProps {
   onClose?: () => void
 }
 
-const LANGUAGES = [
-  { code: 'ko', name: '한국어' },
-  { code: 'en', name: 'English' },
-  { code: 'ja', name: '日本語' },
-  { code: 'zh', name: '中文' },
-]
+const LANGUAGE_CODES = ['ko', 'en', 'ja', 'zh'] as const
 
-const LICENSES = [
-  { value: '', name: '선택 안 함' },
-  { value: 'all-rights-reserved', name: 'All Rights Reserved' },
-  { value: 'CC-BY', name: 'CC BY (저작자표시)' },
-  { value: 'CC-BY-NC', name: 'CC BY-NC (비영리)' },
-  { value: 'CC-BY-SA', name: 'CC BY-SA (동일조건변경허락)' },
-  { value: 'CC-BY-NC-SA', name: 'CC BY-NC-SA' },
-  { value: 'CC0', name: 'CC0 (퍼블릭 도메인)' },
-]
+const LICENSE_VALUES = [
+  '',
+  'all-rights-reserved',
+  'CC-BY',
+  'CC-BY-NC',
+  'CC-BY-SA',
+  'CC-BY-NC-SA',
+  'CC0',
+] as const
 
 export default function MetadataForm({ projectId, onSave, onClose }: MetadataFormProps) {
+  const t = useTranslations('metadata')
+  const tc = useTranslations('common')
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -67,10 +65,11 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
         setLicense(data.license || '')
       }
     } catch {
-      setError('메타데이터를 불러오는데 실패했습니다.')
+      setError(t('fetchError'))
     } finally {
       setIsLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
 
   useEffect(() => {
@@ -108,14 +107,14 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
       })
 
       if (!res.ok) {
-        throw new Error('저장 실패')
+        throw new Error(t('saveFailed'))
       }
 
       const { data } = await res.json()
       onSave?.(data)
       onClose?.()
     } catch {
-      setError('메타데이터 저장에 실패했습니다.')
+      setError(t('saveError'))
     } finally {
       setIsSaving(false)
     }
@@ -135,7 +134,10 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm">
+        <div
+          role="alert"
+          className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm"
+        >
           {error}
         </div>
       )}
@@ -143,18 +145,19 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
       {/* 기본 정보 */}
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-700 pb-2">
-          기본 정보
+          {t('sections.basic')}
         </h2>
 
         <div>
-          <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-            부제목
+          <label htmlFor="metadata-subtitle" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+            {t('fields.subtitle')}
           </label>
           <input
+            id="metadata-subtitle"
             type="text"
             value={subtitle}
             onChange={(e) => setSubtitle(e.target.value)}
-            placeholder="책의 부제목 (선택)"
+            placeholder={t('fields.subtitlePlaceholder')}
             className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
           />
         </div>
@@ -165,27 +168,29 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
       {/* 출판 정보 */}
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-700 pb-2">
-          출판 정보
+          {t('sections.publishing')}
         </h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-              출판사
+            <label htmlFor="metadata-publisher" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+              {t('fields.publisher')}
             </label>
             <input
+              id="metadata-publisher"
               type="text"
               value={publisher}
               onChange={(e) => setPublisher(e.target.value)}
-              placeholder="출판사 이름"
+              placeholder={t('fields.publisherPlaceholder')}
               className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
             />
           </div>
           <div>
-            <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-              출판일
+            <label htmlFor="metadata-publish-date" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+              {t('fields.publishDate')}
             </label>
             <input
+              id="metadata-publish-date"
               type="date"
               value={publishDate}
               onChange={(e) => setPublishDate(e.target.value)}
@@ -195,40 +200,43 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
         </div>
 
         <div>
-          <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-            출판사 주소
+          <label htmlFor="metadata-publisher-address" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+            {t('fields.publisherAddress')}
           </label>
           <input
+            id="metadata-publisher-address"
             type="text"
             value={publisherAddress}
             onChange={(e) => setPublisherAddress(e.target.value)}
-            placeholder="출판사 주소 (선택)"
+            placeholder={t('fields.publisherAddressPlaceholder')}
             className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-              판차
+            <label htmlFor="metadata-edition" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+              {t('fields.edition')}
             </label>
             <input
+              id="metadata-edition"
               type="text"
               value={edition}
               onChange={(e) => setEdition(e.target.value)}
-              placeholder="예: 초판, 개정판"
+              placeholder={t('fields.editionPlaceholder')}
               className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
             />
           </div>
           <div>
-            <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-              인쇄 부수
+            <label htmlFor="metadata-print-run" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+              {t('fields.printRun')}
             </label>
             <input
+              id="metadata-print-run"
               type="number"
               value={printRun}
               onChange={(e) => setPrintRun(e.target.value)}
-              placeholder="예: 1000"
+              placeholder={t('fields.printRunPlaceholder')}
               min="1"
               className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
             />
@@ -239,36 +247,38 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
       {/* 분류 및 키워드 */}
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-700 pb-2">
-          분류
+          {t('sections.classification')}
         </h2>
 
         <CategoryEditor categories={categories} onChange={setCategories} />
 
         <div>
-          <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-            키워드 (쉼표로 구분)
+          <label htmlFor="metadata-keywords" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+            {t('fields.keywords')}
           </label>
           <input
+            id="metadata-keywords"
             type="text"
             value={keywords}
             onChange={(e) => setKeywords(e.target.value)}
-            placeholder="예: 소설, 판타지, 성장"
+            placeholder={t('fields.keywordsPlaceholder')}
             className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-            언어
+          <label htmlFor="metadata-language" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+            {t('fields.language')}
           </label>
           <select
+            id="metadata-language"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
           >
-            {LANGUAGES.map((lang) => (
-              <option key={lang.code} value={lang.code}>
-                {lang.name}
+            {LANGUAGE_CODES.map((code) => (
+              <option key={code} value={code}>
+                {t(`languages.${code}`)}
               </option>
             ))}
           </select>
@@ -278,34 +288,37 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
       {/* 저작권 */}
       <section className="space-y-4">
         <h2 className="text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-700 pb-2">
-          저작권
+          {t('sections.copyright')}
         </h2>
 
         <div>
-          <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-            저작권 표시
+          <label htmlFor="metadata-copyright" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+            {t('fields.copyrightNotice')}
           </label>
           <input
+            id="metadata-copyright"
             type="text"
             value={copyright}
             onChange={(e) => setCopyright(e.target.value)}
-            placeholder={`예: © ${new Date().getFullYear()} 저자명. All rights reserved.`}
+            placeholder={t('fields.copyrightPlaceholder', { year: new Date().getFullYear() })}
             className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
-            라이선스
+          <label htmlFor="metadata-license" className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
+            {t('fields.license')}
           </label>
           <select
+            id="metadata-license"
             value={license}
             onChange={(e) => setLicense(e.target.value)}
             className="w-full px-3 py-2 text-sm border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:border-neutral-500"
           >
-            {LICENSES.map((lic) => (
-              <option key={lic.value} value={lic.value}>
-                {lic.name}
+            <option value="">-</option>
+            {LICENSE_VALUES.filter(v => v !== '').map((value) => (
+              <option key={value} value={value}>
+                {t(`licenses.${value.toLowerCase()}`)}
               </option>
             ))}
           </select>
@@ -320,7 +333,7 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
             onClick={onClose}
             className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
           >
-            취소
+            {tc('cancel')}
           </button>
         )}
         <button
@@ -328,7 +341,7 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
           disabled={isSaving}
           className="px-4 py-2 text-sm bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 hover:bg-neutral-700 dark:hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {isSaving ? '저장 중...' : '저장'}
+          {isSaving ? tc('saving') : tc('save')}
         </button>
       </div>
     </form>

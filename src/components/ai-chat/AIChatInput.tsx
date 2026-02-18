@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, KeyboardEvent } from 'react'
+import { useTranslations } from 'next-intl'
 
 interface QuickPrompt {
   label: string
@@ -21,6 +22,7 @@ interface AIChatInputProps {
 
 export function AIChatInput({ onSend, isLoading, disabled }: AIChatInputProps) {
   const [input, setInput] = useState('')
+  const t = useTranslations('chat')
 
   const handleSend = useCallback(() => {
     if (!input.trim() || isLoading || disabled) return
@@ -63,11 +65,13 @@ export function AIChatInput({ onSend, isLoading, disabled }: AIChatInputProps) {
           placeholder="메시지 입력... (Shift+Enter: 줄바꿈)"
           disabled={isLoading || disabled}
           rows={1}
+          aria-label={t('inputLabel')}
           className="flex-1 min-h-[36px] max-h-24 px-3 py-2 text-sm bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-600 rounded-lg resize-none focus:outline-none focus:ring-1 focus:ring-neutral-400 disabled:opacity-50"
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || isLoading || disabled}
+          aria-label={t('sendLabel')}
           className="flex items-center justify-center w-9 h-9 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-lg hover:bg-neutral-700 dark:hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? (

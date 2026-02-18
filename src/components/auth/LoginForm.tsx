@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 
 export default function LoginForm() {
   const router = useRouter()
+  const t = useTranslations('auth.login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -24,13 +26,13 @@ export default function LoginForm() {
       })
 
       if (result?.error) {
-        setError('이메일 또는 비밀번호가 올바르지 않습니다.')
+        setError(t('invalidCredentials'))
       } else {
         router.push('/')
         router.refresh()
       }
     } catch {
-      setError('로그인 중 오류가 발생했습니다.')
+      setError(t('error'))
     } finally {
       setLoading(false)
     }
@@ -39,7 +41,11 @@ export default function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400">
+        <div
+          id="login-error"
+          role="alert"
+          className="rounded-md bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-600 dark:text-red-400"
+        >
           {error}
         </div>
       )}
@@ -49,7 +55,7 @@ export default function LoginForm() {
           htmlFor="email"
           className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
-          이메일
+          {t('email')}
         </label>
         <input
           id="email"
@@ -57,6 +63,8 @@ export default function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? 'login-error' : undefined}
           className="mt-1 block w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           placeholder="your@email.com"
         />
@@ -67,7 +75,7 @@ export default function LoginForm() {
           htmlFor="password"
           className="block text-sm font-medium text-neutral-700 dark:text-neutral-300"
         >
-          비밀번호
+          {t('password')}
         </label>
         <input
           id="password"
@@ -75,8 +83,10 @@ export default function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? 'login-error' : undefined}
           className="mt-1 block w-full rounded-md border border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-800 px-3 py-2 text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-          placeholder="8자 이상"
+          placeholder={t('passwordPlaceholder')}
         />
       </div>
 
@@ -85,7 +95,7 @@ export default function LoginForm() {
         disabled={loading}
         className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
-        {loading ? '로그인 중...' : '로그인'}
+        {loading ? t('submitting') : t('submit')}
       </button>
     </form>
   )

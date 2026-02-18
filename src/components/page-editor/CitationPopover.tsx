@@ -27,8 +27,17 @@ export function CitationPopover({
         onClose()
       }
     }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
   }, [onClose])
 
   if (!source) return null
@@ -39,6 +48,7 @@ export function CitationPopover({
       className="absolute z-50 w-72 p-4 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-lg shadow-lg"
       style={{ top: position.top, left: position.left }}
       role="tooltip"
+      tabIndex={-1}
     >
       <div className="flex items-start justify-between mb-2">
         <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">

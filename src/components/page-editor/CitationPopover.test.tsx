@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { axe } from 'vitest-axe'
 import { CitationPopover } from './CitationPopover'
 import type { SourceInfo } from '@/lib/citation'
 
@@ -49,5 +50,28 @@ describe('CitationPopover', () => {
       <CitationPopover {...defaultProps} sourceId="nonexistent" />
     )
     expect(container.firstChild).toBeNull()
+  })
+})
+
+describe('CitationPopover a11y', () => {
+  it('axe 접근성 위반이 없어야 한다', async () => {
+    const { container } = render(<CitationPopover {...defaultProps} />)
+    const results = await axe(container)
+    expect(results).toHaveNoViolations()
+  })
+
+  it('Escape 키로 팝오버를 닫을 수 있어야 한다', () => {
+    const onClose = vi.fn()
+    render(<CitationPopover {...defaultProps} onClose={onClose} />)
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+
+    expect(onClose).toHaveBeenCalled()
+  })
+
+  it('팝오버에 tabIndex가 있어 포커스를 받을 수 있어야 한다', () => {
+    render(<CitationPopover {...defaultProps} />)
+    const popover = screen.getByRole('tooltip')
+    expect(popover).toHaveAttribute('tabindex', '-1')
   })
 })

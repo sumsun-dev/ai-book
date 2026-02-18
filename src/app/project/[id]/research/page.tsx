@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import StageHeader from '@/components/project/StageHeader'
 import RichTextEditor from '@/components/RichTextEditor'
 import { AIQuestion, UserAnswer } from '@/types/book'
@@ -31,6 +32,8 @@ export default function ResearchPage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.id as string
+  const t = useTranslations('research')
+  const tc = useTranslations('common')
 
   const [state, setState] = useState<ResearchState>({
     step: 'idea',
@@ -253,21 +256,21 @@ export default function ResearchPage() {
   }
 
   const steps = [
-    { id: 'idea', label: '아이디어', num: 1 },
-    { id: 'questions', label: '탐색', num: 2 },
-    { id: 'planning', label: '기획', num: 3 },
-    { id: 'complete', label: '완료', num: 4 }
+    { id: 'idea', label: t('steps.idea'), num: 1 },
+    { id: 'questions', label: t('steps.explore'), num: 2 },
+    { id: 'planning', label: t('steps.plan'), num: 3 },
+    { id: 'complete', label: t('steps.complete'), num: 4 }
   ]
   const currentStepIndex = steps.findIndex(s => s.id === state.step)
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-700">
       <StageHeader
-        title="리서치"
-        description="책의 컨셉과 방향을 정의하세요"
+        title={t('title')}
+        description={t('description')}
         stage="research"
         onNext={state.step === 'complete' ? handleNextStage : undefined}
-        nextLabel="목차로 이동"
+        nextLabel={t('nextLabel')}
         nextDisabled={state.step !== 'complete'}
       />
 
@@ -344,7 +347,7 @@ export default function ResearchPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                   <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
-                    {viewingStep === 'idea' ? '아이디어' : '탐색'} 단계 미리보기
+                    {t('preview', { step: viewingStep === 'idea' ? t('steps.idea') : t('steps.explore') })}
                   </span>
                 </div>
                 <button
@@ -361,7 +364,7 @@ export default function ResearchPage() {
               {viewingStep === 'idea' && (
                 <div className="p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700">
                   <p className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-2">
-                    초기 아이디어
+                    {t('initialIdea')}
                   </p>
                   <p className="text-neutral-900 dark:text-white whitespace-pre-wrap">
                     {state.initialIdea}
@@ -375,7 +378,7 @@ export default function ResearchPage() {
                   {state.userAnswers.map((answer, index) => (
                     <div key={answer.questionId} className="p-4 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700">
                       <p className="text-xs tracking-wider uppercase text-neutral-400 dark:text-neutral-500 mb-1">
-                        질문 {index + 1}
+                        {t('question', { index: index + 1 })}
                       </p>
                       <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-2">
                         {state.aiQuestions[index]?.question}
@@ -393,13 +396,13 @@ export default function ResearchPage() {
                   onClick={handleClosePreview}
                   className="flex-1 py-3 text-sm font-medium border border-neutral-300 dark:border-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                 >
-                  현재 단계로 돌아가기
+                  {t('returnToCurrent')}
                 </button>
                 <button
                   onClick={() => handleRestartFromStep(viewingStep)}
                   className="flex-1 py-3 text-sm font-medium bg-amber-600 text-white hover:bg-amber-700 transition-colors"
                 >
-                  이 단계부터 다시 시작
+                  {t('restartFromHere')}
                 </button>
               </div>
             </div>
@@ -411,10 +414,10 @@ export default function ResearchPage() {
           <div className="space-y-8">
             <div>
               <h2 className="text-2xl font-light text-neutral-900 dark:text-white mb-2 tracking-tight">
-                어떤 이야기를 전하고 싶으신가요?
+                {t('ideaPrompt')}
               </h2>
               <p className="text-neutral-500 dark:text-neutral-400 text-sm">
-                초기 아이디어를 공유해주세요. AI가 질문을 통해 아이디어를 다듬어 드립니다.
+                {t('ideaDescription')}
               </p>
             </div>
 
@@ -422,7 +425,7 @@ export default function ResearchPage() {
               <textarea
                 value={state.initialIdea}
                 onChange={(e) => setState(prev => ({ ...prev, initialIdea: e.target.value }))}
-                placeholder="책 아이디어, 주제 또는 컨셉을 설명해주세요..."
+                placeholder={t('ideaPlaceholder')}
                 className="w-full h-48 p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors duration-300 resize-none text-lg font-light"
               />
             </div>
@@ -444,10 +447,10 @@ export default function ResearchPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  질문 준비 중...
+                  {t('preparingQuestions')}
                 </>
               ) : (
-                '아이디어 발전시키기'
+                t('developIdea')
               )}
             </button>
           </div>
@@ -462,7 +465,7 @@ export default function ResearchPage() {
                 {state.userAnswers.map((answer, index) => (
                   <div key={answer.questionId} className="p-6 bg-neutral-100 dark:bg-neutral-900 border-l-2 border-neutral-300 dark:border-neutral-700">
                     <p className="text-xs tracking-wider uppercase text-neutral-400 dark:text-neutral-500 mb-2">
-                      질문 {index + 1}
+                      {t('question', { index: index + 1 })}
                     </p>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">
                       {state.aiQuestions[index].question}
@@ -480,7 +483,7 @@ export default function ResearchPage() {
               <div className="space-y-8">
                 <div className="flex items-center justify-between">
                   <span className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
-                    질문 {currentQuestionIndex + 1} / {state.aiQuestions.length}
+                    {t('questionProgress', { current: currentQuestionIndex + 1, total: state.aiQuestions.length })}
                   </span>
                   <span className="px-3 py-1 bg-neutral-100 dark:bg-neutral-800 text-xs text-neutral-500 dark:text-neutral-400">
                     {state.aiQuestions[currentQuestionIndex].category}
@@ -494,7 +497,7 @@ export default function ResearchPage() {
                 <textarea
                   value={currentAnswer}
                   onChange={(e) => setCurrentAnswer(e.target.value)}
-                  placeholder="답변을 입력하세요..."
+                  placeholder={t('answerPlaceholder')}
                   className="w-full h-36 p-6 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-900 dark:text-white placeholder-neutral-400 dark:placeholder-neutral-600 focus:outline-none focus:border-neutral-900 dark:focus:border-white transition-colors duration-300 resize-none"
                 />
 
@@ -509,7 +512,7 @@ export default function ResearchPage() {
                     }
                   `}
                 >
-                  {currentQuestionIndex === state.aiQuestions.length - 1 ? '완료 및 계획 생성' : '다음 질문'}
+                  {currentQuestionIndex === state.aiQuestions.length - 1 ? t('completeAndPlan') : t('nextQuestion')}
                 </button>
               </div>
             )}
@@ -524,10 +527,10 @@ export default function ResearchPage() {
               <div className="absolute inset-0 border-2 border-neutral-900 dark:border-white" />
             </div>
             <h3 className="text-2xl font-light text-neutral-900 dark:text-white mb-3">
-              책 계획을 작성 중입니다
+              {t('generatingPlan')}
             </h3>
             <p className="text-neutral-500 dark:text-neutral-400">
-              최적의 구조를 위해 응답을 분석 중입니다...
+              {t('analyzingResponses')}
             </p>
           </div>
         )}
@@ -544,10 +547,10 @@ export default function ResearchPage() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-light text-neutral-900 dark:text-white">
-                    리서치 완료
+                    {t('complete')}
                   </h2>
                   <p className="text-neutral-500 dark:text-neutral-400 text-sm">
-                    책 컨셉이 개발되었습니다
+                    {t('conceptDeveloped')}
                   </p>
                 </div>
               </div>
@@ -556,7 +559,7 @@ export default function ResearchPage() {
                   onClick={handleStartEditing}
                   className="px-4 py-2 text-sm border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                 >
-                  수정하기
+                  {t('editButton')}
                 </button>
               )}
             </div>
@@ -567,12 +570,12 @@ export default function ResearchPage() {
                 {editedAnswers.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
-                      질문 & 답변 수정
+                      {t('editQA')}
                     </h3>
                     {editedAnswers.map((answer, index) => (
                       <div key={answer.questionId} className="p-6 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
                         <p className="text-xs tracking-wider uppercase text-neutral-400 dark:text-neutral-500 mb-2">
-                          질문 {index + 1}
+                          {t('question', { index: index + 1 })}
                         </p>
                         <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-3">
                           {state.aiQuestions[index]?.question}
@@ -590,7 +593,7 @@ export default function ResearchPage() {
                 {/* 편집 모드: 요약 수정 */}
                 <div className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
                   <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-6">
-                    책 계획 요약 수정
+                    {t('editPlanSummary')}
                   </h3>
                   <RichTextEditor
                     value={editedSummary}
@@ -606,7 +609,7 @@ export default function ResearchPage() {
                     disabled={isSaving}
                     className="flex-1 py-4 text-sm font-medium tracking-widest uppercase border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                   >
-                    취소
+                    {tc('cancel')}
                   </button>
                   <button
                     onClick={handleSaveEditing}
@@ -619,10 +622,10 @@ export default function ResearchPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                        저장 중...
+                        {tc('saving')}
                       </>
                     ) : (
-                      '저장하기'
+                      t('saveButton')
                     )}
                   </button>
                 </div>
@@ -633,12 +636,12 @@ export default function ResearchPage() {
                 {state.userAnswers.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
-                      질문 & 답변
+                      {t('qaTitle')}
                     </h3>
                     {state.userAnswers.map((answer, index) => (
                       <div key={answer.questionId} className="p-6 bg-neutral-50 dark:bg-neutral-900 border-l-2 border-neutral-300 dark:border-neutral-700">
                         <p className="text-xs tracking-wider uppercase text-neutral-400 dark:text-neutral-500 mb-2">
-                          질문 {index + 1}
+                          {t('question', { index: index + 1 })}
                         </p>
                         <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">
                           {state.aiQuestions[index]?.question}
@@ -654,7 +657,7 @@ export default function ResearchPage() {
                 {/* 읽기 모드: 요약 표시 */}
                 <div className="p-8 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
                   <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400 mb-6">
-                    책 계획 요약
+                    {t('planSummary')}
                   </h3>
                   <div
                     className="prose prose-neutral dark:prose-invert max-w-none text-neutral-900 dark:text-neutral-100 prose-headings:text-neutral-900 dark:prose-headings:text-white prose-p:text-neutral-700 dark:prose-p:text-neutral-300 prose-p:leading-relaxed prose-strong:text-neutral-900 dark:prose-strong:text-white prose-li:text-neutral-700 dark:prose-li:text-neutral-300"
@@ -663,7 +666,7 @@ export default function ResearchPage() {
                 </div>
 
                 <p className="text-center text-neutral-500 dark:text-neutral-400 text-sm pt-8">
-                  목차를 디자인할 준비가 되었습니다. 다음 단계로 진행하세요.
+                  {t('readyForOutline')}
                 </p>
               </>
             )}

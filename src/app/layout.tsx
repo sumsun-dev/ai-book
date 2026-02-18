@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
+import { NextIntlClientProvider } from 'next-intl'
+import { getLocale, getMessages } from 'next-intl/server'
 import { ToastProvider } from '@/components/ui/ToastProvider'
 import Providers from '@/app/providers'
 import DevTools from '@/components/DevTools'
@@ -28,13 +30,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocale()
+  const messages = await getMessages()
+
   return (
-    <html lang="ko" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -52,8 +57,18 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black dark:focus:bg-neutral-900 dark:focus:text-white"
+        >
+          Skip to content
+        </a>
         <Providers>
-          <ToastProvider>{children}</ToastProvider>
+          <NextIntlClientProvider messages={messages} locale={locale}>
+            <ToastProvider>
+              <main id="main-content">{children}</main>
+            </ToastProvider>
+          </NextIntlClientProvider>
         </Providers>
         <DevTools />
       </body>

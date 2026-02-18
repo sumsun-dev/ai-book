@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import StageHeader from '@/components/project/StageHeader'
 import { BookOutline, Chapter, EditSuggestion } from '@/types/book'
 
@@ -18,6 +19,7 @@ export default function EditPage() {
   const params = useParams()
   const router = useRouter()
   const projectId = params.id as string
+  const t = useTranslations('edit')
 
   const [state, setState] = useState<EditState>({
     outline: null,
@@ -196,13 +198,13 @@ export default function EditPage() {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex flex-col transition-colors duration-700">
       <StageHeader
-        title="편집"
-        description="AI가 문법, 스타일, 내용을 검토합니다"
+        title={t('title')}
+        description={t('description')}
         stage="edit"
         onPrevious={handlePreviousStage}
         onNext={handleNextStage}
-        nextLabel="최종 검토"
-        previousLabel="집필"
+        nextLabel={t('nextLabel')}
+        previousLabel={t('previousLabel')}
       />
 
       {error && (
@@ -216,7 +218,7 @@ export default function EditPage() {
         <aside className="w-64 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 overflow-auto">
           <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
             <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
-              챕터
+              {t('chapter')}
             </h3>
           </div>
           <div className="py-2">
@@ -271,7 +273,7 @@ export default function EditPage() {
                 {state.currentChapter}. {state.outline?.chapters.find(c => c.number === state.currentChapter)?.title}
               </h2>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                {state.editedContent.length.toLocaleString()}자
+                {t('charCount', { count: state.editedContent.length.toLocaleString() })}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -279,7 +281,7 @@ export default function EditPage() {
                 onClick={handleSaveChapter}
                 className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
               >
-                저장
+                {t('save')}
               </button>
               <button
                 onClick={handleAnalyze}
@@ -298,14 +300,14 @@ export default function EditPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    분석 중...
+                    {t('analyzing')}
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
-                    AI 분석
+                    {t('analyze')}
                   </>
                 )}
               </button>
@@ -328,7 +330,7 @@ export default function EditPage() {
               <aside className="w-96 bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 overflow-auto">
                 <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
                   <h3 className="text-xs tracking-widest uppercase text-neutral-500 dark:text-neutral-400">
-                    제안 ({pendingSuggestions.length})
+                    {t('suggestions', { count: pendingSuggestions.length })}
                   </h3>
                 </div>
                 <div className="p-4 space-y-4">
