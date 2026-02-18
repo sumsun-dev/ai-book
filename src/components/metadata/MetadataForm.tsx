@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import AuthorEditor from './AuthorEditor'
+import CategoryEditor from './CategoryEditor'
 import { BookMetadata, Author, BookCategory } from '@/types/book'
 
 interface MetadataFormProps {
@@ -42,6 +43,7 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
   const [printRun, setPrintRun] = useState('')
   const [keywords, setKeywords] = useState('')
   const [language, setLanguage] = useState('ko')
+  const [categories, setCategories] = useState<BookCategory[]>([])
   const [copyright, setCopyright] = useState('')
   const [license, setLicense] = useState('')
 
@@ -58,6 +60,7 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
         setPublishDate(data.publishDate ? new Date(data.publishDate).toISOString().split('T')[0] : '')
         setEdition(data.edition || '')
         setPrintRun(data.printRun?.toString() || '')
+        setCategories(data.categories || [])
         setKeywords(data.keywords?.join(', ') || '')
         setLanguage(data.language || 'ko')
         setCopyright(data.copyright || '')
@@ -96,7 +99,7 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
           publishDate: publishDate || null,
           edition: edition || null,
           printRun: printRun ? parseInt(printRun) : null,
-          categories: [], // TODO: 카테고리 선택 UI
+          categories,
           keywords: keywordList,
           language,
           copyright: copyright || null,
@@ -238,6 +241,8 @@ export default function MetadataForm({ projectId, onSave, onClose }: MetadataFor
         <h2 className="text-sm font-medium text-neutral-900 dark:text-white border-b border-neutral-200 dark:border-neutral-700 pb-2">
           분류
         </h2>
+
+        <CategoryEditor categories={categories} onChange={setCategories} />
 
         <div>
           <label className="block text-xs text-neutral-500 dark:text-neutral-400 mb-1">
