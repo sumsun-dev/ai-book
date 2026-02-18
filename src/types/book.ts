@@ -401,6 +401,7 @@ export interface ChatMessage {
   timestamp: Date
   chapterNumber?: number
   pageNumber?: number
+  isPinned?: boolean
 }
 
 export interface ChatContext {
@@ -408,6 +409,45 @@ export interface ChatContext {
   pageNumber?: number
   selectedText?: string
   fullContent?: string
+}
+
+// ===== 버전 관리 =====
+
+export interface ProjectSnapshot {
+  id: string
+  projectId: string
+  label: string
+  stage: string
+  outlineData: string | null
+  chaptersData: string
+  bibleData: string | null
+  createdAt: Date
+}
+
+// ===== AI 에이전트 커스터마이징 =====
+
+export type StyleIntensity = 'concise' | 'balanced' | 'detailed'
+
+export interface WriterConfig {
+  styleIntensity: StyleIntensity
+  creativity: number // 0.5 ~ 1.0 → temperature
+  customInstructions: string
+}
+
+export interface EditorConfig {
+  strictness: 'lenient' | 'moderate' | 'strict'
+  focusAreas: ('grammar' | 'style' | 'clarity' | 'structure')[]
+}
+
+export interface CriticConfig {
+  evaluationFocus: 'overall' | 'grammar' | 'style' | 'structure'
+  passThreshold: number // 5 ~ 9
+}
+
+export interface AgentCustomConfig {
+  writer?: Partial<WriterConfig>
+  editor?: Partial<EditorConfig>
+  critic?: Partial<CriticConfig>
 }
 
 // 단계별 진행 상태

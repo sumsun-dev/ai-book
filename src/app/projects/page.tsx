@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { LoadingSpinner } from '@/components/LoadingSpinner'
 import { FileUploader, ChapterSplitter } from '@/components/upload'
 import { useBookStore } from '@/lib/store'
+import { SkeletonCard } from '@/components/Skeleton'
+import { ProjectFilters } from '@/components/projects/ProjectFilters'
+import { useProjectFilters } from '@/components/projects/useProjectFilters'
 import type { BookProject, BookType, ParsedFile, SplitChapter } from '@/types/book'
 
 const bookTypes: { value: BookType; label: string }[] = [
@@ -62,6 +64,7 @@ export default function ProjectsPage() {
   })
 
   const loadProject = useBookStore((state) => state.loadProject)
+  const filterHook = useProjectFilters(projects)
 
   useEffect(() => {
     fetchProjects()
@@ -185,8 +188,24 @@ export default function ProjectsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-50 dark:bg-neutral-950">
-        <LoadingSpinner />
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors duration-700">
+        <header className="sticky top-0 z-50 backdrop-blur-xl bg-neutral-50/80 dark:bg-neutral-950/80 border-b border-neutral-200/50 dark:border-neutral-800/50">
+          <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between">
+            <div className="w-8 h-8 bg-neutral-200 dark:bg-neutral-700 rounded-sm animate-pulse" />
+            <div className="w-28 h-10 bg-neutral-200 dark:bg-neutral-700 animate-pulse" />
+          </div>
+        </header>
+        <main className="max-w-7xl mx-auto px-8 py-16">
+          <div className="mb-16">
+            <div className="h-14 w-64 bg-neutral-200 dark:bg-neutral-700 animate-pulse rounded mb-4" />
+            <div className="h-6 w-40 bg-neutral-200 dark:bg-neutral-700 animate-pulse rounded" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </main>
       </div>
     )
   }
@@ -402,6 +421,15 @@ export default function ProjectsPage() {
           </div>
         )}
 
+        {/* Filters */}
+        {projects.length > 0 && (
+          <ProjectFilters
+            filterHook={filterHook}
+            totalCount={projects.length}
+            filteredCount={filterHook.filteredProjects.length}
+          />
+        )}
+
         {/* Projects Grid */}
         {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-32">
@@ -422,7 +450,20 @@ export default function ProjectsPage() {
           </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
+            {filterHook.filteredProjects.length === 0 && projects.length > 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-20">
+                <p className="text-neutral-500 dark:text-neutral-400 text-lg mb-4">
+                  검색 결과가 없습니다
+                </p>
+                <button
+                  onClick={() => filterHook.resetFilters()}
+                  className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
+                >
+                  필터 초기화
+                </button>
+              </div>
+            ) : null}
+            {filterHook.filteredProjects.map((project) => (
               <article
                 key={project.id}
                 onClick={() => handleSelectProject(project)}

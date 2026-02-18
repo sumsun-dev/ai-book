@@ -4,7 +4,9 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { AIChatMessage } from './AIChatMessage'
 import { AIChatInput } from './AIChatInput'
 import { ChapterPageSelector } from './ChapterPageSelector'
+import { ChatSearchBar } from './ChatSearchBar'
 import { useAIChat } from '@/hooks/useAIChat'
+import { formatChatAsTxt, downloadAsFile } from '@/lib/utils/chat-export'
 import type { Page, ChatContext } from '@/types/book'
 
 const AI_PANEL_EXPANDED_KEY = 'ai-panel-expanded'
@@ -55,7 +57,20 @@ export function AIChatPanel({
     }
   }, [])
 
-  const { messages, isLoading, sendMessage, clearMessages } = useAIChat({
+  const {
+    messages,
+    filteredMessages,
+    isLoading,
+    searchQuery,
+    setSearchQuery,
+    showPinnedOnly,
+    togglePinnedOnly,
+    sendMessage,
+    clearMessages,
+    togglePin,
+    pinnedCount,
+    exportMessages,
+  } = useAIChat({
     projectId,
     chapterId,
   })
@@ -81,6 +96,13 @@ export function AIChatPanel({
 
   const handleCopy = () => {
     // 복사 완료 피드백
+  }
+
+  const handleExport = () => {
+    const msgs = exportMessages()
+    if (msgs.length === 0) return
+    const txt = formatChatAsTxt(msgs)
+    downloadAsFile(txt, `chat-ch${chapterNumber}.txt`)
   }
 
   return (
@@ -137,6 +159,18 @@ export function AIChatPanel({
       {/* 펼쳐진 패널 */}
       {isExpanded && (
         <>
+          {/* Search/Pin/Export bar */}
+          {messages.length > 0 && (
+            <ChatSearchBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              showPinnedOnly={showPinnedOnly}
+              onTogglePinnedOnly={togglePinnedOnly}
+              onExport={handleExport}
+              pinnedCount={pinnedCount}
+            />
+          )}
+
           {/* 페이지 선택 + Clear */}
           <div className="shrink-0 px-4 py-2 border-t border-neutral-100 dark:border-neutral-700 flex items-center justify-between">
             <ChapterPageSelector
@@ -175,12 +209,13 @@ export function AIChatPanel({
                 </p>
               </div>
             ) : (
-              messages.map((message) => (
+              filteredMessages.map((message) => (
                 <AIChatMessage
                   key={message.id}
                   message={message}
                   onApply={handleApply}
                   onCopy={handleCopy}
+                  onTogglePin={togglePin}
                 />
               ))
             )}

@@ -83,6 +83,8 @@ model Project {
   isbn           ISBN?
   memos          Memo[]
   sources        Source[]
+  snapshots      ProjectSnapshot[]
+  agentConfig    String?       // JSON: AgentCustomConfig
 }
 
 model SourceFile {
@@ -242,6 +244,21 @@ model Source {
   @@index([projectId])
 }
 
+// 프로젝트 스냅샷 (버전 관리)
+model ProjectSnapshot {
+  id           String   @id @default(uuid())
+  projectId    String
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label        String
+  stage        String
+  outlineData  String?
+  chaptersData String
+  bibleData    String?
+  createdAt    DateTime @default(now())
+
+  @@index([projectId])
+}
+
 // AI 채팅 메시지 히스토리
 model ChatMessage {
   id          String   @id @default(uuid())
@@ -250,6 +267,7 @@ model ChatMessage {
   pageNumber  Int?
   role        String   // user, assistant
   content     String
+  isPinned    Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   @@index([projectId])

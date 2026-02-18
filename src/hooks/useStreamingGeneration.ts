@@ -2,12 +2,14 @@
 
 import { useState, useCallback, useRef } from 'react'
 import type { BookOutline, ChapterOutline, BookType } from '@/types/book'
+import { parseAgentPhase, type AgentPhase } from '@/lib/utils/progress-calculator'
 
 interface StreamingState {
   isStreaming: boolean
   currentChapter: number | null
   streamedText: string
   error: string | null
+  agentPhase: AgentPhase
 }
 
 interface UseStreamingGenerationReturn extends StreamingState {
@@ -26,6 +28,7 @@ export function useStreamingGeneration(): UseStreamingGenerationReturn {
     currentChapter: null,
     streamedText: '',
     error: null,
+    agentPhase: 'idle',
   })
 
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -36,6 +39,7 @@ export function useStreamingGeneration(): UseStreamingGenerationReturn {
       currentChapter: null,
       streamedText: '',
       error: null,
+      agentPhase: 'idle',
     })
   }, [])
 
@@ -60,6 +64,7 @@ export function useStreamingGeneration(): UseStreamingGenerationReturn {
         currentChapter: chapter.number,
         streamedText: '',
         error: null,
+        agentPhase: 'start',
       })
 
       try {
@@ -98,7 +103,10 @@ export function useStreamingGeneration(): UseStreamingGenerationReturn {
 
           for (const line of lines) {
             if (line.startsWith('event: ')) {
-              // Skip event line, data is on next line
+              const phase = parseAgentPhase(line)
+              if (phase) {
+                setState((prev) => ({ ...prev, agentPhase: phase }))
+              }
               continue
             }
             if (line.startsWith('data: ')) {

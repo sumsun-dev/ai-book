@@ -7,9 +7,10 @@ interface AIChatMessageProps {
   message: ChatMessage
   onApply?: (content: string) => void
   onCopy?: (content: string) => void
+  onTogglePin?: (messageId: string) => void
 }
 
-function AIChatMessageComponent({ message, onApply, onCopy }: AIChatMessageProps) {
+function AIChatMessageComponent({ message, onApply, onCopy, onTogglePin }: AIChatMessageProps) {
   const isUser = message.role === 'user'
 
   const handleCopy = () => {
@@ -38,9 +39,9 @@ function AIChatMessageComponent({ message, onApply, onCopy }: AIChatMessageProps
           )}
         </div>
 
-        {!isUser && message.content && (
+        {message.content && (
           <div className="flex items-center gap-2 mt-2 pt-2 border-t border-neutral-200 dark:border-neutral-600">
-            {onApply && (
+            {!isUser && onApply && (
               <button
                 onClick={() => onApply(message.content)}
                 className="px-2 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
@@ -48,12 +49,27 @@ function AIChatMessageComponent({ message, onApply, onCopy }: AIChatMessageProps
                 적용
               </button>
             )}
-            <button
-              onClick={handleCopy}
-              className="px-2 py-1 text-xs font-medium bg-neutral-200 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-200 rounded hover:bg-neutral-300 dark:hover:bg-neutral-500 transition-colors"
-            >
-              복사
-            </button>
+            {!isUser && (
+              <button
+                onClick={handleCopy}
+                className="px-2 py-1 text-xs font-medium bg-neutral-200 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-200 rounded hover:bg-neutral-300 dark:hover:bg-neutral-500 transition-colors"
+              >
+                복사
+              </button>
+            )}
+            {onTogglePin && (
+              <button
+                onClick={() => onTogglePin(message.id)}
+                className={`px-2 py-1 text-xs font-medium rounded transition-colors ${
+                  message.isPinned
+                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                    : 'bg-neutral-200 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-200 hover:bg-neutral-300 dark:hover:bg-neutral-500'
+                }`}
+                aria-label={message.isPinned ? '고정 해제' : '고정'}
+              >
+                {message.isPinned ? '고정됨' : '고정'}
+              </button>
+            )}
           </div>
         )}
       </div>

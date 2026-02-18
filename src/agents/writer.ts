@@ -1,5 +1,6 @@
 import { streamAgent, AgentConfig } from '@/lib/claude'
-import { BookOutline, ChapterOutline, BookType } from '@/types/book'
+import { mergeWriterConfig } from '@/lib/agent-config'
+import { BookOutline, ChapterOutline, BookType, WriterConfig } from '@/types/book'
 
 const writerAgentConfig: AgentConfig = {
   name: 'Writer Agent',
@@ -25,7 +26,8 @@ export async function runWriterAgent(
   outline: BookOutline,
   chapterOutline: ChapterOutline,
   previousChapterSummary?: string,
-  onChunk?: (chunk: string) => void
+  onChunk?: (chunk: string) => void,
+  customConfig?: Partial<WriterConfig>
 ): Promise<string> {
   const prompt = `
 ## 책 유형: ${bookType}
@@ -45,11 +47,15 @@ ${previousChapterSummary ? `## 이전 챕터 요약:\n${previousChapterSummary}\
 위 정보를 바탕으로 이 챕터의 완전한 본문을 작성해주세요.
 `
 
+  const config = customConfig
+    ? mergeWriterConfig(writerAgentConfig, customConfig)
+    : writerAgentConfig
+
   if (onChunk) {
-    return streamAgent(writerAgentConfig, prompt, undefined, onChunk)
+    return streamAgent(config, prompt, undefined, onChunk)
   }
 
-  return streamAgent(writerAgentConfig, prompt)
+  return streamAgent(config, prompt)
 }
 
 export async function writeFullBook(

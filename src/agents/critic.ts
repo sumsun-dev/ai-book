@@ -1,4 +1,6 @@
 import { runAgent, AgentConfig } from '@/lib/claude'
+import { mergeCriticConfig } from '@/lib/agent-config'
+import type { CriticConfig } from '@/types/book'
 
 type CriticDecision = 'pass' | 'revise'
 
@@ -61,7 +63,8 @@ export async function runCriticAgent(
   content: string,
   chapterTitle: string,
   targetAudience: string,
-  expectedTone: string
+  expectedTone: string,
+  customConfig?: Partial<CriticConfig>
 ): Promise<CriticResult> {
   const prompt = `
 ## 챕터 제목: ${chapterTitle}
@@ -74,7 +77,11 @@ ${content}
 위 내용을 종합적으로 평가해주세요.
 `
 
-  const response = await runAgent(criticAgentConfig, prompt)
+  const config = customConfig
+    ? mergeCriticConfig(criticAgentConfig, customConfig)
+    : criticAgentConfig
+
+  const response = await runAgent(config, prompt)
 
   try {
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) ||

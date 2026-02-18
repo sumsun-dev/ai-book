@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import type { ChatMessage, ChatContext } from '@/types/book'
 
 interface UseAIChatProps {
@@ -10,14 +10,25 @@ interface UseAIChatProps {
 
 interface UseAIChatReturn {
   messages: ChatMessage[]
+  filteredMessages: ChatMessage[]
   isLoading: boolean
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+  showPinnedOnly: boolean
+  setShowPinnedOnly: (value: boolean) => void
+  togglePinnedOnly: () => void
   sendMessage: (message: string, context: ChatContext) => Promise<void>
   clearMessages: () => Promise<void>
+  togglePin: (messageId: string) => Promise<void>
+  pinnedCount: number
+  exportMessages: () => ChatMessage[]
 }
 
 export function useAIChat({ projectId, chapterId }: UseAIChatProps): UseAIChatReturn {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [showPinnedOnly, setShowPinnedOnly] = useState(false)
 
   // 챕터 변경 시 DB에서 히스토리 로드
   useEffect(() => {
@@ -31,12 +42,13 @@ export function useAIChat({ projectId, chapterId }: UseAIChatProps): UseAIChatRe
         const response = await fetch(`/api/projects/${projectId}/chapters/${chapterId}/chat?limit=50`)
         if (response.ok) {
           const { data } = await response.json()
-          const loadedMessages: ChatMessage[] = data.map((m: { id: string; role: string; content: string; createdAt: string; pageNumber?: number }) => ({
+          const loadedMessages: ChatMessage[] = data.map((m: { id: string; role: string; content: string; createdAt: string; pageNumber?: number; isPinned?: boolean }) => ({
             id: m.id,
             role: m.role as 'user' | 'assistant',
             content: m.content,
             timestamp: new Date(m.createdAt),
             pageNumber: m.pageNumber,
+            isPinned: m.isPinned ?? false,
           }))
           setMessages(loadedMessages)
         }
@@ -144,10 +156,75 @@ export function useAIChat({ projectId, chapterId }: UseAIChatProps): UseAIChatRe
     setMessages([])
   }, [projectId, chapterId])
 
+  const togglePin = useCallback(async (messageId: string) => {
+    if (!chapterId) return
+    const message = messages.find((m) => m.id === messageId)
+    if (!message) return
+
+    const newPinned = !message.isPinned
+
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === messageId ? { ...m, isPinned: newPinned } : m
+      )
+    )
+
+    try {
+      await fetch(
+        `/api/projects/${projectId}/chapters/${chapterId}/chat`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messageId, isPinned: newPinned }),
+        }
+      )
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId ? { ...m, isPinned: !newPinned } : m
+        )
+      )
+    }
+  }, [projectId, chapterId, messages])
+
+  const togglePinnedOnly = useCallback(() => {
+    setShowPinnedOnly((prev) => !prev)
+  }, [])
+
+  const pinnedCount = useMemo(
+    () => messages.filter((m) => m.isPinned).length,
+    [messages]
+  )
+
+  const filteredMessages = useMemo(() => {
+    let result = messages
+    if (showPinnedOnly) {
+      result = result.filter((m) => m.isPinned)
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter((m) => m.content.toLowerCase().includes(query))
+    }
+    return result
+  }, [messages, searchQuery, showPinnedOnly])
+
+  const exportMessages = useCallback(() => {
+    return [...messages]
+  }, [messages])
+
   return {
     messages,
+    filteredMessages,
     isLoading,
+    searchQuery,
+    setSearchQuery,
+    showPinnedOnly,
+    setShowPinnedOnly,
+    togglePinnedOnly,
     sendMessage,
     clearMessages,
+    togglePin,
+    pinnedCount,
+    exportMessages,
   }
 }

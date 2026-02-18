@@ -1,4 +1,6 @@
 import { runAgent, AgentConfig } from '@/lib/claude'
+import { mergeEditorConfig } from '@/lib/agent-config'
+import type { EditorConfig } from '@/types/book'
 
 interface EditorResult {
   editedContent: string
@@ -35,7 +37,8 @@ JSON 형식으로 응답하세요:
 export async function runEditorAgent(
   chapterContent: string,
   chapterTitle: string,
-  targetTone: string
+  targetTone: string,
+  customConfig?: Partial<EditorConfig>
 ): Promise<EditorResult> {
   const prompt = `
 ## 챕터 제목: ${chapterTitle}
@@ -47,7 +50,11 @@ ${chapterContent}
 위 내용을 교정하고 다듬어주세요.
 `
 
-  const response = await runAgent(editorAgentConfig, prompt)
+  const config = customConfig
+    ? mergeEditorConfig(editorAgentConfig, customConfig)
+    : editorAgentConfig
+
+  const response = await runAgent(config, prompt)
 
   try {
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) ||

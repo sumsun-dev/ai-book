@@ -158,6 +158,46 @@ ${context?.pageNumber ? `- 페이지: ${context.pageNumber}` : ''}
   }
 }
 
+// 메시지 핀 토글
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; chapterId: string }> }
+) {
+  try {
+    const { error: authError } = await requireAuth()
+    if (authError) return authError
+
+    await params
+    const body = await request.json()
+    const { messageId, isPinned } = body as {
+      messageId: string
+      isPinned: boolean
+    }
+
+    if (!messageId || typeof isPinned !== 'boolean') {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request body' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
+
+    await prisma.chatMessage.update({
+      where: { id: messageId },
+      data: { isPinned },
+    })
+
+    return new Response(
+      JSON.stringify({ success: true }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )
+  } catch {
+    return new Response(
+      JSON.stringify({ error: 'Failed to update message' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
+}
+
 // 채팅 히스토리 조회
 export async function GET(
   request: NextRequest,
