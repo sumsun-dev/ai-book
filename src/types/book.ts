@@ -418,6 +418,7 @@ export interface ChatMessage {
   chapterNumber?: number
   pageNumber?: number
   isPinned?: boolean
+  isError?: boolean
 }
 
 export interface ChatContext {
@@ -493,6 +494,15 @@ export interface ConsistencyReport {
   checkedAt: Date
   chapterCount: number
   summary: string
+}
+
+// 토큰 사용량 정보
+export interface TokenUsageInfo {
+  used: number
+  limit: number
+  percentage: number
+  periodStart: Date
+  periodEnd: Date
 }
 
 // 단계별 진행 상태

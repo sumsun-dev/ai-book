@@ -49,11 +49,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         ]
       : []),
   ],
+  events: {
+    async createUser({ user }) {
+      if (user.id) {
+        const { ensureUserQuota } = await import('@/lib/token-quota')
+        await ensureUserQuota(user.id)
+      }
+    },
+  },
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
+      }
+      if (trigger === 'signIn' && token.id) {
+        const { ensureUserQuota } = await import('@/lib/token-quota')
+        await ensureUserQuota(token.id as string)
       }
       return token
     },

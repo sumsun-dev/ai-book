@@ -29,6 +29,18 @@ export async function runWriterAgent(
   onChunk?: (chunk: string) => void,
   customConfig?: Partial<WriterConfig>
 ): Promise<string> {
+  const result = await runWriterAgentWithUsage(bookType, outline, chapterOutline, previousChapterSummary, onChunk, customConfig)
+  return result.text
+}
+
+export async function runWriterAgentWithUsage(
+  bookType: BookType,
+  outline: BookOutline,
+  chapterOutline: ChapterOutline,
+  previousChapterSummary?: string,
+  onChunk?: (chunk: string) => void,
+  customConfig?: Partial<WriterConfig>
+): Promise<{ text: string; usage: { inputTokens: number; outputTokens: number } }> {
   const prompt = `
 ## 책 유형: ${bookType}
 ## 전체 시놉시스: ${outline.synopsis}
@@ -51,11 +63,8 @@ ${previousChapterSummary ? `## 이전 챕터 요약:\n${previousChapterSummary}\
     ? mergeWriterConfig(writerAgentConfig, customConfig)
     : writerAgentConfig
 
-  if (onChunk) {
-    return streamAgent(config, prompt, undefined, onChunk)
-  }
-
-  return streamAgent(config, prompt)
+  const result = await streamAgent(config, prompt, undefined, onChunk)
+  return { text: result.text, usage: result.usage }
 }
 
 export async function writeFullBook(

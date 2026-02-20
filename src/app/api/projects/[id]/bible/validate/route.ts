@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
 import type { BookBible, FictionBible, SelfHelpBible } from '@/types/book-bible'
 import { isFictionBible } from '@/types/book-bible'
 import { parseJSONFromText, AI_CONTENT_LIMITS } from '@/lib/utils/json-parser'
@@ -186,8 +187,10 @@ const SELFHELP_VALIDATE_PROMPT = `당신은 자기계발서 편집자입니다. 
 // POST /api/projects/[id]/bible/validate - 내용과 Bible 일관성 검증
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id } = await params
     const body = await request.json()
@@ -203,8 +206,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { content } = parseResult.data
 
     // 프로젝트 조회
-    const project = await prisma.project.findUnique({
-      where: { id },
+    const project = await prisma.project.findFirst({
+      where: projectOwnerWhere(id, userId!),
       select: { id: true, type: true, bible: true },
     })
 
@@ -250,7 +253,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const validatePrompt = isFiction ? FICTION_VALIDATE_PROMPT : SELFHELP_VALIDATE_PROMPT
 
     // AI로 검증
-    const result = await runAgent(
+    const agentResult = await runAgent(
       {
         name: 'bible-validator',
         systemPrompt: validatePrompt,
@@ -260,11 +263,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       `## Book Bible 설정\n${bibleContext}\n\n## 검증할 내용\n${content.substring(0, AI_CONTENT_LIMITS.VALIDATE_CONTENT)}`
     )
 
-    const validation = parseJSONFromText<ValidationResult>(result, {
+    const validation = parseJSONFromText<ValidationResult>(agentResult.text, {
       isValid: true,
       issues: [],
       summary: '검증을 완료할 수 없습니다.',
     })
+    recordUsage(userId!, 'bible-validator', agentResult.usage, id).catch(console.error)
 
     return NextResponse.json({
       success: true,

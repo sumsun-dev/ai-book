@@ -9,6 +9,8 @@ import { runAgent } from '@/lib/claude'
 
 const mockRunAgent = vi.mocked(runAgent)
 
+const mockUsage = { inputTokens: 0, outputTokens: 0 }
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -21,7 +23,7 @@ describe('runResearchAgent', () => {
       sources: ['출처 1'],
       recommendations: ['추천 1'],
     })
-    mockRunAgent.mockResolvedValue(mockResponse)
+    mockRunAgent.mockResolvedValue({ text: mockResponse, usage: mockUsage })
 
     const result = await runResearchAgent('fiction', 'AI 주제')
 
@@ -33,14 +35,14 @@ describe('runResearchAgent', () => {
 
   it('코드 블록 안의 JSON을 파싱한다', async () => {
     const mockResponse = '```json\n{"topic": "테스트", "findings": ["f1"], "sources": [], "recommendations": []}\n```'
-    mockRunAgent.mockResolvedValue(mockResponse)
+    mockRunAgent.mockResolvedValue({ text: mockResponse, usage: mockUsage })
 
     const result = await runResearchAgent('nonfiction', '테스트')
     expect(result.topic).toBe('테스트')
   })
 
   it('파싱 실패 시 fallback 구조를 반환한다', async () => {
-    mockRunAgent.mockResolvedValue('이것은 JSON이 아닌 텍스트입니다.')
+    mockRunAgent.mockResolvedValue({ text: '이것은 JSON이 아닌 텍스트입니다.', usage: mockUsage })
 
     const result = await runResearchAgent('fiction', 'AI 주제')
 
@@ -51,7 +53,7 @@ describe('runResearchAgent', () => {
   })
 
   it('additionalContext를 프롬프트에 포함한다', async () => {
-    mockRunAgent.mockResolvedValue('{"topic":"t","findings":[],"sources":[],"recommendations":[]}')
+    mockRunAgent.mockResolvedValue({ text: '{"topic":"t","findings":[],"sources":[],"recommendations":[]}', usage: mockUsage })
 
     await runResearchAgent('fiction', 'topic', '추가 맥락')
 
@@ -62,7 +64,7 @@ describe('runResearchAgent', () => {
   })
 
   it('bookType을 프롬프트에 포함한다', async () => {
-    mockRunAgent.mockResolvedValue('{"topic":"t","findings":[],"sources":[],"recommendations":[]}')
+    mockRunAgent.mockResolvedValue({ text: '{"topic":"t","findings":[],"sources":[],"recommendations":[]}', usage: mockUsage })
 
     await runResearchAgent('technical', 'topic')
 

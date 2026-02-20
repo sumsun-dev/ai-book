@@ -91,6 +91,13 @@ export function useAIChat({ projectId, chapterId }: UseAIChatProps): UseAIChatRe
         }),
       })
 
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || (response.status === 429
+          ? '이번 달 AI 사용량 한도에 도달했습니다.'
+          : 'AI 요청에 실패했습니다.'))
+      }
+
       if (!response.body) {
         throw new Error('No response body')
       }
@@ -124,16 +131,23 @@ export function useAIChat({ projectId, chapterId }: UseAIChatProps): UseAIChatRe
           )
         )
       }
+
+      window.dispatchEvent(new CustomEvent('quota-updated'))
     } catch (error) {
       console.error('AI 채팅 실패:', error)
+
+      const errorMsg = error instanceof Error
+        ? error.message
+        : '요청을 처리하는 중 오류가 발생했습니다.'
 
       const errorMessage: ChatMessage = {
         id: `error-${Date.now()}`,
         role: 'assistant',
-        content: '죄송합니다. 요청을 처리하는 중 오류가 발생했습니다. 다시 시도해주세요.',
+        content: errorMsg,
         timestamp: new Date(),
         chapterNumber: context.chapterNumber,
         pageNumber: context.pageNumber,
+        isError: true,
       }
 
       setMessages(prev => [...prev, errorMessage])

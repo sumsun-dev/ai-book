@@ -88,7 +88,8 @@ ${context}
 
 JSON 형식으로 응답해주세요.`
 
-    const response = await runAgent(consistencyAgentConfig, prompt)
+    const result = await runAgent(consistencyAgentConfig, prompt)
+    const response = result.text
 
     try {
       let jsonStr = ''

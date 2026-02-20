@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
 import type {
   BookBible,
   FictionBible,
@@ -139,8 +140,10 @@ const SELFHELP_EXTRACT_PROMPT = `당신은 자기계발서 분석 전문가입�
 // POST /api/projects/[id]/bible/extract - 챕터에서 Bible 항목 추출
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id } = await params
     const body = await request.json()
@@ -156,8 +159,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { chapterNumber, content } = parseResult.data
 
     // 프로젝트 조회
-    const project = await prisma.project.findUnique({
-      where: { id },
+    const project = await prisma.project.findFirst({
+      where: projectOwnerWhere(id, userId!),
       select: { id: true, type: true, bible: true },
     })
 
@@ -177,7 +180,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const extractPrompt = isFiction ? FICTION_EXTRACT_PROMPT : SELFHELP_EXTRACT_PROMPT
 
     // AI로 추출
-    const result = await runAgent(
+    const agentResult = await runAgent(
       {
         name: 'bible-extractor',
         systemPrompt: extractPrompt,
@@ -186,6 +189,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       `다음 챕터 ${chapterNumber}의 내용을 분석하세요:\n\n${content.substring(0, AI_CONTENT_LIMITS.EXTRACT_CONTENT)}`
     )
+    const result = agentResult.text
+    recordUsage(userId!, 'bible-extractor', agentResult.usage, id).catch(console.error)
 
     if (isFiction) {
       const extraction = parseJSONFromText<FictionExtraction>(result, {

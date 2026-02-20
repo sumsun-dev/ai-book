@@ -9,19 +9,22 @@ import { runAgent } from '@/lib/claude'
 
 const mockRunAgent = vi.mocked(runAgent)
 
+const mockUsage = { inputTokens: 0, outputTokens: 0 }
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
 describe('runEditorAgent', () => {
   it('JSON 응답을 파싱한다', async () => {
-    mockRunAgent.mockResolvedValue(
-      JSON.stringify({
+    mockRunAgent.mockResolvedValue({
+      text: JSON.stringify({
         editedContent: '교정된 내용',
         changes: ['변경 1'],
         suggestions: ['제안 1'],
-      })
-    )
+      }),
+      usage: mockUsage,
+    })
 
     const result = await runEditorAgent('원본 내용', '챕터 1', '전문적')
 
@@ -31,16 +34,17 @@ describe('runEditorAgent', () => {
   })
 
   it('코드 블록 안의 JSON을 파싱한다', async () => {
-    mockRunAgent.mockResolvedValue(
-      '```json\n{"editedContent":"ok","changes":[],"suggestions":[]}\n```'
-    )
+    mockRunAgent.mockResolvedValue({
+      text: '```json\n{"editedContent":"ok","changes":[],"suggestions":[]}\n```',
+      usage: mockUsage,
+    })
 
     const result = await runEditorAgent('내용', '제목', '톤')
     expect(result.editedContent).toBe('ok')
   })
 
   it('파싱 실패 시 fallback을 반환한다', async () => {
-    mockRunAgent.mockResolvedValue('파싱 불가 텍스트')
+    mockRunAgent.mockResolvedValue({ text: '파싱 불가 텍스트', usage: mockUsage })
 
     const result = await runEditorAgent('원본', '제목', '톤')
 
@@ -50,7 +54,7 @@ describe('runEditorAgent', () => {
   })
 
   it('챕터 제목과 톤을 프롬프트에 포함한다', async () => {
-    mockRunAgent.mockResolvedValue('{"editedContent":"","changes":[],"suggestions":[]}')
+    mockRunAgent.mockResolvedValue({ text: '{"editedContent":"","changes":[],"suggestions":[]}', usage: mockUsage })
 
     await runEditorAgent('내용', '1장: 시작', '친근한')
 

@@ -81,7 +81,12 @@ export function useStreamingGeneration(): UseStreamingGenerationReturn {
         })
 
         if (!response.ok) {
-          throw new Error('스트리밍 요청에 실패했습니다.')
+          const data = await response.json().catch(() => ({}))
+          throw new Error(
+            data.error || (response.status === 429
+              ? '이번 달 AI 사용량 한도에 도달했습니다.'
+              : '스트리밍 요청에 실패했습니다.')
+          )
         }
 
         const reader = response.body?.getReader()
@@ -144,6 +149,7 @@ export function useStreamingGeneration(): UseStreamingGenerationReturn {
           streamedText: fullContent,
         }))
 
+        window.dispatchEvent(new CustomEvent('quota-updated'))
         return fullContent
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') {

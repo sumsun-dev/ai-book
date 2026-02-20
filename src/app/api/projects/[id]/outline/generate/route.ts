@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import { BookOutline, PlotStructureType } from '@/types/book'
 import { PLOT_STRUCTURES } from '@/lib/plot-structures'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
 
 const GenerateOutlineSchema = z.object({
   targetAudience: z.string().max(500).optional(),
@@ -152,8 +153,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id } = await params
     const body = await request.json()
@@ -166,8 +169,8 @@ export async function POST(
     }
     const { targetAudience, targetLength, tone, customTone, plotStructure } = parseResult.data
 
-    const project = await prisma.project.findUnique({
-      where: { id },
+    const project = await prisma.project.findFirst({
+      where: projectOwnerWhere(id, userId!),
       include: { researchData: true }
     })
 
@@ -252,7 +255,7 @@ ${researchContext}
 위 정보를 바탕으로 독자를 사로잡을 수 있는 최적의 책 목차를 설계해주세요.
 반드시 유효한 JSON 형식으로 응답해주세요.`
 
-    const response = await runAgent(
+    const agentResult = await runAgent(
       {
         name: 'outline-generator',
         systemPrompt,
@@ -260,6 +263,8 @@ ${researchContext}
       },
       userPrompt
     )
+    const response = agentResult.text
+    recordUsage(userId!, 'outline-generator', agentResult.usage, id).catch(console.error)
 
     // JSON 파싱
     let outline: BookOutline

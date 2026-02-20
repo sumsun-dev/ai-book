@@ -3,16 +3,28 @@ import { requireAuth } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { runResearchAgent } from '@/agents/research'
 import { runOutlinerAgent, refineOutline, generateTableOfContents } from '@/agents/outliner'
-import { runWriterAgent } from '@/agents/writer'
+import { runWriterAgentWithUsage } from '@/agents/writer'
 import { runEditorAgent } from '@/agents/editor'
 import { runCriticAgent } from '@/agents/critic'
 import { runEditorCriticLoop, runSinglePassEditorCritic } from '@/agents/editor-critic'
 import { BookType, OutlineFeedback, BookOutline } from '@/types/book'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
+
+type Usage = { inputTokens: number; outputTokens: number }
+
+function extractUsage(result: unknown): Usage | null {
+  if (result && typeof result === 'object' && '_usage' in result) {
+    return (result as { _usage: Usage })._usage
+  }
+  return null
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const body = await request.json()
     const { phase } = body
@@ -25,12 +37,16 @@ export async function POST(request: NextRequest) {
           description: string
         }
         const research = await runResearchAgent(bookType, `${title}: ${description}`)
+        const usage = extractUsage(research)
+        if (usage) recordUsage(userId!, 'research', usage).catch(console.error)
         return NextResponse.json({ research })
       }
 
       case 'outline': {
         const { bookType, title, description, research } = body
         const outline = await runOutlinerAgent(bookType, title, description, research)
+        const usage = extractUsage(outline)
+        if (usage) recordUsage(userId!, 'outliner', usage).catch(console.error)
         const toc = generateTableOfContents(title, outline)
         return NextResponse.json({ outline, toc })
       }
@@ -38,6 +54,8 @@ export async function POST(request: NextRequest) {
       case 'refine': {
         const { outline, feedback, title } = body as { outline: BookOutline; feedback: OutlineFeedback; title: string }
         const refinedOutline = await refineOutline(outline, feedback)
+        const usage = extractUsage(refinedOutline)
+        if (usage) recordUsage(userId!, 'outliner-refine', usage).catch(console.error)
         const toc = generateTableOfContents(title || 'Untitled', refinedOutline)
         return NextResponse.json({ outline: refinedOutline, toc })
       }
@@ -50,19 +68,24 @@ export async function POST(request: NextRequest) {
 
       case 'write': {
         const { bookType, outline, chapter } = body
-        const content = await runWriterAgent(bookType, outline, chapter)
-        return NextResponse.json({ content })
+        const result = await runWriterAgentWithUsage(bookType, outline, chapter)
+        recordUsage(userId!, 'writer', result.usage).catch(console.error)
+        return NextResponse.json({ content: result.text })
       }
 
       case 'edit': {
         const { content, chapterTitle, tone } = body
         const result = await runEditorAgent(content, chapterTitle, tone)
+        const usage = extractUsage(result)
+        if (usage) recordUsage(userId!, 'editor', usage).catch(console.error)
         return NextResponse.json(result)
       }
 
       case 'critic': {
         const { content, chapterTitle, targetAudience, tone } = body
         const result = await runCriticAgent(content, chapterTitle, targetAudience, tone)
+        const usage = extractUsage(result)
+        if (usage) recordUsage(userId!, 'critic', usage).catch(console.error)
         return NextResponse.json(result)
       }
 
@@ -93,6 +116,8 @@ export async function POST(request: NextRequest) {
             tone,
             { maxIterations, passThreshold }
           )
+          const usage = extractUsage(result)
+          if (usage) recordUsage(userId!, 'editor-critic-loop', usage).catch(console.error)
           return NextResponse.json(result)
         } else {
           const result = await runSinglePassEditorCritic(
@@ -101,6 +126,8 @@ export async function POST(request: NextRequest) {
             targetAudience,
             tone
           )
+          const usage = extractUsage(result)
+          if (usage) recordUsage(userId!, 'editor-critic', usage).catch(console.error)
           return NextResponse.json(result)
         }
       }
@@ -126,6 +153,8 @@ ${originalText}
 
         const { runEditorAgent } = await import('@/agents/editor')
         const result = await runEditorAgent(prompt, 'inline-edit', '')
+        const usage = extractUsage(result)
+        if (usage) recordUsage(userId!, 'inline-editor', usage).catch(console.error)
 
         return NextResponse.json({
           original: originalText,

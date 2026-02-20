@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { POST } from './route'
+import { POST, clearRegisterRateLimit } from './route'
 import { NextRequest } from 'next/server'
 
 vi.mock('@/lib/db/client', () => ({
@@ -8,7 +8,14 @@ vi.mock('@/lib/db/client', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    userQuota: {
+      upsert: vi.fn(),
+    },
   },
+}))
+
+vi.mock('@/lib/token-quota', () => ({
+  ensureUserQuota: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/auth/password', () => ({
@@ -16,8 +23,11 @@ vi.mock('@/lib/auth/password', () => ({
 }))
 
 import { prisma } from '@/lib/db/client'
+import { ensureUserQuota } from '@/lib/token-quota'
+
 const mockFindUnique = prisma.user.findUnique as unknown as ReturnType<typeof vi.fn>
 const mockCreate = prisma.user.create as unknown as ReturnType<typeof vi.fn>
+const mockEnsureUserQuota = ensureUserQuota as unknown as ReturnType<typeof vi.fn>
 
 function createRequest(body: Record<string, unknown>): NextRequest {
   return new NextRequest('http://localhost:3000/api/auth/register', {
@@ -30,6 +40,7 @@ function createRequest(body: Record<string, unknown>): NextRequest {
 describe('POST /api/auth/register', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    clearRegisterRateLimit()
   })
 
   it('should register a new user successfully', async () => {
@@ -113,6 +124,32 @@ describe('POST /api/auth/register', () => {
     expect(response.status).toBe(409)
     const body = await response.json()
     expect(body.error).toContain('이미 사용 중')
+  })
+
+  it('should call ensureUserQuota after user creation', async () => {
+    mockFindUnique.mockResolvedValue(null)
+    mockCreate.mockResolvedValue({
+      id: 'user-1',
+      email: 'test@test.com',
+      name: '테스트',
+      password: '$2a$12$hashedpassword',
+      image: null,
+      provider: 'credentials',
+      emailVerified: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    const response = await POST(
+      createRequest({
+        email: 'test@test.com',
+        password: 'Password123!',
+        name: '테스트',
+      })
+    )
+
+    expect(response.status).toBe(201)
+    expect(mockEnsureUserQuota).toHaveBeenCalledWith('user-1')
   })
 
   it('should hash the password before storing', async () => {

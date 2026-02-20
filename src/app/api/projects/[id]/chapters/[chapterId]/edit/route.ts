@@ -1,8 +1,10 @@
 import { NextRequest } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
+import { AppError, ERROR_CODES } from '@/lib/errors'
 
 type RouteParams = { params: Promise<{ id: string; chapterId: string }> }
 
@@ -44,8 +46,10 @@ const EDIT_SYSTEM_PROMPT = `당신은 베테랑 편집자입니다. 사용자가
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id, chapterId } = await params
     const body = await request.json()
@@ -61,7 +65,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { selectedText, instruction, context } = parseResult.data
 
     const chapter = await prisma.chapter.findFirst({
-      where: { id: chapterId, projectId: id },
+      where: {
+        id: chapterId,
+        project: projectOwnerWhere(id, userId!),
+      },
       include: { project: true },
     })
 
@@ -90,8 +97,9 @@ ${sanitizeForPrompt(instruction)}
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
+        let usage = { inputTokens: 0, outputTokens: 0 }
         try {
-          await streamAgent(
+          const result = await streamAgent(
             {
               name: 'text-editor',
               systemPrompt: EDIT_SYSTEM_PROMPT,
@@ -103,9 +111,14 @@ ${sanitizeForPrompt(instruction)}
               controller.enqueue(encoder.encode(chunk))
             }
           )
+          usage = result.usage
           controller.close()
         } catch (error) {
           controller.error(error)
+        } finally {
+          if (usage.inputTokens > 0 || usage.outputTokens > 0) {
+            recordUsage(userId!, 'text-editor', usage, id).catch(console.error)
+          }
         }
       },
     })
@@ -117,7 +130,14 @@ ${sanitizeForPrompt(instruction)}
         Connection: 'keep-alive',
       },
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof AppError) {
+      const status = error.code === ERROR_CODES.QUOTA_EXCEEDED ? 429 : 400
+      return new Response(
+        JSON.stringify({ error: error.message, code: error.code }),
+        { status, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
     return new Response(
       JSON.stringify({ error: 'Failed to edit text' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

@@ -284,10 +284,11 @@ ${content}
 JSON 형식으로 응답해주세요.
 `
 
-  const response = await runAgent(editorCriticAgentConfig, prompt)
-  const parsed = parseEditorCriticResponse(response)
+  const agentResult = await runAgent(editorCriticAgentConfig, prompt)
+  const parsed = parseEditorCriticResponse(agentResult.text)
 
-  return parsed || createDefaultResult(content)
+  const base = parsed || createDefaultResult(content)
+  return Object.assign(base, { _usage: agentResult.usage })
 }
 
 /**
@@ -327,7 +328,8 @@ ${content}
 위 피드백을 반영하여 내용을 수정해주세요. 수정된 전체 내용만 출력하세요.
 `
 
-  return await runAgent(revisionAgentConfig, prompt)
+  const result = await runAgent(revisionAgentConfig, prompt)
+  return result.text
 }
 
 /**

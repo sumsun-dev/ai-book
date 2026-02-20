@@ -45,3 +45,14 @@ export function checkProjectOwnership(
   }
   return null
 }
+
+/**
+ * 프로젝트 조회 시 소유권 필터를 반환합니다.
+ * - 소유자 본인 또는 레거시(userId=null) 프로젝트만 접근 허용
+ */
+export function projectOwnerWhere(projectId: string, userId: string) {
+  return {
+    id: projectId,
+    OR: [{ userId }, { userId: null }],
+  }
+}

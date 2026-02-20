@@ -1,15 +1,19 @@
 import { NextRequest } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
-import { runWriterAgent } from '@/agents/writer'
+import { runWriterAgentWithUsage } from '@/agents/writer'
 import { BookOutline, ChapterOutline, BookType } from '@/types/book'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
+import { AppError, ERROR_CODES } from '@/lib/errors'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const body = await request.json()
     const { phase, bookType, outline, chapter } = body as {
@@ -39,7 +43,7 @@ export async function POST(request: NextRequest) {
 
           sendEvent('start', { chapterNumber: chapter.number, title: chapter.title })
 
-          const fullContent = await runWriterAgent(
+          const result = await runWriterAgentWithUsage(
             bookType,
             outline,
             chapter,
@@ -49,9 +53,11 @@ export async function POST(request: NextRequest) {
             }
           )
 
+          recordUsage(userId!, 'stream-writer', result.usage).catch(console.error)
+
           sendEvent('complete', {
             chapterNumber: chapter.number,
-            content: fullContent
+            content: result.text
           })
 
           controller.close()
@@ -72,7 +78,14 @@ export async function POST(request: NextRequest) {
         'Connection': 'keep-alive',
       },
     })
-  } catch (_error) {
+  } catch (error) {
+    if (error instanceof AppError) {
+      const status = error.code === ERROR_CODES.QUOTA_EXCEEDED ? 429 : 400
+      return new Response(
+        JSON.stringify({ error: error.message, code: error.code }),
+        { status, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
     return new Response(
       JSON.stringify({ error: 'Failed to start streaming' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
 import { AIQuestion } from '@/types/book'
 
 const QUESTION_GENERATION_PROMPT = `당신은 전문 출판 컨설턴트입니다. 저자가 제시한 책 아이디어를 바탕으로, 책의 방향을 구체화하기 위한 핵심 질문들을 생성해주세요.
@@ -33,8 +34,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id } = await params
     const { initialIdea } = await request.json()
@@ -47,8 +50,8 @@ export async function POST(
     }
 
     // 프로젝트 존재 확인
-    const project = await prisma.project.findUnique({
-      where: { id }
+    const project = await prisma.project.findFirst({
+      where: projectOwnerWhere(id, userId!)
     })
 
     if (!project) {
@@ -59,7 +62,7 @@ export async function POST(
     }
 
     // AI로 질문 생성
-    const response = await runAgent(
+    const agentResult = await runAgent(
       {
         name: 'research-questioner',
         systemPrompt: QUESTION_GENERATION_PROMPT,
@@ -67,6 +70,8 @@ export async function POST(
       },
       `저자의 책 아이디어:\n${initialIdea}\n\n책 유형: ${project.type}`
     )
+    const response = agentResult.text
+    recordUsage(userId!, 'research-questioner', agentResult.usage, id).catch(console.error)
 
     // JSON 파싱
     let questions: AIQuestion[] = []

@@ -3,11 +3,15 @@ import { NextRequest, NextResponse } from 'next/server'
 
 vi.mock('@/lib/auth/auth-utils', () => ({
   requireAuth: vi.fn().mockResolvedValue({ userId: 'user-1', error: null }),
+  projectOwnerWhere: (projectId: string, userId: string) => ({
+    id: projectId,
+    OR: [{ userId }, { userId: null }],
+  }),
 }))
 
 vi.mock('@/lib/db/client', () => ({
   prisma: {
-    project: { findUnique: vi.fn(), update: vi.fn() },
+    project: { findFirst: vi.fn(), update: vi.fn() },
     researchData: { upsert: vi.fn() },
   },
 }))
@@ -16,13 +20,18 @@ vi.mock('@/lib/claude', () => ({
   runAgent: vi.fn(),
 }))
 
+vi.mock('@/lib/token-quota', () => ({
+  checkQuota: vi.fn(),
+  recordUsage: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { POST } from './route'
 import { requireAuth } from '@/lib/auth/auth-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 
 const mockRequireAuth = vi.mocked(requireAuth)
-const mockFindUnique = prisma.project.findUnique as unknown as ReturnType<typeof vi.fn>
+const mockFindFirst = prisma.project.findFirst as unknown as ReturnType<typeof vi.fn>
 const mockUpdate = prisma.project.update as unknown as ReturnType<typeof vi.fn>
 const mockUpsert = prisma.researchData.upsert as unknown as ReturnType<typeof vi.fn>
 const mockRunAgent = vi.mocked(runAgent)
@@ -48,7 +57,7 @@ describe('POST /api/projects/[id]/research/quick-start', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockRequireAuth.mockResolvedValue({ userId: 'user-1', error: null })
-    mockFindUnique.mockResolvedValue(mockProject)
+    mockFindFirst.mockResolvedValue(mockProject)
     mockUpdate.mockResolvedValue(mockProject)
     mockUpsert.mockResolvedValue({})
   })
@@ -61,7 +70,7 @@ describe('POST /api/projects/[id]/research/quick-start', () => {
   })
 
   it('프로젝트가 없으면 404를 반환한다', async () => {
-    mockFindUnique.mockResolvedValue(null)
+    mockFindFirst.mockResolvedValue(null)
 
     const response = await POST(
       createRequest({ initialIdea: '테스트 아이디어' }),
@@ -99,10 +108,11 @@ describe('POST /api/projects/[id]/research/quick-start', () => {
     })
     const planText = '종합 계획 요약'
 
+    const mockUsage = { inputTokens: 0, outputTokens: 0 }
     mockRunAgent
-      .mockResolvedValueOnce(questionsJson)
-      .mockResolvedValueOnce(answersJson)
-      .mockResolvedValueOnce(planText)
+      .mockResolvedValueOnce({ text: questionsJson, usage: mockUsage })
+      .mockResolvedValueOnce({ text: answersJson, usage: mockUsage })
+      .mockResolvedValueOnce({ text: planText, usage: mockUsage })
 
     const response = await POST(
       createRequest({ initialIdea: '테스트 아이디어' }),
@@ -133,10 +143,11 @@ describe('POST /api/projects/[id]/research/quick-start', () => {
       ],
     })
 
+    const mockUsage = { inputTokens: 0, outputTokens: 0 }
     mockRunAgent
       .mockRejectedValueOnce(new Error('AI 실패'))
-      .mockResolvedValueOnce(answersJson)
-      .mockResolvedValueOnce('계획 요약')
+      .mockResolvedValueOnce({ text: answersJson, usage: mockUsage })
+      .mockResolvedValueOnce({ text: '계획 요약', usage: mockUsage })
 
     const response = await POST(
       createRequest({ initialIdea: '테스트 아이디어' }),
@@ -156,10 +167,11 @@ describe('POST /api/projects/[id]/research/quick-start', () => {
       ],
     })
 
+    const mockUsage = { inputTokens: 0, outputTokens: 0 }
     mockRunAgent
-      .mockResolvedValueOnce(questionsJson)
+      .mockResolvedValueOnce({ text: questionsJson, usage: mockUsage })
       .mockRejectedValueOnce(new Error('AI 실패'))
-      .mockResolvedValueOnce('계획 요약')
+      .mockResolvedValueOnce({ text: '계획 요약', usage: mockUsage })
 
     const response = await POST(
       createRequest({ initialIdea: '테스트 아이디어' }),
@@ -182,9 +194,10 @@ describe('POST /api/projects/[id]/research/quick-start', () => {
       answers: [{ questionId: 'q1', answer: '일반 성인' }],
     })
 
+    const mockUsage = { inputTokens: 0, outputTokens: 0 }
     mockRunAgent
-      .mockResolvedValueOnce(questionsJson)
-      .mockResolvedValueOnce(answersJson)
+      .mockResolvedValueOnce({ text: questionsJson, usage: mockUsage })
+      .mockResolvedValueOnce({ text: answersJson, usage: mockUsage })
       .mockRejectedValueOnce(new Error('Plan 실패'))
 
     const response = await POST(

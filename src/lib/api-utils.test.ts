@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { handleApiError } from './api-utils'
+import { AppError, ERROR_CODES } from './errors'
 
 vi.mock('next/server', () => ({
   NextResponse: {
@@ -74,5 +75,29 @@ describe('handleApiError', () => {
     delete process.env.SENTRY_DSN
     handleApiError(new Error('no sentry'))
     // No error thrown = passes (Sentry import not triggered)
+  })
+
+  it('should return 429 for QUOTA_EXCEEDED AppError', async () => {
+    const error = new AppError(ERROR_CODES.QUOTA_EXCEEDED)
+    const response = handleApiError(error)
+    expect(response.status).toBe(429)
+    const body = await response.json()
+    expect(body).toEqual({
+      success: false,
+      error: '이번 달 AI 사용량 한도에 도달했습니다.',
+      code: 'QUOTA_EXCEEDED',
+    })
+  })
+
+  it('should return 400 for other AppError codes', async () => {
+    const error = new AppError(ERROR_CODES.SAVE_FAILED)
+    const response = handleApiError(error)
+    expect(response.status).toBe(400)
+    const body = await response.json()
+    expect(body).toEqual({
+      success: false,
+      error: '저장에 실패했습니다. 잠시 후 다시 시도합니다',
+      code: 'SAVE_FAILED',
+    })
   })
 })

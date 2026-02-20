@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { AppError, ERROR_CODES } from './errors'
 
 export function handleApiError(
   error: unknown,
@@ -12,6 +13,14 @@ export function handleApiError(
     }).catch(() => {
       // Sentry import failed silently
     })
+  }
+
+  if (error instanceof AppError) {
+    const status = error.code === ERROR_CODES.QUOTA_EXCEEDED ? 429 : 400
+    return NextResponse.json(
+      { success: false, error: error.message, code: error.code },
+      { status }
+    )
   }
 
   const message = error instanceof Error ? error.message : 'Internal server error'

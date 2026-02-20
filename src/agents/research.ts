@@ -35,21 +35,24 @@ ${additionalContext ? `## 추가 맥락: ${additionalContext}` : ''}
 위 주제에 대해 책을 쓰기 위한 종합적인 리서치를 수행해주세요.
 `
 
-  const response = await runAgent(researchAgentConfig, prompt)
+  const agentResult = await runAgent(researchAgentConfig, prompt)
+  const response = agentResult.text
 
   try {
     // Extract JSON from response (might be wrapped in markdown code blocks)
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) ||
                       response.match(/\{[\s\S]*\}/)
     const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : response
-    return JSON.parse(jsonStr) as ResearchResult
+    const result = JSON.parse(jsonStr) as ResearchResult
+    return Object.assign(result, { _usage: agentResult.usage })
   } catch {
     // If parsing fails, return a structured response from the raw text
-    return {
+    const result: ResearchResult = {
       topic,
       findings: [response],
       sources: [],
       recommendations: [],
     }
+    return Object.assign(result, { _usage: agentResult.usage })
   }
 }

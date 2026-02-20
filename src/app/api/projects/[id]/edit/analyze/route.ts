@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import { EditSuggestion } from '@/types/book'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
 
 const EDITOR_PROMPT = `당신은 전문 편집자입니다. 주어진 텍스트를 분석하여 개선 제안을 제공해주세요.
 
@@ -41,8 +42,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id } = await params
     const { chapterNumber, content } = await request.json()
@@ -55,8 +58,8 @@ export async function POST(
     }
 
     // 프로젝트 정보 조회
-    const project = await prisma.project.findUnique({
-      where: { id }
+    const project = await prisma.project.findFirst({
+      where: projectOwnerWhere(id, userId!)
     })
 
     if (!project) {
@@ -67,7 +70,7 @@ export async function POST(
     }
 
     // AI 분석
-    const response = await runAgent(
+    const agentResult = await runAgent(
       {
         name: 'editor',
         systemPrompt: EDITOR_PROMPT,
@@ -80,6 +83,8 @@ export async function POST(
 **분석할 텍스트:**
 ${content.substring(0, 8000)}` // 토큰 제한
     )
+    const response = agentResult.text
+    recordUsage(userId!, 'editor', agentResult.usage, id).catch(console.error)
 
     // JSON 파싱
     let suggestions: EditSuggestion[] = []

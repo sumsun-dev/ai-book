@@ -17,6 +17,7 @@ interface UseAIEditReturn {
   selectionRange: SelectionRange | null
   isEditing: boolean
   editInstruction: string
+  editError: string | null
   setEditInstruction: (instruction: string) => void
   handleSelectionChange: (text: string, range: SelectionRange | null) => void
   handleAIEdit: (context: string) => Promise<string | null>
@@ -28,6 +29,7 @@ export function useAIEdit({ projectId, chapterId }: UseAIEditProps): UseAIEditRe
   const [selectionRange, setSelectionRange] = useState<SelectionRange | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [editInstruction, setEditInstruction] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
 
   const handleSelectionChange = useCallback((text: string, range: SelectionRange | null) => {
     setSelectedText(text)
@@ -46,6 +48,7 @@ export function useAIEdit({ projectId, chapterId }: UseAIEditProps): UseAIEditRe
     }
 
     setIsEditing(true)
+    setEditError(null)
 
     try {
       const response = await fetch(`/api/projects/${projectId}/chapters/${chapterId}/edit`, {
@@ -57,6 +60,15 @@ export function useAIEdit({ projectId, chapterId }: UseAIEditProps): UseAIEditRe
           context,
         }),
       })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(
+          data.error || (response.status === 429
+            ? '이번 달 AI 사용량 한도에 도달했습니다.'
+            : 'AI 수정 요청에 실패했습니다.')
+        )
+      }
 
       if (!response.body) {
         throw new Error('No response body')
@@ -72,9 +84,12 @@ export function useAIEdit({ projectId, chapterId }: UseAIEditProps): UseAIEditRe
         editedText += decoder.decode(value, { stream: true })
       }
 
+      window.dispatchEvent(new CustomEvent('quota-updated'))
       resetSelection()
       return editedText
     } catch (error) {
+      const msg = error instanceof Error ? error.message : 'AI 수정 요청에 실패했습니다.'
+      setEditError(msg)
       console.error('AI 수정 실패:', error)
       return null
     } finally {
@@ -87,6 +102,7 @@ export function useAIEdit({ projectId, chapterId }: UseAIEditProps): UseAIEditRe
     selectionRange,
     isEditing,
     editInstruction,
+    editError,
     setEditInstruction,
     handleSelectionChange,
     handleAIEdit,

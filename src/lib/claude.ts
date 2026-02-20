@@ -47,13 +47,18 @@ export interface AgentConfig {
   maxTokens?: number
 }
 
+export interface AgentResult {
+  text: string
+  usage: { inputTokens: number; outputTokens: number }
+}
+
 export type { MessageParam }
 
 export async function runAgent(
   config: AgentConfig,
   userMessage: string,
   context?: string
-): Promise<string> {
+): Promise<AgentResult> {
   const systemPrompt = context
     ? `${config.systemPrompt}\n\n## Current Context:\n${context}`
     : config.systemPrompt
@@ -71,7 +76,13 @@ export async function runAgent(
   )
 
   const textBlock = message.content.find(block => block.type === 'text')
-  return textBlock?.type === 'text' ? textBlock.text : ''
+  const text = textBlock?.type === 'text' ? textBlock.text : ''
+  const usage = {
+    inputTokens: message.usage?.input_tokens ?? 0,
+    outputTokens: message.usage?.output_tokens ?? 0,
+  }
+
+  return { text, usage }
 }
 
 export async function streamAgent(
@@ -79,12 +90,14 @@ export async function streamAgent(
   userMessage: string,
   context?: string,
   onChunk: (chunk: string) => void = () => {}
-): Promise<string> {
+): Promise<AgentResult> {
   const systemPrompt = context
     ? `${config.systemPrompt}\n\n## Current Context:\n${context}`
     : config.systemPrompt
 
-  return withRetry(async () => {
+  const cumulativeUsage = { inputTokens: 0, outputTokens: 0 }
+
+  const result = await withRetry(async () => {
     const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-20250514',
       max_tokens: config.maxTokens ?? 8192,
@@ -96,6 +109,7 @@ export async function streamAgent(
     })
 
     let fullResponse = ''
+    let usage = { inputTokens: 0, outputTokens: 0 }
 
     for await (const event of stream) {
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
@@ -103,10 +117,33 @@ export async function streamAgent(
         fullResponse += chunk
         onChunk(chunk)
       }
+      if (event.type === 'message_delta') {
+        const delta = event as unknown as { usage?: { output_tokens?: number } }
+        if (delta.usage?.output_tokens) {
+          usage.outputTokens = delta.usage.output_tokens
+        }
+      }
     }
 
-    return fullResponse
+    // finalMessage에서 usage 가져오기 시도
+    try {
+      const finalMessage = await stream.finalMessage()
+      usage = {
+        inputTokens: finalMessage.usage?.input_tokens ?? 0,
+        outputTokens: finalMessage.usage?.output_tokens ?? 0,
+      }
+    } catch {
+      // finalMessage 실패 시 이벤트에서 캡처한 값 사용
+    }
+
+    // 재시도 시 이전 시도의 usage 누적
+    cumulativeUsage.inputTokens += usage.inputTokens
+    cumulativeUsage.outputTokens += usage.outputTokens
+
+    return { text: fullResponse, usage: cumulativeUsage }
   })
+
+  return result
 }
 
 /**
@@ -119,8 +156,10 @@ export async function streamAgentWithHistory(
   config: AgentConfig,
   messages: MessageParam[],
   onChunk: (chunk: string) => void = () => {}
-): Promise<string> {
-  return withRetry(async () => {
+): Promise<AgentResult> {
+  const cumulativeUsage = { inputTokens: 0, outputTokens: 0 }
+
+  const result = await withRetry(async () => {
     const stream = anthropic.messages.stream({
       model: 'claude-sonnet-4-20250514',
       max_tokens: config.maxTokens ?? 8192,
@@ -130,6 +169,7 @@ export async function streamAgentWithHistory(
     })
 
     let fullResponse = ''
+    let usage = { inputTokens: 0, outputTokens: 0 }
 
     for await (const event of stream) {
       if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
@@ -137,8 +177,30 @@ export async function streamAgentWithHistory(
         fullResponse += chunk
         onChunk(chunk)
       }
+      if (event.type === 'message_delta') {
+        const delta = event as unknown as { usage?: { output_tokens?: number } }
+        if (delta.usage?.output_tokens) {
+          usage.outputTokens = delta.usage.output_tokens
+        }
+      }
     }
 
-    return fullResponse
+    try {
+      const finalMessage = await stream.finalMessage()
+      usage = {
+        inputTokens: finalMessage.usage?.input_tokens ?? 0,
+        outputTokens: finalMessage.usage?.output_tokens ?? 0,
+      }
+    } catch {
+      // finalMessage 실패 시 이벤트에서 캡처한 값 사용
+    }
+
+    // 재시도 시 이전 시도의 usage 누적
+    cumulativeUsage.inputTokens += usage.inputTokens
+    cumulativeUsage.outputTokens += usage.outputTokens
+
+    return { text: fullResponse, usage: cumulativeUsage }
   })
+
+  return result
 }

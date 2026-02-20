@@ -4,6 +4,7 @@ export const ERROR_CODES = {
   AI_CONTEXT_TOO_LONG: 'AI_CONTEXT_TOO_LONG',
   AI_GENERATION_CANCELLED: 'AI_GENERATION_CANCELLED',
   SAVE_FAILED: 'SAVE_FAILED',
+  QUOTA_EXCEEDED: 'QUOTA_EXCEEDED',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 } as const
 
@@ -15,6 +16,7 @@ export const ERROR_MESSAGES: Record<ErrorCode, string> = {
   [ERROR_CODES.AI_CONTEXT_TOO_LONG]: '내용이 너무 깁니다. 내용을 줄여주세요',
   [ERROR_CODES.AI_GENERATION_CANCELLED]: 'AI 작성이 취소되었습니다',
   [ERROR_CODES.SAVE_FAILED]: '저장에 실패했습니다. 잠시 후 다시 시도합니다',
+  [ERROR_CODES.QUOTA_EXCEEDED]: '이번 달 AI 사용량 한도에 도달했습니다.',
   [ERROR_CODES.UNKNOWN_ERROR]: '알 수 없는 오류가 발생했습니다',
 }
 

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { BookProject, ProjectStage } from '@/types/book'
+import TokenUsageBar from '@/components/ui/TokenUsageBar'
 
 interface StageInfo {
   id: ProjectStage
@@ -132,6 +133,9 @@ export default function ProjectSidebar({ project }: ProjectSidebarProps) {
           })}
         </ul>
       </nav>
+
+      {/* 토큰 사용량 */}
+      <TokenUsageBar />
 
       {/* 하단 진행률 */}
       <div className="p-6 border-t border-neutral-200 dark:border-neutral-800">

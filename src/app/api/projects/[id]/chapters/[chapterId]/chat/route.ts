@@ -1,8 +1,10 @@
 import { NextRequest } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgentWithHistory, type MessageParam } from '@/lib/claude'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
+import { AppError, ERROR_CODES } from '@/lib/errors'
 
 const ChatRequestSchema = z.object({
   message: z.string().min(1).max(2000),
@@ -22,8 +24,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string; chapterId: string }> }
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id: projectId, chapterId } = await params
     const body = await request.json()
@@ -40,7 +44,10 @@ export async function POST(
 
     // 프로젝트 및 챕터 확인
     const chapter = await prisma.chapter.findFirst({
-      where: { id: chapterId, projectId },
+      where: {
+        id: chapterId,
+        project: projectOwnerWhere(projectId, userId!),
+      },
       include: { project: true }
     })
 
@@ -111,8 +118,9 @@ ${context?.pageNumber ? `- 페이지: ${context.pageNumber}` : ''}
 
     const stream = new ReadableStream({
       async start(controller) {
+        let usage = { inputTokens: 0, outputTokens: 0 }
         try {
-          await streamAgentWithHistory(
+          const result = await streamAgentWithHistory(
             {
               name: 'writing-assistant',
               systemPrompt,
@@ -124,6 +132,7 @@ ${context?.pageNumber ? `- 페이지: ${context.pageNumber}` : ''}
               controller.enqueue(encoder.encode(chunk))
             }
           )
+          usage = result.usage
 
           // AI 응답 DB 저장
           await prisma.chatMessage.create({
@@ -139,6 +148,10 @@ ${context?.pageNumber ? `- 페이지: ${context.pageNumber}` : ''}
           controller.close()
         } catch (error) {
           controller.error(error)
+        } finally {
+          if (usage.inputTokens > 0 || usage.outputTokens > 0) {
+            recordUsage(userId!, 'writing-assistant', usage, projectId).catch(console.error)
+          }
         }
       }
     })
@@ -150,7 +163,14 @@ ${context?.pageNumber ? `- 페이지: ${context.pageNumber}` : ''}
         'Connection': 'keep-alive'
       }
     })
-  } catch {
+  } catch (error) {
+    if (error instanceof AppError) {
+      const status = error.code === ERROR_CODES.QUOTA_EXCEEDED ? 429 : 400
+      return new Response(
+        JSON.stringify({ error: error.message, code: error.code }),
+        { status, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
     return new Response(
       JSON.stringify({ error: 'Failed to process chat' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

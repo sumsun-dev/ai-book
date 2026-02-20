@@ -54,18 +54,21 @@ ${chapterContent}
     ? mergeEditorConfig(editorAgentConfig, customConfig)
     : editorAgentConfig
 
-  const response = await runAgent(config, prompt)
+  const agentResult = await runAgent(config, prompt)
+  const response = agentResult.text
 
   try {
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) ||
                       response.match(/\{[\s\S]*\}/)
     const jsonStr = jsonMatch ? (jsonMatch[1] || jsonMatch[0]) : response
-    return JSON.parse(jsonStr) as EditorResult
+    const parsed = JSON.parse(jsonStr) as EditorResult
+    return Object.assign(parsed, { _usage: agentResult.usage })
   } catch {
-    return {
+    const fallback: EditorResult = {
       editedContent: chapterContent,
       changes: [],
       suggestions: [response],
     }
+    return Object.assign(fallback, { _usage: agentResult.usage })
   }
 }

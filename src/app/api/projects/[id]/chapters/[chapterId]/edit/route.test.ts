@@ -10,14 +10,30 @@ vi.mock('@/lib/db/client', () => ({
   },
 }))
 
+// Mock auth
+vi.mock('@/lib/auth/auth-utils', () => ({
+  requireAuth: vi.fn().mockResolvedValue({ userId: 'user-1', error: null }),
+  projectOwnerWhere: vi.fn((projectId: string, userId: string) => ({
+    id: projectId,
+    OR: [{ userId }, { userId: null }],
+  })),
+}))
+
 // Mock claude
 vi.mock('@/lib/claude', () => ({
   streamAgent: vi.fn(),
 }))
 
+// Mock token-quota
+vi.mock('@/lib/token-quota', () => ({
+  checkQuota: vi.fn(),
+  recordUsage: vi.fn(),
+}))
+
 import { POST } from './route'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
+import { recordUsage } from '@/lib/token-quota'
 
 const mockChapter = {
   id: 'chapter-1',
@@ -131,7 +147,7 @@ describe('POST /api/projects/[id]/chapters/[chapterId]/edit', () => {
       vi.mocked(streamAgent).mockImplementation(async (_config, _prompt, _history, onChunk) => {
         onChunk?.('수정된 ')
         onChunk?.('텍스트입니다.')
-        return { content: '수정된 텍스트입니다.' } as never
+        return { text: '수정된 텍스트입니다.', usage: { inputTokens: 100, outputTokens: 50 } } as never
       })
 
       const request = new NextRequest('http://localhost/api/projects/1/chapters/1/edit', {
@@ -157,7 +173,7 @@ describe('POST /api/projects/[id]/chapters/[chapterId]/edit', () => {
       vi.mocked(streamAgent).mockImplementation(async (_config, prompt, _history, onChunk) => {
         capturedPrompt = prompt as string
         onChunk?.('수정됨')
-        return { content: '수정됨' } as never
+        return { text: '수정됨', usage: { inputTokens: 100, outputTokens: 50 } } as never
       })
 
       const request = new NextRequest('http://localhost/api/projects/1/chapters/1/edit', {
@@ -177,6 +193,46 @@ describe('POST /api/projects/[id]/chapters/[chapterId]/edit', () => {
     })
   })
 
+  describe('토큰 사용량 기록', () => {
+    it('streamAgent 완료 후 recordUsage를 호출한다', async () => {
+      vi.mocked(prisma.chapter.findFirst).mockResolvedValue(mockChapter as never)
+      vi.mocked(streamAgent).mockImplementation(async (_config, _prompt, _history, onChunk) => {
+        onChunk?.('수정됨')
+        return { text: '수정됨', usage: { inputTokens: 500, outputTokens: 200 } } as never
+      })
+      vi.mocked(recordUsage).mockResolvedValue(undefined)
+
+      const request = new NextRequest('http://localhost/api/projects/1/chapters/1/edit', {
+        method: 'POST',
+        body: JSON.stringify({
+          selectedText: '원본 텍스트',
+          instruction: '더 간결하게',
+        }),
+      })
+
+      const params = { params: Promise.resolve({ id: 'project-1', chapterId: 'chapter-1' }) }
+      const response = await POST(request, params)
+      expect(response.status).toBe(200)
+
+      // ReadableStream을 소비해야 streamAgent 콜백이 실행됨
+      const reader = response.body!.getReader()
+      while (true) {
+        const { done } = await reader.read()
+        if (done) break
+      }
+
+      // recordUsage가 비동기이므로 약간의 대기
+      await new Promise(resolve => setTimeout(resolve, 50))
+
+      expect(recordUsage).toHaveBeenCalledWith(
+        'user-1',
+        'text-editor',
+        { inputTokens: 500, outputTokens: 200 },
+        'project-1'
+      )
+    })
+  })
+
   describe('보안', () => {
     it('입력에서 위험한 문자를 제거한다', async () => {
       vi.mocked(prisma.chapter.findFirst).mockResolvedValue(mockChapter as never)
@@ -185,7 +241,7 @@ describe('POST /api/projects/[id]/chapters/[chapterId]/edit', () => {
       vi.mocked(streamAgent).mockImplementation(async (_config, prompt, _history, onChunk) => {
         capturedPrompt = prompt as string
         onChunk?.('정제됨')
-        return { content: '정제됨' } as never
+        return { text: '정제됨', usage: { inputTokens: 100, outputTokens: 50 } } as never
       })
 
       const request = new NextRequest('http://localhost/api/projects/1/chapters/1/edit', {

@@ -10,13 +10,15 @@ import { createMockOutline } from '@/test/fixtures/outline'
 
 const mockStreamAgent = vi.mocked(streamAgent)
 
+const mockUsage = { inputTokens: 0, outputTokens: 0 }
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
 describe('runWriterAgent', () => {
   it('스트리밍 에이전트를 호출하고 결과를 반환한다', async () => {
-    mockStreamAgent.mockResolvedValue('챕터 본문입니다.')
+    mockStreamAgent.mockResolvedValue({ text: '챕터 본문입니다.', usage: mockUsage })
 
     const outline = createMockOutline(3)
     const result = await runWriterAgent(
@@ -30,7 +32,7 @@ describe('runWriterAgent', () => {
   })
 
   it('onChunk 콜백을 전달한다', async () => {
-    mockStreamAgent.mockResolvedValue('결과')
+    mockStreamAgent.mockResolvedValue({ text: '결과', usage: mockUsage })
     const onChunk = vi.fn()
 
     const outline = createMockOutline(1)
@@ -45,7 +47,7 @@ describe('runWriterAgent', () => {
   })
 
   it('이전 챕터 요약을 포함한다', async () => {
-    mockStreamAgent.mockResolvedValue('결과')
+    mockStreamAgent.mockResolvedValue({ text: '결과', usage: mockUsage })
 
     const outline = createMockOutline(2)
     await runWriterAgent('fiction', outline, outline.chapters[1], '이전 요약 내용')
@@ -53,11 +55,13 @@ describe('runWriterAgent', () => {
     expect(mockStreamAgent).toHaveBeenCalledWith(
       expect.any(Object),
       expect.stringContaining('이전 요약 내용'),
+      undefined,
+      undefined,
     )
   })
 
   it('bookType과 outline 정보를 프롬프트에 포함한다', async () => {
-    mockStreamAgent.mockResolvedValue('결과')
+    mockStreamAgent.mockResolvedValue({ text: '결과', usage: mockUsage })
 
     const outline = createMockOutline(1)
     await runWriterAgent('technical', outline, outline.chapters[0])
@@ -65,14 +69,16 @@ describe('runWriterAgent', () => {
     expect(mockStreamAgent).toHaveBeenCalledWith(
       expect.any(Object),
       expect.stringContaining('technical'),
+      undefined,
+      undefined,
     )
   })
 })
 
 describe('writeFullBook', () => {
   it('모든 챕터를 작성하고 Map으로 반환한다', async () => {
-    mockStreamAgent.mockResolvedValueOnce('챕터 1 내용')
-    mockStreamAgent.mockResolvedValueOnce('챕터 2 내용')
+    mockStreamAgent.mockResolvedValueOnce({ text: '챕터 1 내용', usage: mockUsage })
+    mockStreamAgent.mockResolvedValueOnce({ text: '챕터 2 내용', usage: mockUsage })
 
     const outline = createMockOutline(2)
     const chapters = await writeFullBook('fiction', outline)
@@ -83,7 +89,7 @@ describe('writeFullBook', () => {
   })
 
   it('onChapterStart 콜백을 호출한다', async () => {
-    mockStreamAgent.mockResolvedValue('내용')
+    mockStreamAgent.mockResolvedValue({ text: '내용', usage: mockUsage })
     const onStart = vi.fn()
 
     const outline = createMockOutline(2)
@@ -94,8 +100,8 @@ describe('writeFullBook', () => {
   })
 
   it('onChapterComplete 콜백을 호출한다', async () => {
-    mockStreamAgent.mockResolvedValueOnce('내용1')
-    mockStreamAgent.mockResolvedValueOnce('내용2')
+    mockStreamAgent.mockResolvedValueOnce({ text: '내용1', usage: mockUsage })
+    mockStreamAgent.mockResolvedValueOnce({ text: '내용2', usage: mockUsage })
     const onComplete = vi.fn()
 
     const outline = createMockOutline(2)

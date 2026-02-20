@@ -13,6 +13,8 @@ import { runAgent } from '@/lib/claude'
 
 const mockRunAgent = vi.mocked(runAgent)
 
+const mockUsage = { inputTokens: 0, outputTokens: 0 }
+
 function createMockEditorCriticResponse(
   decision: 'pass' | 'revise' = 'pass',
   overallScore = 8
@@ -63,7 +65,7 @@ beforeEach(() => {
 
 describe('runEditorCriticAgent', () => {
   it('JSON 응답을 파싱한다', async () => {
-    mockRunAgent.mockResolvedValue(createMockEditorCriticResponse())
+    mockRunAgent.mockResolvedValue({ text: createMockEditorCriticResponse(), usage: mockUsage })
 
     const result = await runEditorCriticAgent('내용', '제목', '독자', '톤')
 
@@ -75,14 +77,14 @@ describe('runEditorCriticAgent', () => {
 
   it('코드 블록 안의 JSON을 파싱한다', async () => {
     const json = createMockEditorCriticResponse()
-    mockRunAgent.mockResolvedValue(`\`\`\`json\n${json}\n\`\`\``)
+    mockRunAgent.mockResolvedValue({ text: `\`\`\`json\n${json}\n\`\`\``, usage: mockUsage })
 
     const result = await runEditorCriticAgent('내용', '제목', '독자', '톤')
     expect(result.editedContent).toBe('교정된 내용')
   })
 
   it('파싱 실패 시 기본 결과를 반환한다', async () => {
-    mockRunAgent.mockResolvedValue('파싱 불가 텍스트')
+    mockRunAgent.mockResolvedValue({ text: '파싱 불가 텍스트', usage: mockUsage })
 
     const result = await runEditorCriticAgent('원본 내용', '제목', '독자', '톤')
 
@@ -93,9 +95,10 @@ describe('runEditorCriticAgent', () => {
   })
 
   it('부분적 응답에 기본값을 채운다', async () => {
-    mockRunAgent.mockResolvedValue(
-      JSON.stringify({ editedContent: '내용만 있음' })
-    )
+    mockRunAgent.mockResolvedValue({
+      text: JSON.stringify({ editedContent: '내용만 있음' }),
+      usage: mockUsage,
+    })
 
     const result = await runEditorCriticAgent('내용', '제목', '독자', '톤')
     expect(result.editedContent).toBe('내용만 있음')
@@ -106,7 +109,7 @@ describe('runEditorCriticAgent', () => {
 
 describe('runEditorCriticLoop', () => {
   it('첫 반복에서 pass하면 즉시 반환한다', async () => {
-    mockRunAgent.mockResolvedValue(createMockEditorCriticResponse('pass', 8))
+    mockRunAgent.mockResolvedValue({ text: createMockEditorCriticResponse('pass', 8), usage: mockUsage })
 
     const result = await runEditorCriticLoop('내용', '제목', '독자', '톤')
 
@@ -116,10 +119,10 @@ describe('runEditorCriticLoop', () => {
   })
 
   it('revise 후 최대 반복에 도달하면 max_iterations_reached를 반환한다', async () => {
-    // 항상 revise 반환
-    mockRunAgent.mockResolvedValue(
-      createMockEditorCriticResponse('revise', 5)
-    )
+    mockRunAgent.mockResolvedValue({
+      text: createMockEditorCriticResponse('revise', 5),
+      usage: mockUsage,
+    })
 
     const result = await runEditorCriticLoop('내용', '제목', '독자', '톤', {
       maxIterations: 2,
@@ -132,7 +135,7 @@ describe('runEditorCriticLoop', () => {
   })
 
   it('onIteration 콜백을 호출한다', async () => {
-    mockRunAgent.mockResolvedValue(createMockEditorCriticResponse('pass', 8))
+    mockRunAgent.mockResolvedValue({ text: createMockEditorCriticResponse('pass', 8), usage: mockUsage })
     const onIteration = vi.fn()
 
     await runEditorCriticLoop('내용', '제목', '독자', '톤', { onIteration })
@@ -143,9 +146,10 @@ describe('runEditorCriticLoop', () => {
   })
 
   it('기본 maxIterations는 3이다', async () => {
-    mockRunAgent.mockResolvedValue(
-      createMockEditorCriticResponse('revise', 5)
-    )
+    mockRunAgent.mockResolvedValue({
+      text: createMockEditorCriticResponse('revise', 5),
+      usage: mockUsage,
+    })
 
     const result = await runEditorCriticLoop('내용', '제목', '독자', '톤')
 
@@ -154,9 +158,10 @@ describe('runEditorCriticLoop', () => {
 
   it('passThreshold를 커스터마이즈할 수 있다', async () => {
     // score 8이지만 threshold 9이므로 pass 안됨
-    mockRunAgent.mockResolvedValue(
-      createMockEditorCriticResponse('pass', 8)
-    )
+    mockRunAgent.mockResolvedValue({
+      text: createMockEditorCriticResponse('pass', 8),
+      usage: mockUsage,
+    })
 
     const result = await runEditorCriticLoop('내용', '제목', '독자', '톤', {
       maxIterations: 1,
@@ -168,9 +173,9 @@ describe('runEditorCriticLoop', () => {
 
   it('두 번째 반복에서 pass하면 종료한다', async () => {
     mockRunAgent
-      .mockResolvedValueOnce(createMockEditorCriticResponse('revise', 5))
-      .mockResolvedValueOnce('수정된 내용') // revision
-      .mockResolvedValueOnce(createMockEditorCriticResponse('pass', 8))
+      .mockResolvedValueOnce({ text: createMockEditorCriticResponse('revise', 5), usage: mockUsage })
+      .mockResolvedValueOnce({ text: '수정된 내용', usage: mockUsage }) // revision
+      .mockResolvedValueOnce({ text: createMockEditorCriticResponse('pass', 8), usage: mockUsage })
 
     const result = await runEditorCriticLoop('내용', '제목', '독자', '톤')
 
@@ -181,7 +186,7 @@ describe('runEditorCriticLoop', () => {
 
 describe('runSinglePassEditorCritic', () => {
   it('단일 패스를 실행하고 single_pass 상태를 반환한다', async () => {
-    mockRunAgent.mockResolvedValue(createMockEditorCriticResponse('pass', 8))
+    mockRunAgent.mockResolvedValue({ text: createMockEditorCriticResponse('pass', 8), usage: mockUsage })
 
     const result = await runSinglePassEditorCritic('내용', '제목', '독자', '톤')
 
@@ -191,7 +196,7 @@ describe('runSinglePassEditorCritic', () => {
   })
 
   it('파싱 실패 시에도 single_pass 상태를 반환한다', async () => {
-    mockRunAgent.mockResolvedValue('파싱 불가')
+    mockRunAgent.mockResolvedValue({ text: '파싱 불가', usage: mockUsage })
 
     const result = await runSinglePassEditorCritic('원본', '제목', '독자', '톤')
 

@@ -7,6 +7,8 @@ vi.mock('@/lib/claude', () => ({
 import { runConsistencyCheck } from './consistency-checker'
 import { runAgent } from '@/lib/claude'
 
+const mockUsage = { inputTokens: 0, outputTokens: 0 }
+
 describe('runConsistencyCheck', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -22,20 +24,23 @@ describe('runConsistencyCheck', () => {
   })
 
   it('should parse valid consistency issues from agent response', async () => {
-    vi.mocked(runAgent).mockResolvedValue(JSON.stringify({
-      issues: [
-        {
-          type: 'character_name',
-          severity: 'error',
-          chapterA: 1,
-          chapterB: 2,
-          title: 'Name inconsistency',
-          description: 'Character Kim is called Lee in chapter 2',
-          suggestion: 'Use consistent name',
-        },
-      ],
-      summary: 'Found 1 issue',
-    }))
+    vi.mocked(runAgent).mockResolvedValue({
+      text: JSON.stringify({
+        issues: [
+          {
+            type: 'character_name',
+            severity: 'error',
+            chapterA: 1,
+            chapterB: 2,
+            title: 'Name inconsistency',
+            description: 'Character Kim is called Lee in chapter 2',
+            suggestion: 'Use consistent name',
+          },
+        ],
+        summary: 'Found 1 issue',
+      }),
+      usage: mockUsage,
+    })
 
     const result = await runConsistencyCheck([
       { number: 1, title: 'Ch 1', content: 'Kim went to school.' },
@@ -48,10 +53,13 @@ describe('runConsistencyCheck', () => {
   })
 
   it('should handle agent response with no issues', async () => {
-    vi.mocked(runAgent).mockResolvedValue(JSON.stringify({
-      issues: [],
-      summary: 'No issues found',
-    }))
+    vi.mocked(runAgent).mockResolvedValue({
+      text: JSON.stringify({
+        issues: [],
+        summary: 'No issues found',
+      }),
+      usage: mockUsage,
+    })
 
     const result = await runConsistencyCheck([
       { number: 1, title: 'Ch 1', content: 'Consistent content' },
@@ -62,7 +70,7 @@ describe('runConsistencyCheck', () => {
   })
 
   it('should handle JSON parse errors gracefully', async () => {
-    vi.mocked(runAgent).mockResolvedValue('invalid json response')
+    vi.mocked(runAgent).mockResolvedValue({ text: 'invalid json response', usage: mockUsage })
 
     const result = await runConsistencyCheck([
       { number: 1, title: 'Ch 1', content: 'Content 1' },

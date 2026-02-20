@@ -71,7 +71,8 @@ ${JSON.stringify(research, null, 2)}
 각 챕터에 2-4개의 섹션을 포함해주세요.
 `
 
-  const response = await runAgent(outlinerAgentConfig, prompt)
+  const agentResult = await runAgent(outlinerAgentConfig, prompt)
+  const response = agentResult.text
 
   try {
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) ||
@@ -90,9 +91,9 @@ ${JSON.stringify(research, null, 2)}
       }],
     }))
 
-    return parsed
+    return Object.assign(parsed, { _usage: agentResult.usage })
   } catch {
-    return {
+    const fallback: BookOutline = {
       synopsis: description,
       chapters: [{
         number: 1,
@@ -110,6 +111,7 @@ ${JSON.stringify(research, null, 2)}
       targetAudience: '일반 독자',
       tone: '친근한',
     }
+    return Object.assign(fallback, { _usage: agentResult.usage })
   }
 }
 
@@ -168,7 +170,8 @@ ${feedback.targetChapter ? `- 대상 챕터: ${feedback.targetChapter}` : ''}
 위 피드백을 반영하여 아웃라인을 수정해주세요.
 `
 
-  const response = await runAgent(refinementAgentConfig, prompt)
+  const agentResult = await runAgent(refinementAgentConfig, prompt)
+  const response = agentResult.text
 
   try {
     const jsonMatch = response.match(/```json\n?([\s\S]*?)\n?```/) ||
@@ -187,9 +190,9 @@ ${feedback.targetChapter ? `- 대상 챕터: ${feedback.targetChapter}` : ''}
       }],
     }))
 
-    return parsed
+    return Object.assign(parsed, { _usage: agentResult.usage })
   } catch {
-    return currentOutline
+    return Object.assign({ ...currentOutline }, { _usage: agentResult.usage })
   }
 }
 

@@ -9,14 +9,16 @@ import { runAgent } from '@/lib/claude'
 
 const mockRunAgent = vi.mocked(runAgent)
 
+const mockUsage = { inputTokens: 0, outputTokens: 0 }
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
 describe('runCriticAgent', () => {
   it('JSON 응답을 파싱한다', async () => {
-    mockRunAgent.mockResolvedValue(
-      JSON.stringify({
+    mockRunAgent.mockResolvedValue({
+      text: JSON.stringify({
         decision: 'pass',
         overallScore: 8,
         scores: {
@@ -29,8 +31,9 @@ describe('runCriticAgent', () => {
         strengths: ['잘 씀'],
         weaknesses: [],
         revisionSuggestions: [],
-      })
-    )
+      }),
+      usage: mockUsage,
+    })
 
     const result = await runCriticAgent('내용', '제목', '독자', '톤')
 
@@ -48,14 +51,14 @@ describe('runCriticAgent', () => {
       weaknesses: ['구성 부족'],
       revisionSuggestions: ['수정 필요'],
     }
-    mockRunAgent.mockResolvedValue(`\`\`\`json\n${JSON.stringify(json)}\n\`\`\``)
+    mockRunAgent.mockResolvedValue({ text: `\`\`\`json\n${JSON.stringify(json)}\n\`\`\``, usage: mockUsage })
 
     const result = await runCriticAgent('내용', '제목', '독자', '톤')
     expect(result.decision).toBe('revise')
   })
 
   it('파싱 실패 시 기본 pass를 반환한다', async () => {
-    mockRunAgent.mockResolvedValue('파싱 불가 텍스트')
+    mockRunAgent.mockResolvedValue({ text: '파싱 불가 텍스트', usage: mockUsage })
 
     const result = await runCriticAgent('내용', '제목', '독자', '톤')
 
@@ -65,7 +68,7 @@ describe('runCriticAgent', () => {
   })
 
   it('프롬프트에 파라미터를 포함한다', async () => {
-    mockRunAgent.mockResolvedValue('{"decision":"pass","overallScore":7,"scores":{"coherence":7,"engagement":7,"clarity":7,"originality":7,"targetFit":7},"strengths":[],"weaknesses":[],"revisionSuggestions":[]}')
+    mockRunAgent.mockResolvedValue({ text: '{"decision":"pass","overallScore":7,"scores":{"coherence":7,"engagement":7,"clarity":7,"originality":7,"targetFit":7},"strengths":[],"weaknesses":[],"revisionSuggestions":[]}', usage: mockUsage })
 
     await runCriticAgent('내용', '제목입니다', '20대', '전문적')
 

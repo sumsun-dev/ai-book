@@ -200,7 +200,7 @@ describe('useAIChat', () => {
 
     const lastMsg = result.current.messages[result.current.messages.length - 1]
     expect(lastMsg.role).toBe('assistant')
-    expect(lastMsg.content).toContain('오류가 발생')
+    expect(lastMsg.content).toContain('Network error')
     expect(result.current.isLoading).toBe(false)
   })
 
@@ -232,7 +232,7 @@ describe('useAIChat', () => {
 
     const lastMsg = result.current.messages[result.current.messages.length - 1]
     expect(lastMsg.role).toBe('assistant')
-    expect(lastMsg.content).toContain('오류가 발생')
+    expect(lastMsg.content).toContain('No response body')
     expect(result.current.isLoading).toBe(false)
   })
 

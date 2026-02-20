@@ -20,6 +20,8 @@ import type { ResearchResult } from '@/types/book'
 
 const mockRunAgent = vi.mocked(runAgent)
 
+const mockUsage = { inputTokens: 0, outputTokens: 0 }
+
 const mockResearch: ResearchResult = {
   topic: '테스트 주제',
   findings: ['발견 1'],
@@ -34,7 +36,7 @@ beforeEach(() => {
 describe('runOutlinerAgent', () => {
   it('JSON 응답을 파싱하여 BookOutline을 반환한다', async () => {
     const outline = createMockOutline(2)
-    mockRunAgent.mockResolvedValue(JSON.stringify(outline))
+    mockRunAgent.mockResolvedValue({ text: JSON.stringify(outline), usage: mockUsage })
 
     const result = await runOutlinerAgent('fiction', '테스트 책', '설명', mockResearch)
 
@@ -44,7 +46,7 @@ describe('runOutlinerAgent', () => {
 
   it('코드 블록 안의 JSON을 파싱한다', async () => {
     const outline = createMockOutline(1)
-    mockRunAgent.mockResolvedValue(`\`\`\`json\n${JSON.stringify(outline)}\n\`\`\``)
+    mockRunAgent.mockResolvedValue({ text: `\`\`\`json\n${JSON.stringify(outline)}\n\`\`\``, usage: mockUsage })
 
     const result = await runOutlinerAgent('fiction', '책', '설명', mockResearch)
     expect(result.chapters).toHaveLength(1)
@@ -58,7 +60,7 @@ describe('runOutlinerAgent', () => {
       targetAudience: '독자',
       tone: '톤',
     }
-    mockRunAgent.mockResolvedValue(JSON.stringify(outline))
+    mockRunAgent.mockResolvedValue({ text: JSON.stringify(outline), usage: mockUsage })
 
     const result = await runOutlinerAgent('fiction', '책', '설명', mockResearch)
     expect(result.chapters[0].sections).toBeDefined()
@@ -66,7 +68,7 @@ describe('runOutlinerAgent', () => {
   })
 
   it('파싱 실패 시 기본 구조를 반환한다', async () => {
-    mockRunAgent.mockResolvedValue('파싱 불가한 텍스트')
+    mockRunAgent.mockResolvedValue({ text: '파싱 불가한 텍스트', usage: mockUsage })
 
     const result = await runOutlinerAgent('fiction', '책', '설명', mockResearch)
 
@@ -76,7 +78,7 @@ describe('runOutlinerAgent', () => {
   })
 
   it('bookType을 프롬프트에 포함한다', async () => {
-    mockRunAgent.mockResolvedValue(JSON.stringify(createMockOutline(1)))
+    mockRunAgent.mockResolvedValue({ text: JSON.stringify(createMockOutline(1)), usage: mockUsage })
 
     await runOutlinerAgent('technical', '책', '설명', mockResearch)
 
@@ -107,7 +109,7 @@ describe('generateTableOfContents (outliner)', () => {
 describe('refineOutline', () => {
   it('피드백을 반영한 수정된 아웃라인을 반환한다', async () => {
     const refined = createMockOutline(4)
-    mockRunAgent.mockResolvedValue(JSON.stringify(refined))
+    mockRunAgent.mockResolvedValue({ text: JSON.stringify(refined), usage: mockUsage })
 
     const original = createMockOutline(3)
     const result = await refineOutline(original, {
@@ -119,7 +121,7 @@ describe('refineOutline', () => {
   })
 
   it('파싱 실패 시 원본을 반환한다', async () => {
-    mockRunAgent.mockResolvedValue('파싱 불가')
+    mockRunAgent.mockResolvedValue({ text: '파싱 불가', usage: mockUsage })
 
     const original = createMockOutline(3)
     const result = await refineOutline(original, {
@@ -127,11 +129,14 @@ describe('refineOutline', () => {
       instruction: '개선해주세요',
     })
 
-    expect(result).toBe(original)
+    expect(result).toEqual({
+      ...original,
+      _usage: mockUsage,
+    })
   })
 
   it('targetChapter를 프롬프트에 포함한다', async () => {
-    mockRunAgent.mockResolvedValue(JSON.stringify(createMockOutline(3)))
+    mockRunAgent.mockResolvedValue({ text: JSON.stringify(createMockOutline(3)), usage: mockUsage })
 
     await refineOutline(createMockOutline(3), {
       type: 'modify_chapter',

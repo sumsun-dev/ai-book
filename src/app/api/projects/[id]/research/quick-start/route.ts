@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import { AIQuestion, UserAnswer } from '@/types/book'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
 
 const QUESTION_GENERATION_PROMPT = `당신은 전문 출판 컨설턴트입니다. 저자가 제시한 책 아이디어를 바탕으로, 책의 방향을 구체화하기 위한 핵심 질문들을 생성해주세요.
 
@@ -70,8 +71,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id } = await params
     const { initialIdea } = await request.json()
@@ -83,8 +86,8 @@ export async function POST(
       )
     }
 
-    const project = await prisma.project.findUnique({
-      where: { id },
+    const project = await prisma.project.findFirst({
+      where: projectOwnerWhere(id, userId!),
     })
 
     if (!project) {
@@ -97,7 +100,7 @@ export async function POST(
     // Step 1: 질문 생성
     let questions: AIQuestion[] = []
     try {
-      const questionResponse = await runAgent(
+      const questionResult = await runAgent(
         {
           name: 'research-questioner',
           systemPrompt: QUESTION_GENERATION_PROMPT,
@@ -106,7 +109,9 @@ export async function POST(
         `저자의 책 아이디어:\n${initialIdea}\n\n책 유형: ${project.type}`
       )
 
-      const jsonMatch = questionResponse.match(/\{[\s\S]*\}/)
+      recordUsage(userId!, 'research-questioner', questionResult.usage, id).catch(console.error)
+
+      const jsonMatch = questionResult.text.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0])
         questions = parsed.questions
@@ -126,7 +131,7 @@ export async function POST(
         .map((q) => `- [${q.id}] ${q.question} (${q.category})`)
         .join('\n')
 
-      const answerResponse = await runAgent(
+      const answerResult = await runAgent(
         {
           name: 'research-auto-answerer',
           systemPrompt: AUTO_ANSWER_PROMPT,
@@ -135,7 +140,9 @@ export async function POST(
         `저자의 책 아이디어:\n${initialIdea}\n\n책 유형: ${project.type}\n\n질문 목록:\n${questionsContext}`
       )
 
-      const jsonMatch = answerResponse.match(/\{[\s\S]*\}/)
+      recordUsage(userId!, 'research-auto-answerer', answerResult.usage, id).catch(console.error)
+
+      const jsonMatch = answerResult.text.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0])
         answers = parsed.answers.map((a: { questionId: string; answer: string }) => ({
@@ -166,7 +173,7 @@ export async function POST(
       })
       .join('\n\n')
 
-    const planResponse = await runAgent(
+    const planResult = await runAgent(
       {
         name: 'research-planner',
         systemPrompt: PLAN_GENERATION_PROMPT,
@@ -174,6 +181,8 @@ export async function POST(
       },
       `**책 유형**: ${project.type}\n**초기 아이디어**: ${initialIdea}\n\n**질문과 답변**:\n${qaContext}`
     )
+    const planResponse = planResult.text
+    recordUsage(userId!, 'research-planner', planResult.usage, id).catch(console.error)
 
     // DB 저장
     await prisma.researchData.upsert({

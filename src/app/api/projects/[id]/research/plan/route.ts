@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/auth-utils'
+import { requireAuth, projectOwnerWhere } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import { runAgent } from '@/lib/claude'
 import { AIQuestion, UserAnswer } from '@/types/book'
+import { checkQuota, recordUsage } from '@/lib/token-quota'
 
 const PLAN_GENERATION_PROMPT = `당신은 전문 출판 기획자입니다. 저자의 아이디어와 질문 답변을 분석하여 책의 전체적인 계획을 수립해주세요.
 
@@ -23,8 +24,10 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError } = await requireAuth()
+    const { userId, error: authError } = await requireAuth()
     if (authError) return authError
+
+    await checkQuota(userId!)
 
     const { id } = await params
     const { initialIdea, questions, answers } = await request.json() as {
@@ -34,8 +37,8 @@ export async function POST(
     }
 
     // 프로젝트 정보 조회
-    const project = await prisma.project.findUnique({
-      where: { id }
+    const project = await prisma.project.findFirst({
+      where: projectOwnerWhere(id, userId!)
     })
 
     if (!project) {
@@ -52,7 +55,7 @@ export async function POST(
     }).join('\n\n')
 
     // AI로 계획 생성
-    const response = await runAgent(
+    const agentResult = await runAgent(
       {
         name: 'research-planner',
         systemPrompt: PLAN_GENERATION_PROMPT,
@@ -64,6 +67,8 @@ export async function POST(
 **질문과 답변**:
 ${qaContext}`
     )
+    const response = agentResult.text
+    recordUsage(userId!, 'research-planner', agentResult.usage, id).catch(console.error)
 
     // ResearchData 업데이트
     await prisma.researchData.update({

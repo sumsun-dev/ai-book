@@ -9,18 +9,20 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String         @id @default(uuid())
+  email         String         @unique
   emailVerified DateTime?
   name          String?
   password      String?
   image         String?
-  provider      String?   // google, kakao, credentials
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  provider      String?        // google, kakao, credentials
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   projects      Project[]
   accounts      Account[]
   sessions      Session[]
+  tokenUsages   TokenUsage[]
+  quota         UserQuota?
 }
 
 model Account {
@@ -272,6 +274,33 @@ model NewsletterSubscriber {
   subscribedAt DateTime @default(now())
   locale       String   @default("ko")
   isActive     Boolean  @default(true)
+}
+
+// 토큰 사용량 추적
+model TokenUsage {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId    String?
+  agentName    String
+  inputTokens  Int
+  outputTokens Int
+  totalTokens  Int
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([projectId])
+}
+
+// 사용자 쿼터 관리
+model UserQuota {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan         String   @default("free")
+  monthlyLimit Int      @default(50000)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // AI 채팅 메시지 히스토리
