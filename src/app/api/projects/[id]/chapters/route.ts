@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/auth-utils'
 import { z } from 'zod'
 import { projectRepository } from '@/lib/db/project-repository'
+import { prisma } from '@/lib/db/client'
+import { extractRuleBasedSummary } from '@/lib/utils/content-context'
+import { stripHtml } from '@/lib/utils/content-context'
 
 
 interface RouteParams {
@@ -43,6 +46,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const chapter = await projectRepository.saveChapter(id, { number, title, content, status })
+
+    // 내용이 2000자 이상이면 비동기로 요약 생성 (응답 차단하지 않음)
+    const plainText = stripHtml(content)
+    if (plainText.length >= 2000) {
+      const summary = extractRuleBasedSummary(plainText, 500)
+      if (summary) {
+        prisma.chapter.update({
+          where: { id: chapter.id },
+          data: { summary },
+        }).catch(() => { /* 요약 저장 실패는 무시 */ })
+      }
+    }
+
     return NextResponse.json({ success: true, message: '챕터가 저장되었습니다.', data: chapter })
   } catch {
     return NextResponse.json(

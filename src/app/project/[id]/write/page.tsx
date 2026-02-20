@@ -269,10 +269,14 @@ export default function WritePage() {
       state.outline?.chapters.forEach(ch => {
         if (ch.number < state.currentChapter) {
           const existingChapter = state.chapters.get(ch.number)
+          const summary = existingChapter?.summary
+            || ch.summary
+            || existingChapter?.content?.substring(0, 500)
+            || ''
           previousChapters.push({
             number: ch.number,
             title: ch.title,
-            summary: existingChapter?.content?.substring(0, 500) || ch.summary
+            summary,
           })
         }
       })

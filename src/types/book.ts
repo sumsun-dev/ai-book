@@ -100,6 +100,7 @@ export interface Chapter {
   number: number
   title: string
   content: string
+  summary?: string
   status: ChapterStatus
   revisions: Revision[]
 }

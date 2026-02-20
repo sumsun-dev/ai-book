@@ -4,6 +4,9 @@ import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
 import { streamAgent } from '@/lib/claude'
 import { buildBibleContext, parseBibleJson } from '@/lib/bible-context'
+import { buildContinueContext } from '@/lib/utils/content-context'
+import { analyzeKeyPointProgress, formatKeyPointProgress } from '@/lib/utils/key-point-tracker'
+import { analyzeStyle, formatStyleGuide } from '@/lib/utils/style-analyzer'
 
 const MAX_CONTENT_LENGTH = 10000
 
@@ -252,6 +255,60 @@ const WRITER_PROMPTS: Record<string, string> = {
 // 기본 프롬프트 (알 수 없는 유형용)
 const DEFAULT_WRITER_PROMPT = WRITER_PROMPTS.nonfiction
 
+// 분야별 이어쓰기 전용 프롬프트
+const CONTINUE_PROMPTS: Record<string, string> = {
+  fiction: `## 이어쓰기 원칙 (소설)
+1. 직전 장면의 분위기, 시점, 시제를 그대로 유지
+2. 등장인물의 말투, 성격, 감정 흐름을 일관되게 이어감
+3. 복선이나 미해결 장면이 있으면 자연스럽게 연결
+4. 장면 전환 시 시각적 단서(빈 줄, 새 단락)로 표시
+5. [미완료] 키포인트에 집중하되, 이야기 흐름을 해치지 않게 녹여냄`,
+
+  nonfiction: `## 이어쓰기 원칙 (논픽션)
+1. 직전 논점의 맥락을 이어받아 발전시킴
+2. 앞서 제시한 주장/근거와 모순되지 않게 진행
+3. 새로운 사례나 데이터를 추가하여 논증 강화
+4. [미완료] 키포인트를 우선 다루되, 논리적 흐름 유지
+5. 소제목이나 문단 전환으로 구조감 유지`,
+
+  selfhelp: `## 이어쓰기 원칙 (자기계발)
+1. 독자에게 말하는 2인칭 어조 유지
+2. 앞서 제시한 원칙/프레임워크와 연결
+3. 실천 방법이나 구체적 행동 지침을 이어서 제시
+4. [미완료] 키포인트를 실천 가능한 형태로 전개
+5. 격려와 동기부여 톤 일관 유지`,
+
+  technical: `## 이어쓰기 원칙 (기술서)
+1. 앞서 설명한 개념/용어를 일관되게 사용
+2. 난이도 흐름을 유지 (갑자기 어려워지지 않게)
+3. 이전 설명을 참조하며 새 개념 도입
+4. [미완료] 키포인트를 예시와 함께 설명
+5. 코드나 수식이 있었다면 형식 일관성 유지`,
+
+  essay: `## 이어쓰기 원칙 (에세이)
+1. 작가의 개인적 목소리와 관점 유지
+2. 직전 사유의 흐름을 자연스럽게 확장
+3. 일상적 소재에서 깊은 통찰로 이어지는 구조 유지
+4. [미완료] 키포인트를 성찰적으로 풀어냄
+5. 여운과 여백의 미학 유지`,
+
+  children: `## 이어쓰기 원칙 (아동문학)
+1. 쉬운 단어와 짧은 문장 유지
+2. 등장인물의 말투와 성격 일관성
+3. 이야기의 재미와 호기심 흐름 유지
+4. [미완료] 키포인트를 재미있는 에피소드로 전달
+5. 의성어, 의태어로 생동감 유지`,
+
+  poetry: `## 이어쓰기 원칙 (시/산문시)
+1. 기존 리듬과 운율 패턴 유지
+2. 이미지와 상징의 일관된 세계관
+3. 호흡과 여백의 감각 유지
+4. [미완료] 키포인트를 시적 이미지로 표현
+5. 감정의 흐름과 강도를 자연스럽게 이어감`,
+}
+
+const DEFAULT_CONTINUE_PROMPT = CONTINUE_PROMPTS.nonfiction
+
 // 공통 출력 형식 규칙
 const OUTPUT_FORMAT_RULES = `
 
@@ -327,13 +384,34 @@ export async function POST(
         ).join('\n')
       : ''
 
-    // continue 모드일 때 기존 내용 컨텍스트 추가
-    const existingContentContext = mode === 'continue' && existingContent
-      ? `\n\n**현재까지 작성된 내용:**
-${sanitizeForPrompt(existingContent.replace(/<[^>]*>/g, ' ').substring(0, 3000))}
+    // continue 모드: 컨텍스트 + 스타일 + 키포인트 추적
+    let existingContentContext = ''
+    let styleContext = ''
+    let keyPointContext = ''
+    let continuePromptContext = ''
 
-위 내용에 이어서 자연스럽게 계속 작성해주세요. 기존 내용을 반복하지 말고, 새로운 내용만 작성해주세요.`
-      : ''
+    if (mode === 'continue' && existingContent) {
+      const context = buildContinueContext(existingContent, 4000)
+      if (context.text) {
+        existingContentContext = `\n\n**현재까지 작성된 내용** (총 ${context.totalLength}자, ${context.strategy === 'split' ? '앞뒤 발췌' : '전문'}):\n${sanitizeForPrompt(context.text)}`
+      }
+
+      const styleProfile = analyzeStyle(existingContent)
+      styleContext = formatStyleGuide(styleProfile)
+      if (styleContext) {
+        styleContext = '\n\n' + styleContext
+      }
+
+      if (chapterOutline.keyPoints && chapterOutline.keyPoints.length > 0) {
+        const progress = analyzeKeyPointProgress(context.text, chapterOutline.keyPoints)
+        const formatted = formatKeyPointProgress(progress)
+        if (formatted) {
+          keyPointContext = `\n**키포인트 진행 상황:**\n${formatted}`
+        }
+      }
+
+      continuePromptContext = '\n\n' + (CONTINUE_PROMPTS[project.type] || DEFAULT_CONTINUE_PROMPT)
+    }
 
     const writeInstruction = mode === 'continue'
       ? '위 정보를 바탕으로 기존 내용에 이어서 자연스럽게 계속 작성해주세요. 기존 내용을 다시 쓰지 말고 새로운 부분만 작성하세요.'
@@ -348,15 +426,15 @@ ${sanitizeForPrompt(existingContent.replace(/<[^>]*>/g, ' ').substring(0, 3000))
 **책 유형**: ${project.type}
 **타겟 독자**: ${sanitizeForPrompt(project.targetAudience || '일반 독자')}
 **문체**: ${toneDescription}
-${bibleContext}
+${bibleContext}${styleContext}
 ${previousContext}
 
 **현재 챕터 정보:**
 - 챕터 번호: ${chapterNumber}
 - 챕터 제목: ${sanitizeForPrompt(chapterOutline.title)}
 - 챕터 요약: ${sanitizeForPrompt(chapterOutline.summary)}
-- 핵심 포인트: ${chapterOutline.keyPoints?.map(sanitizeForPrompt).join(', ') || '없음'}
-${existingContentContext}
+- 핵심 포인트: ${chapterOutline.keyPoints?.map(sanitizeForPrompt).join(', ') || '없음'}${keyPointContext}
+${existingContentContext}${continuePromptContext}
 
 ${writeInstruction}`
 

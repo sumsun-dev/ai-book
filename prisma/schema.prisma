@@ -133,6 +133,7 @@ model Chapter {
   number    Int
   title     String
   content   String
+  summary   String?
   status    String   @default("pending")
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)

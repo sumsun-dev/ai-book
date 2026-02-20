@@ -78,6 +78,7 @@ function toBookProject(dbProject: {
     number: number
     title: string
     content: string
+    summary: string | null
     status: string
   }[]
 }): BookProject {
@@ -99,6 +100,7 @@ function toBookProject(dbProject: {
       number: ch.number,
       title: ch.title,
       content: ch.content,
+      summary: ch.summary || undefined,
       status: ch.status as Chapter['status'],
       revisions: [],
     })),
