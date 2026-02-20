@@ -112,12 +112,12 @@ AI 멀티 에이전트 기반 책 집필 플랫폼. 주제와 스타일을 입�
 | **Framework** | Next.js 16 (App Router), React 19, TypeScript 5 |
 | **Styling** | Tailwind CSS 4, Tailwind Typography, Framer Motion |
 | **Editor** | TipTap (rich text) |
-| **AI** | Anthropic Claude API (@anthropic-ai/sdk) |
-| **Database** | Prisma + PostgreSQL |
+| **AI** | Anthropic Claude API (@anthropic-ai/sdk), OpenAI SDK 6 (DALL-E) |
+| **Database** | Prisma 7 + PostgreSQL (@prisma/adapter-pg) |
 | **State** | Zustand |
 | **3D** | Three.js, React Three Fiber, React Three Drei |
 | **Export** | @react-pdf/renderer (PDF), epub-gen-memory (EPUB) |
-| **Validation** | Zod |
+| **Validation** | Zod 4 |
 | **File Parsing** | mammoth (docx), pdf-parse (pdf), sharp (image) |
 | **Auth** | NextAuth.js v5 (JWT), bcryptjs, @auth/prisma-adapter |
 | **i18n** | next-intl (cookie 기반 로케일, ko/en) |
@@ -202,6 +202,7 @@ ai-book/
 ├── sentry.*.config.ts       # Sentry 설정 (client/server/edge)
 ├── .github/workflows/       # CI/CD (GitHub Actions)
 ├── prisma/schema.prisma     # DB 스키마 (19 models, PostgreSQL)
+├── prisma.config.ts         # Prisma 7 설정 (datasource URL, migrations)
 └── vitest.config.ts         # 테스트 설정
 ```
 
@@ -242,7 +243,6 @@ AUTH_SECRET=          # NextAuth 시크릿 (openssl rand -base64 32)
 DATABASE_URL=         # PostgreSQL 연결 문자열
 
 # === 선택 ===
-# DIRECT_URL=         # Prisma 직접 DB 연결 (마이그레이션용)
 # AUTH_GOOGLE_ID=     # Google OAuth
 # AUTH_GOOGLE_SECRET= # Google OAuth
 # UPSTASH_REDIS_REST_URL=   # Rate Limiting (Upstash Redis)
@@ -305,3 +305,4 @@ DATABASE_URL=         # PostgreSQL 연결 문자열
 - [x] 토큰 쿼터 시스템 (사용량 추적, 한도 차단, 적응형 UI)
 - [x] 회원가입 in-memory rate limit (3회/10분)
 - [x] 프로젝트 소유권 검증 강화 (전체 AI 라우트)
+- [x] 의존성 메이저 업그레이드 (Prisma 5→7, Zod 3→4, OpenAI SDK 4→6)

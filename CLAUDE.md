@@ -8,13 +8,13 @@ AI multi-agent book writing platform. Users input a topic and style, and 5 AI ag
 - **Framework**: Next.js 16 (App Router), React 19, TypeScript 5
 - **Styling**: Tailwind CSS 4, Tailwind Typography, Framer Motion (dark mode required)
 - **Editor**: TipTap (rich text), InDesign-style page editor
-- **AI**: Anthropic Claude API (@anthropic-ai/sdk)
-- **DB**: Prisma + PostgreSQL
+- **AI**: Anthropic Claude API (@anthropic-ai/sdk), OpenAI SDK 6 (DALL-E cover)
+- **DB**: Prisma 7 + PostgreSQL (@prisma/adapter-pg)
 - **Auth**: NextAuth.js v5 (JWT), bcryptjs, Google OAuth
 - **State**: Zustand
 - **3D**: Three.js + React Three Fiber (landing page)
 - **Export**: PDF (@react-pdf/renderer), EPUB (epub-gen-memory)
-- **Validation**: Zod
+- **Validation**: Zod 4
 - **i18n**: next-intl (cookie-based locale, ko/en)
 - **Security**: CSRF (Origin/Referer), Rate Limit (Upstash Redis), XSS (DOMPurify), Sentry
 - **Testing**: Vitest (80% coverage threshold), Playwright (E2E)
@@ -84,7 +84,7 @@ ai-book/
 │   │   ├── rate-limit.ts    # Upstash-based Rate Limiting
 │   │   ├── sanitize.ts      # DOMPurify HTML sanitization
 │   │   ├── store.ts         # Zustand store
-│   │   ├── db/              # Prisma client
+│   │   ├── db/              # Prisma client (imports from @/generated/prisma/client)
 │   │   └── utils/           # JSON parser, text→HTML conversion
 │   └── types/
 │       ├── book.ts          # Domain type definitions
@@ -94,6 +94,7 @@ ai-book/
 ├── sentry.*.config.ts       # Sentry config (client/server/edge)
 ├── .github/workflows/       # CI/CD (GitHub Actions)
 ├── prisma/schema.prisma     # DB schema (19 models, PostgreSQL)
+├── prisma.config.ts         # Prisma 7 config (datasource URL, migrations)
 └── vitest.config.ts         # Test configuration
 ```
 
@@ -135,7 +136,6 @@ AUTH_SECRET=          # NextAuth secret (openssl rand -base64 32)
 DATABASE_URL=         # PostgreSQL connection string
 
 # === Optional ===
-# DIRECT_URL=                  # Prisma direct DB connection (for migrations)
 # AUTH_GOOGLE_ID=              # Google OAuth
 # AUTH_GOOGLE_SECRET=          # Google OAuth
 # UPSTASH_REDIS_REST_URL=     # Rate Limiting (Upstash Redis)
