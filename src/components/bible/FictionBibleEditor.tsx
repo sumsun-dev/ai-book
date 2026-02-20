@@ -547,7 +547,7 @@ function WorldSettingEditor({
 // ===== Plot Thread Editor =====
 function PlotThreadEditor({
   threads,
-  characters,
+  characters: _characters,
   onChange,
 }: {
   threads: PlotThread[]

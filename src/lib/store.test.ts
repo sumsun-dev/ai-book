@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useBookStore } from './store'
-import type { BookProject, BookOutline, AgentMessage, Reference } from '@/types/book'
+import type { BookProject, AgentMessage, Reference } from '@/types/book'
 import { createMockOutline } from '@/test/fixtures/outline'
 
 // Reset store before each test
@@ -274,7 +274,7 @@ describe('useBookStore - outline 조작', () => {
   })
 
   it('outline이 없으면 조작이 무시된다', () => {
-    useBookStore.getState().setOutline(null as any)
+    useBookStore.getState().setOutline(null as unknown as Parameters<ReturnType<typeof useBookStore.getState>['setOutline']>[0])
     // These should not throw
     useBookStore.getState().addChapterToOutline('test', 'test')
     useBookStore.getState().removeChapterFromOutline(1)

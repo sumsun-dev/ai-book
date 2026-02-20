@@ -11,6 +11,7 @@ export default function BibleOnboardingCard({ projectId, projectType }: BibleOnb
   const [isDismissed, setIsDismissed] = useState(false)
   const [isLoaded, setIsLoaded] = useState(false)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const dismissed = localStorage.getItem(`bible-onboarding-dismissed-${projectId}`)
     if (dismissed) {
@@ -18,6 +19,7 @@ export default function BibleOnboardingCard({ projectId, projectType }: BibleOnb
     }
     setIsLoaded(true)
   }, [projectId])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleDismiss = () => {
     localStorage.setItem(`bible-onboarding-dismissed-${projectId}`, 'true')

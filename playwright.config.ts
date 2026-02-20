@@ -34,7 +34,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'cross-env DATABASE_URL=file:./prisma/test-e2e.db npm run dev -- --port 3001',
+    command: 'npm run dev -- --port 3001',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

@@ -53,7 +53,7 @@ export function generateTemplateCover(
   project: BookProject,
   templateId: string
 ): CoverGenerationResult {
-  const template = getTemplateById(templateId)
+  getTemplateById(templateId)
 
   // For template-based covers, we return a placeholder that will be rendered client-side
   return {

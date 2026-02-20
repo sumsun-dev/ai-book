@@ -163,6 +163,7 @@ export function CoverDesigner({ project, onSave, onCancel }: CoverDesignerProps)
 
               {aiImageUrl && (
                 <div className="mb-4 flex justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={aiImageUrl}
                     alt="AI Generated Cover"

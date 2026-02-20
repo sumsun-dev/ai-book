@@ -51,13 +51,6 @@ export function markdownToHTML(markdown: string): string {
 }
 
 /**
- * 텍스트에서 HTML 태그 제거
- */
-function stripHTML(html: string): string {
-  return html.replace(/<[^>]*>/g, '')
-}
-
-/**
  * 타이틀 페이지 HTML 생성
  */
 function generateTitlePageHTML(

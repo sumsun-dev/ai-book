@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/db/client'
 import ProjectLayout from '@/components/project/ProjectLayout'
-import { BookProject, BookOutline, ProjectStage, BookType, Chapter, ChapterStatus } from '@/types/book'
+import { BookProject, BookOutline, ProjectStage, BookType, ChapterStatus } from '@/types/book'
 
 async function getProject(id: string): Promise<BookProject | null> {
   const project = await prisma.project.findUnique({

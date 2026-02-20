@@ -48,6 +48,7 @@ export default function UserMenu() {
         aria-label="사용자 메뉴"
       >
         {session.user.image ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={session.user.image}
             alt=""

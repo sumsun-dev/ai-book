@@ -1,4 +1,4 @@
-import { ISBNComponents, ISBNData } from '@/types/book'
+import { ISBNComponents } from '@/types/book'
 
 /**
  * ISBN-13 체크 디지트 계산

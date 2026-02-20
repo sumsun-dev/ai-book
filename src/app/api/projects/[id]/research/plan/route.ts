@@ -46,7 +46,7 @@ export async function POST(
     }
 
     // Q&A 컨텍스트 구성
-    const qaContext = questions.map((q, i) => {
+    const qaContext = questions.map((q) => {
       const answer = answers.find(a => a.questionId === q.id)
       return `Q: ${q.question}\nA: ${answer?.answer || '(미답변)'}`
     }).join('\n\n')

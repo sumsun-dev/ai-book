@@ -37,14 +37,6 @@ describe('FileParseError', () => {
 })
 
 describe('validateFile', () => {
-  function createMockFile(
-    name: string,
-    size: number
-  ): File {
-    return new File([''], name, { type: 'text/plain' })
-    // Note: File constructor in jsdom doesn't respect size well, test the logic
-  }
-
   it('유효한 txt 파일을 통과시킨다', () => {
     const file = new File(['content'], 'test.txt', { type: 'text/plain' })
     expect(() => validateFile(file)).not.toThrow()

@@ -3,7 +3,7 @@ import { requireAuth } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { z } from 'zod'
 import { prisma } from '@/lib/db/client'
-import { validateAndParseISBN, formatISBN, convertISBN13to10 } from '@/lib/isbn'
+import { validateAndParseISBN, formatISBN } from '@/lib/isbn'
 import { ISBNData, ISBNStatus } from '@/types/book'
 
 interface RouteParams {

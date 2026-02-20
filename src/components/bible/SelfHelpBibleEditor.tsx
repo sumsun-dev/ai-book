@@ -179,7 +179,7 @@ function CoreMessageEditor({
                       <div className="flex gap-1 mt-2 flex-wrap">
                         {msg.keyPhrases.map((phrase, i) => (
                           <span key={i} className="text-xs px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300">
-                            "{phrase}"
+                            &ldquo;{phrase}&rdquo;
                           </span>
                         ))}
                       </div>
@@ -566,7 +566,7 @@ function FrameworkForm({
 // ===== Case Study Editor =====
 function CaseStudyEditor({
   cases,
-  frameworks,
+  frameworks: _frameworks,
   onChange,
 }: {
   cases: CaseStudy[]

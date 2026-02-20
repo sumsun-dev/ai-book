@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useBookStore } from '@/lib/store'
 import { BookType, AgentType } from '@/types/book'
@@ -19,7 +19,6 @@ const bookTypeNames: Record<BookType, string> = {
 }
 
 function WritePageContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const bookType = (searchParams.get('type') || 'fiction') as BookType
 
@@ -41,7 +40,6 @@ function WritePageContent() {
     setChapter,
     addAgentMessage,
     setProcessing,
-    saveProject,
     saveChapterToServer,
   } = useBookStore()
 
@@ -150,7 +148,7 @@ function WritePageContent() {
         // Save chapter to server
         try {
           await saveChapterToServer(chapter.number, chapter.title, chapterContent)
-        } catch (saveError) {
+        } catch (_saveError) {
           // Continue even if save fails
         }
 

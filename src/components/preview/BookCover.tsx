@@ -53,6 +53,7 @@ export function BookCover({ project, coverImageUrl, onClick }: BookCoverProps) {
           }}
         >
           {coverImageUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={coverImageUrl}
               alt={project.title}

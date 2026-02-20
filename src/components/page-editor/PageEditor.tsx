@@ -8,7 +8,7 @@ import SourcesCollapsible from './SourcesCollapsible'
 import { AIChatPanel } from '@/components/ai-chat'
 import { splitChapterToPages, countWords, getPageStatus, redistributePages, PAGE_CHAR_LIMITS, getTextLength } from '@/lib/page-utils'
 import { useToast } from '@/hooks/useToast'
-import { getErrorMessage, ERROR_CODES } from '@/lib/errors'
+import { getErrorMessage } from '@/lib/errors'
 import type { Page, PageViewMode, PageEditorState, PageGenerateMode, ChapterOutline, PaperSize } from '@/types/book'
 
 interface PageEditorProps {
@@ -165,6 +165,7 @@ export default function PageEditor({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.currentPage, state.totalPages, state.pages, saveContent])
 
   const handlePageChange = (pageNumber: number) => {

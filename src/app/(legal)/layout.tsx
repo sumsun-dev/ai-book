@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-white dark:bg-neutral-950">
@@ -14,12 +16,12 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           {children}
         </div>
         <div className="mt-16 pt-8 border-t border-neutral-200 dark:border-neutral-800">
-          <a
+          <Link
             href="/"
             className="text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
           >
             &larr; 홈으로 돌아가기
-          </a>
+          </Link>
         </div>
       </div>
     </div>

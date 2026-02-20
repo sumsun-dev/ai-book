@@ -63,6 +63,7 @@ export default function WritePage() {
   // Bible이 지원되는 타입인지 확인
   const isBibleSupported = projectType === 'fiction' || projectType === 'selfhelp'
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     loadProjectData()
     fetchMemoCount()
@@ -112,8 +113,8 @@ export default function WritePage() {
       if (data.success) {
         setMemoCount(data.data.length)
       }
-    } catch (error) {
-      console.error('메모 개수 로드 실패:', error)
+    } catch (_error) {
+      // 메모 개수 로드 실패 무시
     }
   }
 
@@ -482,7 +483,8 @@ export default function WritePage() {
 
     // 생성된 내용 반환 (PageEditor에서 내부 상태 업데이트용)
     return fullContent
-  }, [chapterId, projectId, handlePageSave])
+  }, [chapterId, projectId])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const handleNextStage = async () => {
     try {

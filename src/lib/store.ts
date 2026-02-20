@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { BookProject, BookStatus, BookOutline, AgentMessage, BookType, TableOfContents, OutlineFeedback, ProjectStage, Reference } from '@/types/book'
+import { BookProject, BookStatus, BookOutline, AgentMessage, BookType, TableOfContents, OutlineFeedback, Reference } from '@/types/book'
 import { generateTableOfContents, addChapter, removeChapter, reorderChapters, addSection, removeSection } from '@/lib/outline-utils'
 
 interface BookStore {
@@ -177,7 +177,7 @@ export const useBookStore = create<BookStore>((set, get) => ({
           outline: currentProject.outline,
         }),
       })
-    } catch (error) {
+    } catch (_error) {
       throw new Error('프로젝트 저장에 실패했습니다.')
     }
   },
@@ -197,7 +197,7 @@ export const useBookStore = create<BookStore>((set, get) => ({
           status: 'writing',
         }),
       })
-    } catch (error) {
+    } catch (_error) {
       throw new Error('챕터 저장에 실패했습니다.')
     }
   },

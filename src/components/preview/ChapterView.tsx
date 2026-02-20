@@ -34,9 +34,9 @@ export function ChapterView({
   const hasContent = chapter?.content && chapter.content.trim().length > 0
 
   const renderedContent = useMemo(() => {
-    if (!hasContent) return ''
-    return sanitizeHtml(marked.parse(chapter!.content) as string)
-  }, [chapter?.content, hasContent])
+    if (!chapter?.content || !chapter.content.trim().length) return ''
+    return sanitizeHtml(marked.parse(chapter.content) as string)
+  }, [chapter])
 
   return (
     <div className="bg-gray-800/50 rounded-xl p-8">

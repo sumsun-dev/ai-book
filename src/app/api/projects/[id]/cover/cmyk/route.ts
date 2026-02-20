@@ -3,7 +3,6 @@ import { requireAuth } from '@/lib/auth/auth-utils'
 import { handleApiError } from '@/lib/api-utils'
 import { prisma } from '@/lib/db/client'
 import {
-  prepareForPrint,
   preparePrintReadyCover,
   validatePrintQuality,
   calculateSpineWidth,

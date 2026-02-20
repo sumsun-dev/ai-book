@@ -65,7 +65,7 @@ export function BookPreview({
       link.download = `${project.title}.epub`
       link.click()
       URL.revokeObjectURL(url)
-    } catch (error) {
+    } catch (_error) {
       alert('EPUB 다운로드에 실패했습니다.')
     } finally {
       setIsExporting(false)
@@ -89,7 +89,7 @@ export function BookPreview({
       link.download = `${project.title}-cover-print.tiff`
       link.click()
       URL.revokeObjectURL(url)
-    } catch (error) {
+    } catch (_error) {
       alert('인쇄용 표지 다운로드에 실패했습니다.')
     } finally {
       setIsExporting(false)

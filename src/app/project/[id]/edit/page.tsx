@@ -32,10 +32,6 @@ export default function EditPage() {
   })
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadProjectData()
-  }, [projectId])
-
   const loadProjectData = async () => {
     try {
       const res = await fetch(`/api/projects/${projectId}`)
@@ -64,6 +60,9 @@ export default function EditPage() {
       setError('Failed to load project.')
     }
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadProjectData() }, [projectId])
 
   const getCurrentChapter = (): Chapter | null => {
     return state.chapters.get(state.currentChapter) || null

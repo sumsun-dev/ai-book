@@ -94,6 +94,7 @@ export default function FileUploader({
     if (files.length > 0) {
       handleUpload(files[0])
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

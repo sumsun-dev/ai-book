@@ -26,6 +26,7 @@ export function GenerationProgress({
   const [elapsed, setElapsed] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (isStreaming) {
       setElapsed(0)
@@ -45,6 +46,7 @@ export function GenerationProgress({
       }
     }
   }, [isStreaming])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   if (!isStreaming) return null
 

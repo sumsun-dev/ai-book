@@ -169,7 +169,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 현재 Bible 파싱
-    let bible: BookBible = project.bible
+    const bible: BookBible = project.bible
       ? JSON.parse(project.bible)
       : createEmptyBible(project.type)
 

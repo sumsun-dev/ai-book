@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 
 vi.mock('next-auth', () => ({
   default: vi.fn().mockReturnValue({
-    auth: vi.fn().mockImplementation((handler: Function) => handler),
+    auth: vi.fn().mockImplementation((handler: (...args: unknown[]) => unknown) => handler),
   }),
 }))
 

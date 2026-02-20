@@ -100,7 +100,7 @@ export default function ConfirmStep({ outline }: ConfirmStepProps) {
       </div>
 
       <p className="text-center text-neutral-500 dark:text-neutral-400 text-sm pt-4">
-        상단의 "집필 시작" 버튼을 눌러 각 챕터를 집필해보세요.
+        상단의 &ldquo;집필 시작&rdquo; 버튼을 눌러 각 챕터를 집필해보세요.
       </p>
     </div>
   )

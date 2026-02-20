@@ -75,7 +75,7 @@ export async function runConsistencyCheck(
   // 슬라이딩 윈도우: 10챕터 초과 시 분할 검사
   const windowSize = 10
   const allIssues: ConsistencyIssue[] = []
-  let summaries: string[] = []
+  const summaries: string[] = []
 
   for (let i = 0; i < chapters.length; i += windowSize - 2) {
     const window = chapters.slice(i, i + windowSize)

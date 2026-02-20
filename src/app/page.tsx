@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
 import { useTranslations } from 'next-intl'
 import FloatingBookThree from '@/components/FloatingBookThree'
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
@@ -58,10 +58,12 @@ function ThemeToggle() {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setMounted(true)
     setIsDark(document.documentElement.classList.contains('dark'))
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const toggleTheme = () => {
     const newIsDark = !isDark
@@ -93,27 +95,6 @@ function ThemeToggle() {
         </svg>
       )}
     </button>
-  )
-}
-
-function BrushStroke({ className = '' }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 400 60"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        className="brush-stroke"
-        d="M10 45 C50 35, 80 50, 120 40 C160 30, 200 45, 250 35 C300 25, 340 40, 390 30"
-        stroke="currentColor"
-        strokeWidth="12"
-        strokeLinecap="round"
-        fill="none"
-        style={{ opacity: 0.6 }}
-      />
-    </svg>
   )
 }
 
@@ -199,13 +180,13 @@ function BackgroundBook() {
             >
               {/* Subtle lines resembling text/poetry */}
               <div className="absolute inset-0 p-16 flex flex-col justify-center opacity-40">
-                {Array.from({ length: 12 }).map((_, i) => (
+                {[68, 52, 75, 43, 61, 80, 55, 47, 72, 58, 65, 50].map((w, i) => (
                   <div
                     key={i}
                     className="h-1 bg-gray-400/30 mb-8 rounded-full"
                     style={{
-                      width: `${Math.random() * 40 + 40}%`,
-                      marginLeft: `${Math.random() * 20}%`
+                      width: `${w}%`,
+                      marginLeft: `${(i * 7) % 20}%`
                     }}
                   />
                 ))}
@@ -303,168 +284,6 @@ function BackgroundBook() {
 
         </motion.div>
       </div>
-    </div>
-  )
-}
-
-function FloatingBook() {
-  return (
-    <div className="perspective-[2000px] w-64 h-80 md:w-80 md:h-[26rem]">
-      <motion.div
-        className="relative w-full h-full"
-        style={{ transformStyle: 'preserve-3d' }}
-        animate={{
-          y: [0, -15, 0],
-          rotateZ: [-2, 2, -2],
-          rotateX: [5, 0, 5],
-        }}
-        transition={{
-          y: {
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-          },
-          rotateZ: {
-            duration: 7,
-            repeat: Infinity,
-            ease: "easeInOut",
-          },
-          rotateX: {
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          },
-        }}
-      >
-        {/* Back Cover */}
-        <div
-          className="absolute inset-0 rounded-r-md rounded-l-sm bg-[#5a4030]"
-          style={{
-            transform: 'translateZ(-15px)',
-            boxShadow: '20px 20px 50px rgba(0,0,0,0.5)',
-          }}
-        />
-
-        {/* Pages Block (Thickness) */}
-        <div
-          className="absolute top-2 bottom-2 right-2 w-4"
-          style={{
-            right: '2px',
-            background: 'linear-gradient(to right, #ccc, #fff, #ccc)',
-            transform: 'rotateY(90deg) translateZ(-2px)',
-            transformOrigin: 'right center',
-          }}
-        />
-
-        {/* Static Pages (Left Side when open, but here roughly just the block) */}
-        <div
-          className="absolute inset-0 rounded-r-md rounded-l-sm bg-[#fffdf9]"
-          style={{
-            transform: 'translateZ(-14px)',
-            width: '98%',
-            height: '98%',
-            top: '1%',
-            left: '0.5%'
-          }}
-        />
-
-
-        {/* Front Cover (Stationary Base for flipping pages to rest on) */}
-        <div
-          className="absolute inset-0 rounded-r-md rounded-l-sm"
-          style={{
-            background: 'linear-gradient(135deg, #3d2b1f 0%, #5a4030 100%)',
-            transform: 'translateZ(-15px)',
-          }}
-        />
-
-
-        {/* Animated Pages */}
-        {[0, 1, 2, 3].map((index) => (
-          <motion.div
-            key={index}
-            className="absolute inset-0 rounded-r-md rounded-l-md origin-left bg-cream-light border-l border-gray-200"
-            style={{
-              transformStyle: 'preserve-3d',
-            }}
-            initial={{ rotateY: 0 }}
-            animate={{ rotateY: -160 }}
-            transition={{
-              duration: 8,
-              ease: "easeInOut",
-              delay: index * 2, // Stagger pages
-              repeat: Infinity,
-              repeatDelay: 0,
-            }}
-          >
-            {/* Front of the page */}
-            <div
-              className="absolute inset-0 backface-hidden p-6 md:p-8 flex flex-col overflow-hidden"
-              style={{ backfaceVisibility: 'hidden' }}
-            >
-              <div className="text-warm-gray text-xs mb-4 text-right">{index + 1}</div>
-              <div className="space-y-4 opacity-50">
-                <div className="h-1 bg-black/10 rounded w-full" />
-                <div className="h-1 bg-black/10 rounded w-5/6" />
-                <div className="h-1 bg-black/10 rounded w-4/6" />
-                <div className="h-1 bg-black/10 rounded w-full" />
-                <div className="h-1 bg-black/10 rounded w-3/4" />
-              </div>
-
-              {/* Random decorative elements on pages */}
-              {index % 2 === 0 && (
-                <div className="mt-8 mx-auto w-24 h-24 border border-black/5 rounded-full flex items-center justify-center">
-                  <div className="w-20 h-20 bg-black/5 rounded-full" />
-                </div>
-              )}
-            </div>
-
-            {/* Back of the page */}
-            <div
-              className="absolute inset-0 backface-hidden rounded-l-md bg-[#f4ebd0]"
-              style={{
-                transform: 'rotateY(180deg)',
-                backfaceVisibility: 'hidden',
-              }}
-            >
-              <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/5 to-transparent" />
-            </div>
-          </motion.div>
-        ))}
-
-        {/* Front Cover (Animated to open first) */}
-        <motion.div
-          className="absolute inset-0 rounded-r-md rounded-l-sm origin-left"
-          style={{
-            background: 'linear-gradient(145deg, #4a3728 0%, #3d2b1f 50%, #2a1f15 100%)',
-            transformStyle: 'preserve-3d',
-          }}
-          animate={{ rotateY: -160 }}
-          transition={{
-            duration: 10,
-            ease: "easeInOut",
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        >
-          {/* Cover Decoration */}
-          <div className="absolute inset-4 border border-gold/40 rounded-sm opacity-70" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center transform translate-z-1">
-            <h3 className="font-serif text-gold text-2xl font-semibold tracking-wider">AI Book</h3>
-            <div className="w-8 h-8 mt-4 rounded-full border border-gold/30 flex items-center justify-center">
-              <div className="w-1 h-1 bg-gold rounded-full" />
-            </div>
-          </div>
-
-          {/* Inner side of Front Cover */}
-          <div
-            className="absolute inset-0 bg-[#3d2b1f] rounded-l-md backface-hidden"
-            style={{ transform: 'rotateY(180deg)', backfaceVisibility: 'hidden' }}
-          />
-
-        </motion.div>
-
-      </motion.div>
     </div>
   )
 }
@@ -703,6 +522,7 @@ function GallerySection() {
                   {/* Image Cover */}
                   <div className="absolute inset-0 transition-transform duration-700 group-hover:scale-105 bg-stone/10">
                     {book.cover ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img src={book.cover} alt={t(`samples.${book.key}.title`)} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full" style={{ background: book.color }} />
@@ -745,7 +565,7 @@ function TestimonialsSection() {
         <div className="text-center mb-20">
           <span className="text-gold text-xs tracking-[0.2em] uppercase font-bold mb-4 block">Testimonials</span>
           <h2 className="text-4xl md:text-5xl font-serif font-bold text-ink dark:text-cream">
-            Authors' Voices
+            Authors&apos; Voices
           </h2>
         </div>
 
@@ -759,7 +579,7 @@ function TestimonialsSection() {
               transition={{ duration: 0.6, delay: index * 0.15 }}
               className="bg-cream dark:bg-ink p-8 rounded-xl border border-stone/10 shadow-sm relative group hover:border-gold/30 transition-all flex flex-col"
             >
-              <div className="absolute -top-4 -left-2 text-6xl text-gold/20 font-serif leading-none">"</div>
+              <div className="absolute -top-4 -left-2 text-6xl text-gold/20 font-serif leading-none">&ldquo;</div>
               <p className="text-stone dark:text-stone/60 leading-relaxed mb-8 relative z-10 pt-4 font-light italic flex-grow">
                 {t(`testimonials.${id}.quote`)}
               </p>
@@ -767,6 +587,7 @@ function TestimonialsSection() {
               <div className="border-t border-stone/10 pt-6 flex items-center gap-5">
                 <div className="shrink-0 w-14 h-14 rounded-full overflow-hidden border-2 border-gold/20 group-hover:border-gold transition-all">
                   {testimonialAvatars[id] ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={testimonialAvatars[id]} alt={t(`testimonials.${id}.author`)} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gold/10" />

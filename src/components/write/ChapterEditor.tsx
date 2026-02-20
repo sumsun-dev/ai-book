@@ -292,7 +292,7 @@ export default function ChapterEditor({
       setTimeout(() => {
         isInternalUpdate.current = false
       }, 100)
-    } catch (error) {
+    } catch (_error) {
       alert('이미지를 처리하는 중 오류가 발생했습니다.')
     }
     e.target.value = ''

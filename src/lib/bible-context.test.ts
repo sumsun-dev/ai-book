@@ -4,7 +4,7 @@ import {
   createMockFictionBible,
   createMockSelfHelpBible,
 } from '@/test/fixtures/bible'
-import type { FictionBible, SelfHelpBible } from '@/types/book-bible'
+import type { BookBible } from '@/types/book-bible'
 
 describe('buildBibleContext', () => {
   describe('null/empty 처리', () => {
@@ -13,7 +13,7 @@ describe('buildBibleContext', () => {
     })
 
     it('알 수 없는 type은 빈 문자열을 반환한다', () => {
-      const bible = { type: 'unknown' } as any
+      const bible = { type: 'unknown' } as unknown as BookBible
       expect(buildBibleContext(bible, { currentChapter: 1 })).toBe('')
     })
   })
@@ -96,7 +96,7 @@ describe('buildBibleContext', () => {
 
     it('스타일 가이드가 없으면 해당 섹션을 건너뛴다', () => {
       const bible = createMockFictionBible({
-        styleGuide: undefined as any,
+        styleGuide: undefined as unknown as ReturnType<typeof createMockFictionBible>['styleGuide'],
       })
       const result = buildBibleContext(bible, { currentChapter: 1 })
       expect(result).not.toContain('문체 가이드')
@@ -355,7 +355,7 @@ describe('buildBibleContext', () => {
 
     it('voiceGuide가 없으면 해당 섹션을 건너뛴다', () => {
       const bible = createMockSelfHelpBible({
-        voiceGuide: undefined as any,
+        voiceGuide: undefined as unknown as ReturnType<typeof createMockSelfHelpBible>['voiceGuide'],
       })
       const result = buildBibleContext(bible, { currentChapter: 1 })
       expect(result).not.toContain('음성 가이드')

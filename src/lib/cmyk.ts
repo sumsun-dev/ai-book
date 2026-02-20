@@ -1,6 +1,5 @@
 import sharp from 'sharp'
-import { join } from 'path'
-import { PrintOptions, PaperSize } from '@/types/book'
+import { PaperSize } from '@/types/book'
 
 export interface CMYKOptions {
   dpi?: 300 | 400 | 600
@@ -18,7 +17,7 @@ export interface CoverDimensions {
 }
 
 // 용지 크기별 기본 치수 (mm)
-const PAPER_DIMENSIONS: Record<PaperSize, { width: number; height: number }> = {
+export const PAPER_DIMENSIONS: Record<PaperSize, { width: number; height: number }> = {
   a4: { width: 210, height: 297 },
   a5: { width: 148, height: 210 },
   b5: { width: 176, height: 250 },
@@ -51,7 +50,7 @@ export async function prepareForPrint(
   imageBuffer: Buffer,
   options: CMYKOptions = {}
 ): Promise<Buffer> {
-  const { dpi = 300, bleed = 3 } = options
+  const { dpi = 300 } = options
 
   let image = sharp(imageBuffer)
   const metadata = await image.metadata()
@@ -127,11 +126,11 @@ export async function preparePrintReadyCover(
   dimensions: CoverDimensions,
   options: CMYKOptions = {}
 ): Promise<Buffer> {
-  const { dpi = 300, bleed = 3, cropMarks = true } = options
+  const { dpi = 300 } = options
 
   // 전체 크기 계산 (앞표지 + 책등 + 뒤표지 + 도련)
-  const totalWidth = dimensions.width * 2 + dimensions.spineWidth + bleed * 2
-  const totalHeight = dimensions.height + bleed * 2
+  const totalWidth = dimensions.width * 2 + dimensions.spineWidth + dimensions.bleed * 2
+  const totalHeight = dimensions.height + dimensions.bleed * 2
 
   const widthPx = mmToPixels(totalWidth, dpi)
   const heightPx = mmToPixels(totalHeight, dpi)
@@ -156,7 +155,7 @@ export async function preparePrintReadyCover(
     .toBuffer()
 
   // 펼침 표지 생성
-  const bleedPx = mmToPixels(bleed, dpi)
+  const bleedPx = mmToPixels(dimensions.bleed, dpi)
   const spinePx = mmToPixels(dimensions.spineWidth, dpi)
 
   // 기본 캔버스 (흰색 배경)

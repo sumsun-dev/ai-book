@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
         'Connection': 'keep-alive',
       },
     })
-  } catch (error) {
+  } catch (_error) {
     return new Response(
       JSON.stringify({ error: 'Failed to start streaming' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

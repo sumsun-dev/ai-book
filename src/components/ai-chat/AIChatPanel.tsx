@@ -45,6 +45,7 @@ export function AIChatPanel({
     })
   }, [])
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const hasSeenTip = localStorage.getItem('ai-panel-onboarding-seen')
     if (!hasSeenTip && isExpanded) {
@@ -56,6 +57,7 @@ export function AIChatPanel({
       return () => clearTimeout(timer)
     }
   }, [])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const {
     messages,

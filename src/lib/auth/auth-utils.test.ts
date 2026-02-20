@@ -36,14 +36,14 @@ describe('auth-utils', () => {
       mockAuth.mockResolvedValue({
         user: { id: 'user-123', email: 'test@test.com' },
         expires: new Date(Date.now() + 86400000).toISOString(),
-      } as any)
+      } as unknown as Awaited<ReturnType<typeof auth>>)
 
       const userId = await getCurrentUserId()
       expect(userId).toBe('user-123')
     })
 
     it('should return null when no session', async () => {
-      mockAuth.mockResolvedValue(null as any)
+      mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>)
       const userId = await getCurrentUserId()
       expect(userId).toBeNull()
     })
@@ -52,7 +52,7 @@ describe('auth-utils', () => {
       mockAuth.mockResolvedValue({
         user: undefined,
         expires: new Date(Date.now() + 86400000).toISOString(),
-      } as any)
+      } as unknown as Awaited<ReturnType<typeof auth>>)
 
       const userId = await getCurrentUserId()
       expect(userId).toBeNull()
@@ -64,14 +64,14 @@ describe('auth-utils', () => {
       mockAuth.mockResolvedValue({
         user: { id: 'user-456', email: 'test@test.com' },
         expires: new Date(Date.now() + 86400000).toISOString(),
-      } as any)
+      } as unknown as Awaited<ReturnType<typeof auth>>)
 
       const result = await requireAuth()
       expect(result).toEqual({ userId: 'user-456', error: null })
     })
 
     it('should return error response when not authenticated', async () => {
-      mockAuth.mockResolvedValue(null as any)
+      mockAuth.mockResolvedValue(null as unknown as Awaited<ReturnType<typeof auth>>)
 
       const result = await requireAuth()
       expect(result.userId).toBeNull()

@@ -8,7 +8,7 @@ import {
   pdf,
 } from '@react-pdf/renderer'
 import { createElement } from 'react'
-import { BookProject, Chapter, BookOutline } from '@/types/book'
+import { BookProject, BookOutline } from '@/types/book'
 
 // Register Korean font (Noto Sans Korean)
 Font.register({

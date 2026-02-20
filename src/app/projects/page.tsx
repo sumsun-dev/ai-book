@@ -39,9 +39,8 @@ export default function ProjectsPage() {
   const loadProject = useBookStore((state) => state.loadProject)
   const filterHook = useProjectFilters(projects)
 
-  useEffect(() => {
-    fetchProjects()
-  }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchProjects() }, [])
 
   const fetchProjects = async () => {
     try {

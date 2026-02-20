@@ -58,9 +58,8 @@ export default function ResearchPage() {
   const [viewingStep, setViewingStep] = useState<string | null>(null)
   const [quickStartProgress, setQuickStartProgress] = useState<QuickStartProgress>(null)
 
-  useEffect(() => {
-    loadExistingData()
-  }, [projectId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadExistingData() }, [projectId])
 
   const loadExistingData = async () => {
     try {

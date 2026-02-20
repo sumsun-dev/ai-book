@@ -6,7 +6,7 @@ vi.mock('@/lib/claude', () => ({
 
 import { runWriterAgent, writeFullBook } from './writer'
 import { streamAgent } from '@/lib/claude'
-import { createMockOutline, createMockChapterOutline } from '@/test/fixtures/outline'
+import { createMockOutline } from '@/test/fixtures/outline'
 
 const mockStreamAgent = vi.mocked(streamAgent)
 

@@ -20,6 +20,7 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
   )
 
   // outline 변경 시 새 챕터도 펼침
+  /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
   useEffect(() => {
     setExpandedChapters(prev => {
       const newSet = new Set(prev)
@@ -27,6 +28,7 @@ export default function EditStep({ outline, onOutlineChange, onConfirm, isLoadin
       return newSet
     })
   }, [outline.chapters.length])
+  /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
   const toggleChapter = (index: number) => {
     setExpandedChapters(prev => {

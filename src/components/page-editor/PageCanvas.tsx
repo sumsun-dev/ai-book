@@ -38,7 +38,7 @@ export default function PageCanvas({
   zoom,
   viewMode,
   paperSize,
-  chapterTitle,
+  chapterTitle: _chapterTitle,
   projectId,
   chapterId,
 }: PageCanvasProps) {
@@ -63,10 +63,6 @@ export default function PageCanvas({
       right: pages.find((p) => p.pageNumber === rightPageNum) || null,
     }
   }, [pages, currentPage, viewMode])
-
-  const handleContentChange = (content: string) => {
-    onContentChange(currentPage, content)
-  }
 
   // 페이지 스타일 계산
   const pageStyle = {

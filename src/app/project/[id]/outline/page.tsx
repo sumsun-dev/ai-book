@@ -46,10 +46,6 @@ export default function OutlinePage() {
   const [error, setError] = useState<string | null>(null)
   const [viewingStep, setViewingStep] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadExistingData()
-  }, [projectId])
-
   const loadExistingData = async () => {
     try {
       const res = await fetch(`/api/projects/${projectId}`)
@@ -111,6 +107,9 @@ export default function OutlinePage() {
       // Initial load failure ignored
     }
   }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadExistingData() }, [projectId])
 
   const handleSettingsSave = async () => {
     setState(prev => ({ ...prev, step: 'generate', isLoading: true }))

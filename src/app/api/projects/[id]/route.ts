@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (ownerError) return ownerError
 
     return NextResponse.json({ success: true, data: project })
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: '프로젝트를 불러오는데 실패했습니다.' },
       { status: 500 }
@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const project = await projectRepository.update(id, body)
     return NextResponse.json({ success: true, data: project })
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: '프로젝트 수정에 실패했습니다.' },
       { status: 500 }
@@ -85,7 +85,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     await projectRepository.delete(id)
     return NextResponse.json({ success: true, message: '프로젝트가 삭제되었습니다.' })
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json(
       { success: false, error: '프로젝트 삭제에 실패했습니다.' },
       { status: 500 }
