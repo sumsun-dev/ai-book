@@ -17,6 +17,7 @@ export default async function globalSetup() {
     env: {
       ...process.env,
       DATABASE_URL: dbUrl,
+      DIRECT_URL: process.env.DIRECT_URL || dbUrl,
     },
     stdio: 'pipe',
   })
