@@ -270,7 +270,7 @@ DATABASE_URL=         # PostgreSQL 연결 문자열
 - [x] 다크/라이트 모드 완전 지원
 - [x] 카테고리 선택 UI (BISAC/KDC/DDC/custom)
 - [x] 사용자 인증 (NextAuth.js v5, JWT, Google OAuth)
-- [x] 테스트 커버리지 80% 달성 (77 files / 768 tests)
+- [x] 테스트 커버리지 80% 달성 (95 files / 888 tests)
 - [x] 커버리지 미달 파일 개선 완료 (useAIChat, file-parser, useStreamingGeneration, isbn 등)
 - [x] 프로젝트 검색/필터/정렬
 - [x] 전역 에러 바운더리 & 404
