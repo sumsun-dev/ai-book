@@ -163,7 +163,7 @@ export async function POST(
     const parseResult = GenerateOutlineSchema.safeParse(body)
     if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: parseResult.error.flatten() },
+        { error: 'Invalid request body', details: z.flattenError(parseResult.error) },
         { status: 400 }
       )
     }

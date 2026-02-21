@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const parseResult = EditRequestSchema.safeParse(body)
     if (!parseResult.success) {
       return new Response(
-        JSON.stringify({ error: 'Invalid request body', details: parseResult.error.flatten() }),
+        JSON.stringify({ error: 'Invalid request body', details: z.flattenError(parseResult.error) }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       )
     }

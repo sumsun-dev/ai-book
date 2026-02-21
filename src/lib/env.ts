@@ -4,7 +4,6 @@ const serverEnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY is required'),
   AUTH_SECRET: z.string().min(1, 'AUTH_SECRET is required'),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
-  DIRECT_URL: z.string().optional(),
   AUTH_GOOGLE_ID: z.string().optional(),
   AUTH_GOOGLE_SECRET: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),
@@ -27,7 +26,7 @@ function getEnv(): ServerEnv {
   const result = serverEnvSchema.safeParse(process.env)
 
   if (!result.success) {
-    const formatted = result.error.flatten().fieldErrors
+    const formatted = z.flattenError(result.error).fieldErrors
     const messages = Object.entries(formatted)
       .map(([key, errors]) => `  ${key}: ${errors?.join(', ')}`)
       .join('\n')

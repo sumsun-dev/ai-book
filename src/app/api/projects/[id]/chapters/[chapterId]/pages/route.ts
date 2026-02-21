@@ -65,7 +65,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const parseResult = CreatePageSchema.safeParse(body)
     if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: parseResult.error.flatten() },
+        { error: 'Invalid request body', details: z.flattenError(parseResult.error) },
         { status: 400 }
       )
     }
@@ -110,7 +110,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const parseResult = UpdatePagesSchema.safeParse(body)
     if (!parseResult.success) {
       return NextResponse.json(
-        { error: 'Invalid request body', details: parseResult.error.flatten() },
+        { error: 'Invalid request body', details: z.flattenError(parseResult.error) },
         { status: 400 }
       )
     }

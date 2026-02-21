@@ -68,7 +68,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const parseResult = BibleSchema.safeParse(body)
     if (!parseResult.success) {
       return NextResponse.json(
-        { success: false, error: '잘못된 Bible 형식입니다.', details: parseResult.error.flatten() },
+        { success: false, error: '잘못된 Bible 형식입니다.', details: z.flattenError(parseResult.error) },
         { status: 400 }
       )
     }

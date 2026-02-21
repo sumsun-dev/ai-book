@@ -30,7 +30,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const parseResult = SaveChapterSchema.safeParse(body)
     if (!parseResult.success) {
       return NextResponse.json(
-        { success: false, error: '잘못된 요청입니다.', details: parseResult.error.flatten() },
+        { success: false, error: '잘못된 요청입니다.', details: z.flattenError(parseResult.error) },
         { status: 400 }
       )
     }
